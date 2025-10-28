@@ -1,0 +1,15 @@
+INSERT INTO EXPANSION(Set_Code, Set_Abbr, Set_Name, Release_Date, Total_Cards)
+VALUES ("SV03", "OBF", "Obsidian Flames", "2023-08-10", 230),
+("SV03.5", "MEW", "151", "2023-09-21", 207),
+("SV04", "PAR", "Paradox Rift", "2023-11-02", 266),
+("SV04.5", "PAF", "Paldean Fates", "2024-01-25", 245),
+("SV05", "TEF", "Temporal Forces", "2024-03-21", 218),
+("SV06", "TWM", "Twilight Masquerade", "2024-05-23", 226),
+("SV06.5", "SFA", "Shrouded Fable", "2024-08-01", 99),
+("SV07", "SCR", "Stellar Crown", "2024-09-12", 175),
+("SV08", "SSP", "Surging Sparks", "2024-11-07", 252),
+("SV08.5", "PRE", "Prismatic Evolutions", "2025-01-16", 180),
+("SV09", "JTG", "Journey Together", "2025-03-31", 190),
+("SV10", "DRI", "Destined Rivals", "2025-05-29", 244),
+("SV10.5a", "WHT", "White Flare", "2025-07-17", 173),
+("SV10.5b", "BLK", "Black Bolt", "2025-07-17", 172);
