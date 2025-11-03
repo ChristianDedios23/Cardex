@@ -1,0 +1,14 @@
+.loginContainer{
+    background-image: url('../assets/Sparkling-Shiny-Background.jpg');
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+#logo{
+    width: 15%;
+    min-width: 290px;
+}
