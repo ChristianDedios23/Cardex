@@ -1,5 +1,8 @@
 INSERT INTO EXPANSION(Set_Code, Set_Abbr, Set_Name, Release_Date, Total_Cards)
-VALUES ("SV03", "OBF", "Obsidian Flames", "2023-08-10", 230),
+VALUES 
+("SV01", "SVI", "Scarlet & Violet", "2023-03-30", 258),
+("SV02", "PAL", "Paldea Evolved", "2023-06-08", 279),
+("SV03", "OBF", "Obsidian Flames", "2023-08-10", 230),
 ("SV03.5", "MEW", "151", "2023-09-21", 207),
 ("SV04", "PAR", "Paradox Rift", "2023-11-02", 266),
 ("SV04.5", "PAF", "Paldean Fates", "2024-01-25", 245),
