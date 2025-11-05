@@ -3,4 +3,10 @@ VALUES
 ("Item"),
 ("Supporter"),
 ("Stadium"),
-("Tool");
+("Tool"),
+("Ace Spec"),
+("Technical Machine"),
+("TAG Team"),
+("Prism Star"),
+("Fossil"),
+("Substitute");
