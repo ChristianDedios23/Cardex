@@ -5,8 +5,8 @@ VALUES
 ("Rare"),
 ("Double Rare"),
 ("Illustration Rare"),
+("Ultra Rare"),
 ("Special Illustration Rare"),
 ("Hyper Rare"),
 ("Shiny Rare"),
-("Shiny Ultra Rare"),
 ("Promo");
