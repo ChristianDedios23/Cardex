@@ -1,0 +1,90 @@
+/** Container of the home page content*/
+.HomePageContainer{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-image: url('../assets/background-front-page.jpg');
+    background-position: center;   /* keep centered */
+    background-repeat: no-repeat;  /* prevent tiling */
+    background-size: cover;        /* fill screen while staying centered */
+}
+
+/** Adjusts the size and content placement in of the top nav bar*/
+.topNavBar {
+    height: 10%;
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    background-color: #0d1117;
+}
+
+/** Minimizes size of logo*/
+#logo{
+    height: 100px;      /* Maintains proportions */
+    object-fit: contain;
+}
+
+/** Adjusts the size and content placement of the nav links in the top nav bar*/
+nav {
+    width: 60%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+}
+
+/** Adjusts the size and content placement of the login link in the top nav bar*/
+#loginLink {
+    width: 15%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/** Changes the font style, size, and color of the top nav bar components*/
+#loginLink, nav a {
+    font-size: 25px;
+    font-family: Impact, Charcoal, sans-serif;
+    text-decoration: none;
+    color: white;
+}
+
+/** Adjusts the size and content placement of the header and search bar*/
+.titleSearchContainer {
+    width: 100%;
+    height: 38%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+} 
+
+/** Change font style, size, and color of header*/
+h1 {
+    font-family: Helvetica;
+    font-size: 75px;
+    color: white;
+}
+
+/** Change the placement, font style, size, and color of text under header*/
+p {
+    margin-top: 5px;
+    font-family: Helvetica;
+    font-size: 20px;
+    color: white;
+}
+
+.searchBar {
+
+}
+
+#cardSearch {
+    outline: none;
+    border: none;
+}
