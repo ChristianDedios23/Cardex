@@ -8,7 +8,6 @@ VALUES
 ("Fighting"),
 ("Darkness"),
 ("Metal"),
-("Fairy"),
+("Colorless"),
 ("Dragon"),
-("Colorless");
-
+("Fairy");

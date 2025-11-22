@@ -9,4 +9,5 @@ VALUES
 ("Special Illustration Rare"),
 ("Hyper Rare"),
 ("Shiny Rare"),
-("Promo");
+("Shiny Ultra Rare"),
+("Ace Spec Rare");
