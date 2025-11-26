@@ -3,7 +3,14 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const db = require('./dbConfig');
+const dbPromise = require('./dbConfig');
+
+//db will recieve the connection after the promise
+//is fulfulled from dbPromise.
+let db;
+dbPromise.then(connection => {
+    db = connection;
+});
 
 //Create connection
 const app = express();
@@ -12,8 +19,8 @@ const app = express();
 app.use(cors()); //allow frontend to make requests to backend when both on different ports
 app.use(express.json()); //parse JSON bodies
 
-// JWT secret (in production, store in .env file) //COMEBACK AND CHANGE
-const JWT_SECRET = 'your_jwt_secret_key';
+// JWT secret key
+const JWT_SECRET = process.env.JWT_SECRET;
 
 //Create POST request that lets user sign-up with username, email, and password
 app.post('/signup', async (req, res) => {
@@ -23,7 +30,7 @@ app.post('/signup', async (req, res) => {
         const [rows] = await db.execute('SELECT * FROM USER WHERE Email_Address = ?', [email]);
 
         if(rows.length > 0){
-            return res.status(400).send('Email already exists');
+            return res.status(400).json({message: 'Email already exists'});
         }
         
         //hashed password
@@ -31,24 +38,49 @@ app.post('/signup', async (req, res) => {
 
         await db.execute(
             'INSERT INTO USER (Username, Password, Email_Address) VALUES (?, ?, ?)',
-            [username, email, hashedPassword]
+            [username, hashedPassword, email]
         );
 
-        res.json('User created successfully');
+        res.json({message: 'User created successfully'});
     }
     catch(err) {
         console.error('Error adding user', err);
-        res.status(500).send('Error adding user to db');
+        res.status(500).json({message: 'Error adding user to db'});
     }
 });
 
 //Create POST request for user to login
 app.post('/login', async (req, res) => {
-    
-})
+    const {email, password} = req.body;
 
-//JWT Authentication Middleware
-//COME BACK TO, EXPLAIN IT
+    try{
+        const [rows] = await db.execute('SELECT * FROM USER WHERE Email_Address = ?', [email])
+        
+        const user = rows[0];
+
+        if(!user) return res.status(400).json({message: 'Invalid email'});
+
+        const isMatch = await bcrypt.compare(password, user.Password);
+
+        if(!isMatch) return res.status(400).send('Incorrect password');
+
+        //return a token for user to remember who's logged in
+        const token = jwt.sign({email: user.Email_Address}, JWT_SECRET);
+
+        res.json({ message: 'Login successful', token});
+    }
+    catch(err){
+        console.error('Failure to login', err);
+        res.status(500).json({message: 'Failure to login'});
+    }
+})
+/*
+JWT Authentication Middleware
+COME BACK TO, EXPLAIN IT
+Is used to verify if a token is valid using secret key
+used for authentication for protected routes. A rout that 
+requires the user to be loggin in or have token.
+*/
 const authenticateToken = 23//placeholder for no error
 
 const PORT = process.env.PORT || 5000;

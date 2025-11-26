@@ -5,7 +5,55 @@ import { useState } from "react";
 export default function LoginPageContainer(){
     
     const [isLogin, setIsLogin] = useState(true);
-    
+    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [message, setMessage] = useState(''); //Displays message based on action
+
+    const handleSubmit = async (e) => {
+        //prevent page reload
+        e.preventDefault();
+
+        //assign url based on state of page
+        const url = isLogin ? 'http://localhost:5000/login' : 'http://localhost:5000/signup'
+        
+        //assign body based on state of page
+        const body = isLogin ? {email, password} : {email, username, password}
+        try{
+            //make request and get back result
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)  
+            });
+
+            //returns the body from the request
+            const data = await res.json();
+
+            //If status is not 200/201, then res.ok returns false and
+            //displays the current problem in message.
+            if(!res.ok) {
+                setMessage(data.message);
+                return;
+            }
+
+            if(isLogin){
+                localStorage.setItem('token', data.token);
+                setMessage(data.message);
+                //redirect
+                //ADD LATER
+            }
+            else{
+                setMessage(data.message);
+                setIsLogin(true);
+            }
+        }
+        catch(err){
+            console.error(err);
+            setMessage('Server error. Try again');    
+        }
+    }
+
     
     return(
         <div className="loginContainer">
@@ -16,30 +64,30 @@ export default function LoginPageContainer(){
 
                 <div className='emailInput'>
                     <label htmlFor="email" className='inputLabel'>Email</label>
-                    <input type='text' id='email' placeholder='Enter Email...'/>
+                    <input type='text' id='email' onChange={(e) => {setEmail(e.target.value)}} placeholder='Enter Email...'/>
                 </div>
 
                 {!isLogin && (
                     <div className='userNameInput'>
                         <label htmlFor="user" className='inputLabel'>Username</label>
-                        <input type='text' id='user' placeholder='Enter Username...'/>
+                        <input type='text' id='user' onChange={(e) => {setUsername(e.target.value)}}placeholder='Enter Username...'/>
                     </div>   
                 )}
                 
-
-                
                 <div className='passwordInput'>    
                     <label htmlFor='pass' className='inputLabel'>Password</label>
-                    <input type='password' id='pass' placeholder='Enter Password...'/>
+                    <input type='password' id='pass' onChange={(e) => {setPassword(e.target.value)}} placeholder='Enter Password...'/>
                 </div>
                 
-                {/**Give on change event */}
                 <div className='loginButton'>
-                    <input type='Button' value={isLogin ? 'Login' : 'Sign-Up'} id='login'/>
+                    <input type='Button' value={isLogin ? 'Login' : 'Sign-Up'} id='login' onClick={handleSubmit}/>
                 </div> 
 
                 <div className='line'></div>
                 
+                {/*Change the text color based on error or success*/}
+                {message && <p className='loginSignUpText'>{message}</p>}
+
                 {isLogin ? 
                     <p className='loginSignUpText'>Need an account? <span className='linkSL' onClick={() => setIsLogin(false)}>SIGN-UP</span></p> : 
                     <p className='loginSignUpText'>Already a user? <span className='linkSL' onClick={() => setIsLogin(true)}>LOGIN</span></p>
