@@ -1,21 +1,21 @@
 //Import the mysql2 library for database interaction
-import mysql from 'mysql2';
+const mysql =  require('mysql2');
 
 //Load environment variables from .env file
-import dotenv from 'dotenv';
+require('dotenv').config();
 
-dotenv.config();
-
-const db = mysql.createConnection({
+const connection = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASS,
-    database: process.env.DB_NAME
+    database: process.env.DB_NAME,
+    
 })
 
-db.connect((err) => {
+connection.connect((err) => {
     if(err) {
         console.log('Database connection failed', err)
+        return;
     }
 
     else{
@@ -23,4 +23,4 @@ db.connect((err) => {
     }
 });
 
-export default db
+module.exports = connection;

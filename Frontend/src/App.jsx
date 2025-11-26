@@ -1,6 +1,5 @@
 import LoginPageContainer from './LoginPageComponents/LoginPageContainer'
 import HomePageContainer from './HomePageComponents/HomePageContainer'
-import './App.css'
 import { Routes , Route} from 'react-router-dom'
 
 export default function App() {

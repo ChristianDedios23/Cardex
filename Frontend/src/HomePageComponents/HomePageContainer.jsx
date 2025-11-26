@@ -1,5 +1,5 @@
 import './HomePageContainer.css'
-import logo from '../assets/Cardex-Logo-White.png'
+import logo1 from '../assets/Cardex-Logo-White.png'
 import { Link } from 'react-router-dom';
 import { FaSearch } from 'react-icons/fa';
 
@@ -9,7 +9,7 @@ export default function HomePageContainer(){
         <div className='HomePageContainer'>
             
             <div className='topNavBar'>
-                <img src={logo} alt='Cardex Logo' id='logo'/>
+                <img src={logo1} alt='Cardex Logo' id='logo'/>
                 <nav>
                     <Link to='/Login'>HOME</Link>
                     <Link to='/Login'>SETS</Link>

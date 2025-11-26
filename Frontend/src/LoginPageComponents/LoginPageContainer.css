@@ -1,3 +1,4 @@
+/* Main container for entire login page background & layout */
 .loginContainer{
     background-image: url('../assets/Sparkling-Shiny-Background.jpg');
     display: flex;
@@ -8,20 +9,24 @@
     height: 100%;
 }
 
-#logo{
+/* Logo sizing and spacing */
+#logo2{
     width: 15%;
     min-width: 290px;
+    margin-bottom: 5px;
 }
 
+/* Outer login box styling (border, background, size) */
 .loginBoxBorder{
     min-width: 300px;
-    height: 35%;
+    min-height: 390px;
     background-color: #333333;
     margin-bottom: 5%;
     border-radius: 9px;
     border: 3px solid #6b9080;
 }
 
+/* Layout for inputs inside the login box */
 .loginInputs{
     display: flex;
     flex-direction: column;
@@ -31,15 +36,25 @@
     height: 100%;
 }
 
-
-.userNameInput, .passwordInput, .loginButton{
+/* Shared layout for input sections and button containers */
+.userNameInput, .passwordInput, .loginButton, .emailInput{
     display: flex;
     flex-direction: column;
-    height: 23%;
     width: 80%;
-    margin-top: 20px;
+    margin-top: 25px;
 }
 
+/* Fixed height for each input block */
+.userNameInput, .passwordInput, .emailInput{
+    height: 75px;
+}
+
+/* Fixed height for login button container */
+.loginButton {
+    height: 80px;
+}
+
+/* Login button base styling */
 #login{
     background-color: #6b9080;
     color: #e0e0e0;
@@ -50,13 +65,15 @@
     transition: background-color 1s ease-in, color 1s ease-in-out;
 }
 
+/* Login button hover effect */
 #login:hover{
     background-color: #e0e0e0;
     color: #6b9080;
     cursor: pointer;
 }
 
-#user, #pass{
+/* Styles for text input fields (email, user, password) */
+#user, #pass, #email{
     background-color: #1f1f1f;
     color: #e0e0e0;
     font-family: 'Roboto', sans-serif;
@@ -69,13 +86,39 @@
     transition: border-color 0.3s ease-in;
 }
 
+/* Input focus highlight */
 #user:focus, #pass:focus{
     border-color: #6b9080;
     outline: none;
 }
 
+/* Label styling for input titles */
 .inputLabel{
     font-family: 'Roboto', sans-serif;
     font-weight: bold;
     color:#e0e0e0;
+}
+
+/* Text for toggling login/sign-up */
+.loginSignUpText{
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold;
+    color:#e0e0e0;
+    margin-bottom: 30px;
+    font-size: 18px;
+}
+
+/* Clickable text link for switching login/sign-up */
+.linkSL{
+    color:#5191e6;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Divider line between form sections */
+.line{
+    background-color: white;
+    width: 80%;
+    height: 1px;
+    margin-bottom: 20px;
 }
