@@ -6,8 +6,9 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/" element={ <HomePageContainer/> }/>
-      <Route path="/Login" element={<LoginPageContainer/>}/>
+      <Route path="/" element={<LoginPageContainer/>}/>
+      <Route path="/Home" element={ <HomePageContainer/> }/>
+      
       {/** Add other paths later */}
     </Routes>
   )

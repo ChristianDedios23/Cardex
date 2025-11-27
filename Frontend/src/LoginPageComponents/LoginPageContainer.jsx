@@ -1,14 +1,24 @@
 import './LoginPageContainer.css'
 import logo2 from '../assets/Cardex-Logo-White.png'
 import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 
-export default function LoginPageContainer(){
+/*
+    Fixes to consider: 
+    - Message takes time to display for server error,
+        decrease time it takes for message to display.
     
+    - Add forgot password functionality
+*/
+export default function LoginPageContainer(){
+
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState(''); //Displays message based on action
+    const [isSuccess, setIsSuccess] = useState(false);
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         //prevent page reload
@@ -33,19 +43,27 @@ export default function LoginPageContainer(){
             //If status is not 200/201, then res.ok returns false and
             //displays the current problem in message.
             if(!res.ok) {
+                setIsSuccess(false);
                 setMessage(data.message);
                 return;
             }
 
+            setIsSuccess(true); //login/signup was successful
+
+            //Login phase
             if(isLogin){
-                localStorage.setItem('token', data.token);
+                sessionStorage.setItem('token', data.token);
                 setMessage(data.message);
-                //redirect
-                //ADD LATER
+                navigate('/Home');
             }
+
+            //Sign-Up phase
             else{
                 setMessage(data.message);
                 setIsLogin(true);
+                setEmail('');
+                setPassword('');
+                setUsername('');
             }
         }
         catch(err){
@@ -86,11 +104,11 @@ export default function LoginPageContainer(){
                 <div className='line'></div>
                 
                 {/*Change the text color based on error or success*/}
-                {message && <p className='loginSignUpText'>{message}</p>}
+                {message && <p className='loginSignUpText' style={ isSuccess ? {color : 'green'} : {color : 'red'}}>{message}</p>}
 
                 {isLogin ? 
-                    <p className='loginSignUpText'>Need an account? <span className='linkSL' onClick={() => setIsLogin(false)}>SIGN-UP</span></p> : 
-                    <p className='loginSignUpText'>Already a user? <span className='linkSL' onClick={() => setIsLogin(true)}>LOGIN</span></p>
+                    <p className='loginSignUpText'>Need an account? <span className='linkSL' onClick={() => {setIsLogin(false); setMessage('');}}>SIGN-UP</span></p> : 
+                    <p className='loginSignUpText'>Already a user? <span className='linkSL' onClick={() => {setIsLogin(true); setMessage('');}}>LOGIN</span></p>
                     }
                 
             </div>

@@ -28,11 +28,17 @@ app.post('/signup', async (req, res) => {
 
     try {
         const [rows] = await db.execute('SELECT * FROM USER WHERE Email_Address = ?', [email]);
-
+        
+        //Check if any fields are empty
+        if(!username || !email || !password){
+            return res.status(400).json({message: 'Please fill out all fields'})
+        }
+        
+        //Check if user exists
         if(rows.length > 0){
             return res.status(400).json({message: 'Email already exists'});
         }
-        
+
         //hashed password
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -62,10 +68,10 @@ app.post('/login', async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, user.Password);
 
-        if(!isMatch) return res.status(400).send('Incorrect password');
+        if(!isMatch) return res.status(400).json({message :'Incorrect password'});
 
         //return a token for user to remember who's logged in
-        const token = jwt.sign({email: user.Email_Address}, JWT_SECRET);
+        const token = jwt.sign({email: user.Email_Address, username: user.Username}, JWT_SECRET);
 
         res.json({ message: 'Login successful', token});
     }
@@ -73,7 +79,7 @@ app.post('/login', async (req, res) => {
         console.error('Failure to login', err);
         res.status(500).json({message: 'Failure to login'});
     }
-})
+});
 /*
 JWT Authentication Middleware
 COME BACK TO, EXPLAIN IT

@@ -23,14 +23,14 @@
 
 /** Minimizes size of logo*/
 #logo{
-    height: 100px;      /* Maintains proportions */
+    height: 100%;      /* Maintains proportions */
     object-fit: contain;
     filter: drop-shadow(0 0 3px white);
 }
 
 /** Adjusts the size and content placement of the nav links in the top nav bar*/
 nav {
-    width: 60%;
+    min-width: 60%;
     height: 100%;
     display: flex;
     flex-direction: row;
@@ -51,7 +51,7 @@ nav {
 /** Changes the font style, size, and color of the top nav bar components*/
 #loginLink, nav a {
     font-size: 25px;
-    font-family: Impact, Charcoal, sans-serif;
+    font-family: 'Roboto', sans-serif;
     text-decoration: none;
     color: white;
 }
@@ -81,19 +81,19 @@ p {
     color: white;
 }
 
+/* container of search bar*/
 .searchBar {
     background-color: #1e1e1e;
-    min-width: 25%;
-    height: 11%;
+    min-width: 20%;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 5px;
-    margin-top: 40px;
+    margin-top: 36px;
 }
 
 #searchIcon {
-    margin-left: 10px;
     color: white;
 }
 
@@ -101,7 +101,8 @@ p {
     margin-left: 10px;
     outline: none;
     border: none;
-    width: 95%;
+    height: 95%;
+    width: 90%;
     color: white;
     font-size: 25px;
     background-color: #1e1e1e;
