@@ -10,4 +10,5 @@ VALUES
 ("Hyper Rare"),
 ("Shiny Rare"),
 ("Shiny Ultra Rare"),
-("Ace Spec Rare");
+("Ace Spec Rare"),
+("Black White Rare");

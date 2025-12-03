@@ -2,7 +2,7 @@ INSERT INTO CARD_CATEGORY(Category_Name)
 VALUES
 ("Pokemon"),
 ("Trainer"),
-("Basic"),
+("Energy"),
 ("Item"),
 ("Supporter"),
 ("Stadium"),

@@ -1,0 +1,10 @@
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("WHT-079","1");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("WHT-080","4");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("WHT-081","2");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("WHT-082","1");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("WHT-083","2");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("WHT-084","2");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("WHT-085","1");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("WHT-163","2");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("WHT-164","2");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("WHT-171","2");

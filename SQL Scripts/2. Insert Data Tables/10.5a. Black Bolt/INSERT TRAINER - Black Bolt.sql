@@ -1,0 +1,10 @@
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("BLK-079","4");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("BLK-080","1");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("BLK-081","1");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("BLK-082","2");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("BLK-083","2");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("BLK-084","1");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("BLK-085","2");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("BLK-162","2");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("BLK-163","2");
+INSERT INTO TRAINER(Card_ID, Trainer_Subtype_ID) values("BLK-170","2");
