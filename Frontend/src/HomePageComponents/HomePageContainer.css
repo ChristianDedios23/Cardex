@@ -9,17 +9,12 @@
     background-position: center;   /* keep centered */
     background-repeat: no-repeat;  /* prevent tiling */
     background-size: cover;        /* fill screen while staying centered */
+    overflow: hidden;
+
 }
 
 /** Adjusts the size and content placement in of the top nav bar*/
-.topNavBar {
-    height: 10%;
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    background-color: #0d1117;
-}
+
 
 /** Minimizes size of logo*/
 #logo{
@@ -97,7 +92,7 @@ p {
     color: white;
 }
 
-#cardSearch {
+#cardSearchHome {
     margin-left: 10px;
     outline: none;
     border: none;

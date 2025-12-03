@@ -1,0 +1,5 @@
+.cardContainer{
+    min-width: 200px; /* Match the minmax value */
+    height: 280px; /* Proportionally increased height */
+    background-color: white;
+}

@@ -1,0 +1,90 @@
+.page{
+    min-height: 100vh;
+    min-width: 100vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;          
+    overflow: hidden;
+    
+}
+
+.topContent{
+    width: 62%;
+    height: 25px;
+    margin-top: 5%;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.searchBarBox{
+    border: 1px solid white;
+    border-radius: 2px;
+    padding-left: 5px;
+    margin-right: 25px;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    height: 100%;
+    width: 300px;
+    background-color: black;
+}
+
+#cardSearch{
+    font-size: 20px;
+    background-color: black;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    width: 100%;
+    border: none;
+    outline: none;
+    margin-left: 5px;
+    color: white;
+}
+
+#allOption, #inCollectionOption, #notInCollectionOption{
+    margin-left: 10px;
+}
+
+label{
+    font-size: 20px;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    margin-left: 8px;
+    color: white;
+}
+
+input[type="radio"] {
+    accent-color: orange; /* color of the selected dot */
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.cardSearchContainer{
+    margin-top: 10px;
+    min-width: 420px;
+    max-width: 60%;
+    background-color: red;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.lineSearch{
+    background-color: white;
+    width: 62%;
+    height: 1px;
+    margin: 10px;
+}
+
+.numCardDisplay{
+    width: 62%;
+    height: 20px;
+    display: flex;
+    justify-content: left;
+    align-items: end;
+    margin-top: 30px;
+    color: white;
+}

@@ -3,14 +3,8 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const dbPromise = require('./dbConfig');
-
-//db will recieve the connection after the promise
-//is fulfulled from dbPromise.
-let db;
-dbPromise.then(connection => {
-    db = connection;
-});
+const db = require('./dbConfig');
+require('dotenv').config();
 
 //Create connection
 const app = express();
@@ -27,7 +21,8 @@ app.post('/signup', async (req, res) => {
     const {username, email, password} = req.body;
 
     try {
-        const [rows] = await db.execute('SELECT * FROM USER WHERE Email_Address = ?', [email]);
+        //change to query
+        const [rows] = await db.query('SELECT * FROM USER WHERE Email_Address = ?', [email]);
         
         //Check if any fields are empty
         if(!username || !email || !password){
@@ -42,7 +37,7 @@ app.post('/signup', async (req, res) => {
         //hashed password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await db.execute(
+        await db.query(
             'INSERT INTO USER (Username, Password, Email_Address) VALUES (?, ?, ?)',
             [username, hashedPassword, email]
         );
@@ -60,7 +55,7 @@ app.post('/login', async (req, res) => {
     const {email, password} = req.body;
 
     try{
-        const [rows] = await db.execute('SELECT * FROM USER WHERE Email_Address = ?', [email])
+        const [rows] = await db.query('SELECT * FROM USER WHERE Email_Address = ?', [email])
         
         const user = rows[0];
 
