@@ -9,6 +9,8 @@ require('dotenv').config();
 //Create connection
 const app = express();
 
+
+
 //Middleware
 app.use(cors()); //allow frontend to make requests to backend when both on different ports
 app.use(express.json()); //parse JSON bodies
@@ -75,6 +77,50 @@ app.post('/login', async (req, res) => {
         res.status(500).json({message: 'Failure to login'});
     }
 });
+
+
+app.get('/getCard', async (req, res) => {
+    const card = req.query.cardName;
+    const likeTerm = `${card}%`
+    try {
+        const [cards] = await db.query('SELECT * FROM CARD WHERE Card_Name LIKE ?', [likeTerm]);
+        res.status(200).json(cards);
+
+    } catch(err) {
+        console.error("Couldnt get card.", err);
+        res.status(500).json({message: 'Server Error'});
+
+    }
+
+});
+
+app.get('/getSet', async (req, res) => {
+    const setName = req.query.setName;
+    const likeTerm = `${setName}%`;
+    try {
+        const [cards] = await db.query('SELECT c.* FROM CARD c JOIN EXPANSION e ON e.Set_Code = c.Set_Code WHERE e.Set_Name LIKE ?', [likeTerm]);
+        res.status(200).json(cards);
+    } catch(err) {
+        console.error("Couldnt find set", err);
+        res.status(500).json({message: ' Couldnt find set Server Error'});
+    }
+
+});
+
+app.get('/card/pincurchin', async (req, res) => {
+
+    try{
+        const res = await fetch("https://pokeapi.co/api/v2/pokemon/pikachu");
+        res.status(200).json(res);
+    }
+    catch(err) {
+        console.log(err)
+        res.status(500)
+    }
+});
+
+
+
 /*
 JWT Authentication Middleware
 COME BACK TO, EXPLAIN IT

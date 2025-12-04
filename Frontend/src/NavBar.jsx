@@ -19,8 +19,8 @@ export default function NavBar({}){
                 <img src={logo1} alt='Cardex Logo' id='logo'/>
                 <nav>
                     <Link to='/Home'>HOME</Link>
-                    <Link to='/'>SETS</Link>
-                    <Link to='/'>HELP</Link>
+                    <Link to='/Home'>SETS</Link>
+                    <Link to='/Home'>HELP</Link>
                     <Link to='/Search'>SEARCH</Link>
                 </nav>         
                 <Link to='/' id='loginLink' onClick={() => sessionStorage.removeItem('token')}>{username ? 'Welcome ' + username :'REGISTER / LOGIN'}</Link>
