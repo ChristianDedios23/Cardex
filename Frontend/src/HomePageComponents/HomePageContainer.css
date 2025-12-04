@@ -1,0 +1,104 @@
+/** Container of the home page content*/
+.HomePageContainer{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-image: url('../assets/background-front-page.jpg');
+    background-position: center;   /* keep centered */
+    background-repeat: no-repeat;  /* prevent tiling */
+    background-size: cover;        /* fill screen while staying centered */
+    overflow: hidden;
+
+}
+
+/** Adjusts the size and content placement in of the top nav bar*/
+
+
+/** Minimizes size of logo*/
+#logo{
+    height: 100%;      /* Maintains proportions */
+    object-fit: contain;
+    filter: drop-shadow(0 0 3px white);
+}
+
+/** Adjusts the size and content placement of the nav links in the top nav bar*/
+nav {
+    min-width: 60%;
+    height: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 40px;
+}
+
+/** Adjusts the size and content placement of the login link in the top nav bar*/
+#loginLink {
+    width: 15%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/** Changes the font style, size, and color of the top nav bar components*/
+#loginLink, nav a {
+    font-size: 25px;
+    font-family: 'Roboto', sans-serif;
+    text-decoration: none;
+    color: white;
+}
+
+/** Adjusts the size and content placement of the header and search bar*/
+.titleSearchContainer {
+    width: 100%;
+    height: 42%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+} 
+
+/** Change font style, size, and color of header*/
+h1 {
+    font-family: Helvetica;
+    font-size: 75px;
+    color: white;
+}
+
+/** Change the placement, font style, size, and color of text under header*/
+p {
+    margin-top: 5px;
+    font-family: Helvetica;
+    font-size: 20px;
+    color: white;
+}
+
+/* container of search bar*/
+.searchBar {
+    background-color: #1e1e1e;
+    min-width: 20%;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px;
+    margin-top: 36px;
+}
+
+#searchIcon {
+    color: white;
+}
+
+#cardSearchHome {
+    margin-left: 10px;
+    outline: none;
+    border: none;
+    height: 95%;
+    width: 90%;
+    color: white;
+    font-size: 25px;
+    background-color: #1e1e1e;
+}
