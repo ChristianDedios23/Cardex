@@ -1,6 +1,7 @@
 import './SearchPageContainer.css'
 import { FaSearch } from 'react-icons/fa';
 import { useState, useEffect } from 'react';
+import { jwtDecode } from 'jwt-decode';
 import NavBar from '../NavBar';
 import CardContainer from './CardContainer';
 
@@ -11,7 +12,7 @@ export default function SearchPageContainer() {
     const [searchTerm, setSearchTerm] = useState("")
     const [image, setImage] = useState("")
     const [images, setImages] = useState({});
-
+    const token = sessionStorage.getItem('token');
 
     useEffect(() => {
         // Enable scrolling for this page
@@ -92,6 +93,26 @@ export default function SearchPageContainer() {
         }
     }
 
+    const getSearchedInCollection = async () => {
+        if (token) {
+            try {
+                const decoded = jwtDecode(token);
+                let id = decoded.id;
+                const url = `http://localhost:5000/getCardInCollection?cardName=${encodeURIComponent(searchTerm)}&userID=${id}`;
+                console.log(`fetching response for ${searchTerm}`);
+                const set = await fetch(url);
+                console.log("parsing response");
+                const setInfo = await set.json();
+                console.log("Finished");
+                console.log(setInfo);
+                setData(setInfo);
+            }
+            catch (error) {
+                console.error(error);
+            }
+        }
+    }
+
     const handleSearch = () => {
         if (!searchTerm.trim()) {
             console.log("Didnt search");
@@ -102,6 +123,9 @@ export default function SearchPageContainer() {
         }
         if (filter == 'set') {
             getSearchedSet();
+        }
+        if (filter == 'collectionSearch') {
+            getSearchedInCollection();
         }
     }
 
@@ -150,7 +174,7 @@ export default function SearchPageContainer() {
                 </label>
 
                 <label>
-                    <input type='radio' id='InCollection' name='filter' onChange={(e) => setFilter("card")} />
+                    <input type='radio' id='InCollection' name='filter' onChange={(e) => setFilter("collectionSearch")} />
                     <span className='checkmark'></span>
                     In Collection
                 </label>
@@ -159,7 +183,7 @@ export default function SearchPageContainer() {
 
 
             </div>
-            <text className='numCardDisplay'>{myData.length}/63432 Cards</text>
+            <text className='numCardDisplay'>{myData.length} Cards</text>
             <div className='lineSearch'></div>
 
             <div className='cardSearchContainer'>

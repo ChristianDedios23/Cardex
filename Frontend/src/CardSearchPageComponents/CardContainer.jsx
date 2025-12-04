@@ -3,13 +3,7 @@ import './CardContainer.css'
 
 export default function CardContainer({ localId, name, rarity, url}){
 
-    const[update, setUpdate] = useState(false)
 
-    useEffect(
-        () => {
-            // update the db
-        }, [update]
-    )
 
 
     return(
@@ -18,7 +12,7 @@ export default function CardContainer({ localId, name, rarity, url}){
             <h3>{rarity}</h3>
             <img src={url}></img>
             <div>
-                <input type='checkbox' id='currCard' name='addOrRemoveCard' onClick={setUpdate(!update)}/>
+                <input type='checkbox' id='currCard' name='addOrRemoveCard' />
             </div>
         </div>
         

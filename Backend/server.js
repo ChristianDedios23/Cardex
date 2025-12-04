@@ -68,7 +68,7 @@ app.post('/login', async (req, res) => {
         if(!isMatch) return res.status(400).json({message :'Incorrect password'});
 
         //return a token for user to remember who's logged in
-        const token = jwt.sign({email: user.Email_Address, username: user.Username}, JWT_SECRET);
+        const token = jwt.sign({email: user.Email_Address, username: user.Username, id: user.User_ID}, JWT_SECRET);
 
         res.json({ message: 'Login successful', token});
     }
@@ -78,7 +78,7 @@ app.post('/login', async (req, res) => {
     }
 });
 
-
+// Create get request for card searches
 app.get('/getCard', async (req, res) => {
     const card = req.query.cardName;
     const likeTerm = `${card}%`
@@ -94,6 +94,7 @@ app.get('/getCard', async (req, res) => {
 
 });
 
+// create get request for set searches
 app.get('/getSet', async (req, res) => {
     const setName = req.query.setName;
     const likeTerm = `${setName}%`;
@@ -107,17 +108,22 @@ app.get('/getSet', async (req, res) => {
 
 });
 
-app.get('/card/pincurchin', async (req, res) => {
+// create get request for in collection card searches
+app.get('/getCardInCollection', async (req, res) => {
+    const cardName = req.query.cardName;
+    const userID = req.query.userID;
+    const likeTerm = `${cardName}%`;
+    try {
+        const [cards] = await db.query('SELECT ca.* FROM CARD ca JOIN COLLECTION co ON co.Card_ID = ca.Card_ID WHERE ca.Card_Name LIKE ? AND co.User_ID = ?', [likeTerm, userID]);
+        res.status(200).json(cards);
+    } catch(err) {
+        console.error("Server error", err);
 
-    try{
-        const res = await fetch("https://pokeapi.co/api/v2/pokemon/pikachu");
-        res.status(200).json(res);
     }
-    catch(err) {
-        console.log(err)
-        res.status(500)
-    }
+
 });
+
+
 
 
 
