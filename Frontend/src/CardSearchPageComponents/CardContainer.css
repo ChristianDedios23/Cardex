@@ -1,5 +1,32 @@
 .cardContainer{
     min-width: 200px; /* Match the minmax value */
     height: 280px; /* Proportionally increased height */
-    background-color: white;
+    display: flex;
+    flex-direction: column;
+}
+
+.addRemoveCount, .cardDetails{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+#card{
+    width: 190px;
+    height: 240px;
+}
+
+.minus, .plus{
+    color: white;
+}
+
+.minus:hover, .plus:hover{
+    cursor: pointer;
+    color: orange;
+    transition: color, 0.3s ease-in-out;
+}
+
+.count{
+    color: white;
 }
