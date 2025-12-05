@@ -1,0 +1,269 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 OPR/124.0.0.0 (Edition std-1)" version="29.2.4">
+  <diagram id="C5RBs43oDa-KdzZeNtuy" name="Page-1">
+    <mxGraphModel dx="1705" dy="824" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="WIyWlLk6GJQsqaUBKTNV-0" />
+        <mxCell id="WIyWlLk6GJQsqaUBKTNV-1" parent="WIyWlLk6GJQsqaUBKTNV-0" />
+        <mxCell id="zkfFHV4jXpPFQw0GAbJ--0" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="EXPANSION" vertex="1">
+          <mxGeometry height="318" width="360" x="20" y="60" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zkfFHV4jXpPFQw0GAbJ--1" parent="zkfFHV4jXpPFQw0GAbJ--0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: Set_Code (PK), Set_Abbr (UNIQUE),&#xa;Set_Name (UNIQUE), Release_Date, Total_Cards" vertex="1">
+          <mxGeometry height="44" width="360" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="zkfFHV4jXpPFQw0GAbJ--2" parent="zkfFHV4jXpPFQw0GAbJ--0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: Set_Code" vertex="1">
+          <mxGeometry height="26" width="360" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="zkfFHV4jXpPFQw0GAbJ--3" parent="zkfFHV4jXpPFQw0GAbJ--0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;- Set_Code -&gt; Set_Abbr, Set_Name, Release_Date, Total_Card &#xa;    - Set_Code is primary key which is unique.&#xa;- Set_Abbr -&gt; Set_Code, Set_Name, Release_Date, Total_Cards&#xa;- Set_Name -&gt; Set_Code, Set_Abbr, Release_Date, Total_Cards&#xa;    - Set_Abbr &amp; Set_Name are unique." vertex="1">
+          <mxGeometry height="92" width="360" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-1" parent="zkfFHV4jXpPFQw0GAbJ--0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: Set_Code, Set_Abbr, Set_Name" vertex="1">
+          <mxGeometry height="30" width="360" y="188" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-3" parent="zkfFHV4jXpPFQw0GAbJ--0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- Set_Code is a superkey and primary key&#xa;- Set_Abbr is a superkey&#xa;- Set_Name is a superkey" vertex="1">
+          <mxGeometry height="70" width="360" y="218" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-4" parent="zkfFHV4jXpPFQw0GAbJ--0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="EXPANSION is in BCNF" vertex="1">
+          <mxGeometry height="30" width="360" y="288" as="geometry" />
+        </mxCell>
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-0" parent="WIyWlLk6GJQsqaUBKTNV-1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;h1&gt;Cardex Normalization (BCNF)&lt;/h1&gt;" vertex="1">
+          <mxGeometry height="30" width="360" x="234" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-60" parent="WIyWlLk6GJQsqaUBKTNV-1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontStyle=1" value="Team 10&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="767" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-5" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="CARD" vertex="1">
+          <mxGeometry height="280" width="420" x="390" y="60" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-6" parent="prdiltUuNrB4Z3HwtUFU-5" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: Card_ID (PK), Set_Code, Card_Name, Card_Number,&#xa;Category_ID (FK), Rarity_ID (FK)" vertex="1">
+          <mxGeometry height="44" width="420" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-7" parent="prdiltUuNrB4Z3HwtUFU-5" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: Card_ID" vertex="1">
+          <mxGeometry height="26" width="420" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-8" parent="prdiltUuNrB4Z3HwtUFU-5" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;Card_ID -&gt; Set_Code, Card_Name, Card_Number, Category_ID, Rarity_ID&#xa;{Set_Code, Card_Number} -&gt; Card_ID, Card_Name, Category_ID, Rarity_ID" vertex="1">
+          <mxGeometry height="54" width="420" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-9" parent="prdiltUuNrB4Z3HwtUFU-5" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: Card_ID, {Set_Code, Card_Number}" vertex="1">
+          <mxGeometry height="30" width="420" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-10" parent="prdiltUuNrB4Z3HwtUFU-5" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- Card_ID is a superkey and primary key&#xa;- {Set_Code, Card_Number} is a superkey&#xa;    - Card numbers are unique within a set&#xa;" vertex="1">
+          <mxGeometry height="70" width="420" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-11" parent="prdiltUuNrB4Z3HwtUFU-5" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="CARD is in BCNF" vertex="1">
+          <mxGeometry height="30" width="420" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-12" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="POKEMON" vertex="1">
+          <mxGeometry height="240" width="380" x="20" y="390" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-13" parent="prdiltUuNrB4Z3HwtUFU-12" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: Pokemon_ID (PK), Card_ID (FK), Primary_Type_ID (FK)" vertex="1">
+          <mxGeometry height="24" width="380" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-14" parent="prdiltUuNrB4Z3HwtUFU-12" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: Pokemon_ID" vertex="1">
+          <mxGeometry height="26" width="380" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-15" parent="prdiltUuNrB4Z3HwtUFU-12" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;Pokemon_ID -&gt; Card_ID, Primary_Type_ID&#xa;Card_ID -&gt; Pokemon_ID, Primary_Type_ID" vertex="1">
+          <mxGeometry height="54" width="380" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-16" parent="prdiltUuNrB4Z3HwtUFU-12" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: Pokemon_ID, Card_ID" vertex="1">
+          <mxGeometry height="30" width="380" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-17" parent="prdiltUuNrB4Z3HwtUFU-12" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- Pokemon_ID is a superkey and primary key&#xa;- Card_ID is a superkey&#xa;" vertex="1">
+          <mxGeometry height="50" width="380" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-18" parent="prdiltUuNrB4Z3HwtUFU-12" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="POKEMON is in BCNF" vertex="1">
+          <mxGeometry height="30" width="380" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-19" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="POKEMON_TYPE" vertex="1">
+          <mxGeometry height="240" width="390" x="420" y="390" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-20" parent="prdiltUuNrB4Z3HwtUFU-19" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: Type_ID (PK), Type_Name (UNIQUE)" vertex="1">
+          <mxGeometry height="24" width="390" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-21" parent="prdiltUuNrB4Z3HwtUFU-19" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: Type_ID" vertex="1">
+          <mxGeometry height="26" width="390" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-22" parent="prdiltUuNrB4Z3HwtUFU-19" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;Type_ID -&gt; Type_Name&#xa;Type_Name -&gt; Type_ID" vertex="1">
+          <mxGeometry height="54" width="390" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-23" parent="prdiltUuNrB4Z3HwtUFU-19" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: Type_ID, Type_Name" vertex="1">
+          <mxGeometry height="30" width="390" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-24" parent="prdiltUuNrB4Z3HwtUFU-19" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- Type_ID is superkey and primary key&#xa;- Type_Name is a superkey&#xa;" vertex="1">
+          <mxGeometry height="50" width="390" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-25" parent="prdiltUuNrB4Z3HwtUFU-19" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="POKEMON_TYPE is in BCNF" vertex="1">
+          <mxGeometry height="30" width="390" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-26" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="TRAINER" vertex="1">
+          <mxGeometry height="260" width="380" x="20" y="640" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-27" parent="prdiltUuNrB4Z3HwtUFU-26" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: Trainer_ID (PK), Card_ID (FK, unique?),&#xa;Trainer_Subtype_ID (FK)" vertex="1">
+          <mxGeometry height="44" width="380" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-28" parent="prdiltUuNrB4Z3HwtUFU-26" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: Trainer_ID" vertex="1">
+          <mxGeometry height="26" width="380" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-29" parent="prdiltUuNrB4Z3HwtUFU-26" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;Trainer_ID -&gt; Card_ID, Trainer_Subtype_ID&#xa;Card_ID -&gt; Trainer_ID, Trainer_Subtype_ID" vertex="1">
+          <mxGeometry height="54" width="380" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-30" parent="prdiltUuNrB4Z3HwtUFU-26" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: Trainer_ID, Card_ID" vertex="1">
+          <mxGeometry height="30" width="380" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-31" parent="prdiltUuNrB4Z3HwtUFU-26" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- Trainer_ID is a superkey and primary key&#xa;- Card_ID is a superkey&#xa;" vertex="1">
+          <mxGeometry height="50" width="380" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-32" parent="prdiltUuNrB4Z3HwtUFU-26" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="TRAINER is in BCNF" vertex="1">
+          <mxGeometry height="30" width="380" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-33" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="TRAINER_SUBTYPE" vertex="1">
+          <mxGeometry height="240" width="400" x="420" y="640" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-34" parent="prdiltUuNrB4Z3HwtUFU-33" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: Trainer_Subtype_ID (PK), Trainer_Subtype_Name (UNIQUE)" vertex="1">
+          <mxGeometry height="24" width="400" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-35" parent="prdiltUuNrB4Z3HwtUFU-33" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: Trainer_Subtype_ID" vertex="1">
+          <mxGeometry height="26" width="400" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-36" parent="prdiltUuNrB4Z3HwtUFU-33" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;Trainer_Subtype_ID -&gt; Trainer_Subtype_Name&#xa;Trainer_Subtype_Name -&gt; Trainer_Subtype_ID " vertex="1">
+          <mxGeometry height="54" width="400" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-37" parent="prdiltUuNrB4Z3HwtUFU-33" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: Trainer_Subtype_ID, Trainer_Subtype_Name" vertex="1">
+          <mxGeometry height="30" width="400" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-38" parent="prdiltUuNrB4Z3HwtUFU-33" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- Trainer_Subtype_ID is superkey and primary key&#xa;- Trainer_Subtype_Name is a superkey&#xa;" vertex="1">
+          <mxGeometry height="50" width="400" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-39" parent="prdiltUuNrB4Z3HwtUFU-33" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;fontStyle=0" value="TRAINER_SUBTYPE is in BCNF" vertex="1">
+          <mxGeometry height="30" width="400" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-40" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="CARD_CATEGORY" vertex="1">
+          <mxGeometry height="240" width="380" x="20" y="910" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-41" parent="prdiltUuNrB4Z3HwtUFU-40" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: Category_ID (PK), Category_Name (UNIQUE)" vertex="1">
+          <mxGeometry height="24" width="380" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-42" parent="prdiltUuNrB4Z3HwtUFU-40" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: Category_ID" vertex="1">
+          <mxGeometry height="26" width="380" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-43" parent="prdiltUuNrB4Z3HwtUFU-40" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;Category_ID -&gt; Category_Name&#xa;Category_Name -&gt; Category_ID" vertex="1">
+          <mxGeometry height="54" width="380" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-44" parent="prdiltUuNrB4Z3HwtUFU-40" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: Category_ID, Category_Name" vertex="1">
+          <mxGeometry height="30" width="380" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-45" parent="prdiltUuNrB4Z3HwtUFU-40" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- Category_ID is a superkey and primary key&#xa;- Category_Name is a superkey&#xa;" vertex="1">
+          <mxGeometry height="50" width="380" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-46" parent="prdiltUuNrB4Z3HwtUFU-40" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="CARD_CATEGORY is in BCNF" vertex="1">
+          <mxGeometry height="30" width="380" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-47" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="RARITY" vertex="1">
+          <mxGeometry height="240" width="380" x="420" y="910" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-48" parent="prdiltUuNrB4Z3HwtUFU-47" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: Rarity_ID (PK), Rarity_Name (UNIQUE)" vertex="1">
+          <mxGeometry height="24" width="380" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-49" parent="prdiltUuNrB4Z3HwtUFU-47" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: Rarity_ID" vertex="1">
+          <mxGeometry height="26" width="380" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-50" parent="prdiltUuNrB4Z3HwtUFU-47" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;Rarity_ID -&gt; Rarity_Name&#xa;Rarity_Name -&gt; Rarity_ID" vertex="1">
+          <mxGeometry height="54" width="380" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-51" parent="prdiltUuNrB4Z3HwtUFU-47" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: Rarity_ID, Rarity_Name" vertex="1">
+          <mxGeometry height="30" width="380" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-52" parent="prdiltUuNrB4Z3HwtUFU-47" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- Rarity_ID is a superkey and primary key&#xa;- Rarity_Name is a superkey&#xa;" vertex="1">
+          <mxGeometry height="50" width="380" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-53" parent="prdiltUuNrB4Z3HwtUFU-47" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="RARITY is in BCNF" vertex="1">
+          <mxGeometry height="30" width="380" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-54" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="VARIANT" vertex="1">
+          <mxGeometry height="240" width="380" x="20" y="1190" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-55" parent="prdiltUuNrB4Z3HwtUFU-54" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: Variant_ID (PK), Variant_Name (UNIQUE)" vertex="1">
+          <mxGeometry height="24" width="380" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-56" parent="prdiltUuNrB4Z3HwtUFU-54" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: Variant_ID" vertex="1">
+          <mxGeometry height="26" width="380" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-57" parent="prdiltUuNrB4Z3HwtUFU-54" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;Variant_ID -&gt; Variant_Name&#xa;Variant_Name -&gt; Variant_ID" vertex="1">
+          <mxGeometry height="54" width="380" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-58" parent="prdiltUuNrB4Z3HwtUFU-54" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: Variant_ID, Variant_Name" vertex="1">
+          <mxGeometry height="30" width="380" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-59" parent="prdiltUuNrB4Z3HwtUFU-54" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- Variant_ID is a superkey and primary key&#xa;- Variant_Name is a superkey&#xa;" vertex="1">
+          <mxGeometry height="50" width="380" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-60" parent="prdiltUuNrB4Z3HwtUFU-54" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="VARIANT is in BCNF" vertex="1">
+          <mxGeometry height="30" width="380" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-61" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="USER" vertex="1">
+          <mxGeometry height="300" width="380" x="420" y="1190" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-62" parent="prdiltUuNrB4Z3HwtUFU-61" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: User_ID (PK), User_Name (UNIQUE), &#xa;Password, Email (UNIQUE)" vertex="1">
+          <mxGeometry height="44" width="380" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-63" parent="prdiltUuNrB4Z3HwtUFU-61" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: User_ID" vertex="1">
+          <mxGeometry height="26" width="380" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-64" parent="prdiltUuNrB4Z3HwtUFU-61" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;User_ID -&gt; Username, Password, Email&#xa;Username -&gt; UserID, Password, Email&#xa;Email -&gt; User_ID, Username, Password" vertex="1">
+          <mxGeometry height="74" width="380" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-65" parent="prdiltUuNrB4Z3HwtUFU-61" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: User_ID, Username, Email" vertex="1">
+          <mxGeometry height="30" width="380" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-66" parent="prdiltUuNrB4Z3HwtUFU-61" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- User_ID is a superkey and primary key&#xa;- User_Name is a superkey&#xa;- Email is a superkey&#xa;" vertex="1">
+          <mxGeometry height="70" width="380" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-67" parent="prdiltUuNrB4Z3HwtUFU-61" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="USER is in BCNF" vertex="1">
+          <mxGeometry height="30" width="380" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-68" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="COLLECTION" vertex="1">
+          <mxGeometry height="290" width="380" x="20" y="1454" as="geometry">
+            <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-69" parent="prdiltUuNrB4Z3HwtUFU-68" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=0" value="Attributes: Collection_ID (PK), User_ID, Card_ID, &#xa;Variant_ID, Quantity" vertex="1">
+          <mxGeometry height="44" width="380" y="26" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-70" parent="prdiltUuNrB4Z3HwtUFU-68" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Primary Key: Collection_ID" vertex="1">
+          <mxGeometry height="26" width="380" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-71" parent="prdiltUuNrB4Z3HwtUFU-68" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Functional Dependencies:&#xa;Collection_ID -&gt; User_ID, Card_ID, Variant_ID, Quantity&#xa;{User_ID, Card_ID, Variant_ID} -&gt; Collection_ID, Quantity" vertex="1">
+          <mxGeometry height="74" width="380" y="96" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-72" parent="prdiltUuNrB4Z3HwtUFU-68" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Candidate Keys: Collection_ID, {User_ID, Card_ID, Variant_ID}" vertex="1">
+          <mxGeometry height="30" width="380" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-73" parent="prdiltUuNrB4Z3HwtUFU-68" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="BCNF Verification:&#xa;- Collection_ID is a superkey and primary key&#xa;-  {User_ID, Card_ID, Variant_ID} is a superkey" vertex="1">
+          <mxGeometry height="60" width="380" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="prdiltUuNrB4Z3HwtUFU-74" parent="prdiltUuNrB4Z3HwtUFU-68" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="COLLECTION is in BCNF" vertex="1">
+          <mxGeometry height="30" width="380" y="260" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

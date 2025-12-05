@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 OPR/124.0.0.0 (Edition std-1)" version="29.2.3">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 OPR/124.0.0.0 (Edition std-1)" version="29.2.4">
   <diagram id="C5RBs43oDa-KdzZeNtuy" name="Page-1">
-    <mxGraphModel dx="1623" dy="786" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1620" dy="783" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="WIyWlLk6GJQsqaUBKTNV-0" />
         <mxCell id="WIyWlLk6GJQsqaUBKTNV-1" parent="WIyWlLk6GJQsqaUBKTNV-0" />
@@ -9,7 +9,7 @@
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="zkfFHV4jXpPFQw0GAbJ--1" parent="zkfFHV4jXpPFQw0GAbJ--0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Set_Code VARCHAR(7) PK" vertex="1">
+        <mxCell id="zkfFHV4jXpPFQw0GAbJ--1" parent="zkfFHV4jXpPFQw0GAbJ--0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=4" value="Set_Code VARCHAR(7) PK" vertex="1">
           <mxGeometry height="26" width="280" y="26" as="geometry" />
         </mxCell>
         <mxCell id="zkfFHV4jXpPFQw0GAbJ--2" parent="zkfFHV4jXpPFQw0GAbJ--0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Set_Abbr VARCHAR(3) NOT NULL, UNIQUE" vertex="1">
@@ -24,15 +24,15 @@
         <mxCell id="C2dFFJPrkqfnQ3HHl1y2-2" parent="zkfFHV4jXpPFQw0GAbJ--0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Total_Cards INT NOT NULL" vertex="1">
           <mxGeometry height="26" width="280" y="140" as="geometry" />
         </mxCell>
-        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-0" parent="WIyWlLk6GJQsqaUBKTNV-1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;h1&gt;Cardex Finalized Schema Draft&lt;/h1&gt;" vertex="1">
-          <mxGeometry height="30" width="360" x="230" y="20" as="geometry" />
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-0" parent="WIyWlLk6GJQsqaUBKTNV-1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;h1&gt;Cardex Relational Schema&lt;/h1&gt;" vertex="1">
+          <mxGeometry height="30" width="360" x="234" y="20" as="geometry" />
         </mxCell>
         <mxCell id="C2dFFJPrkqfnQ3HHl1y2-3" parent="WIyWlLk6GJQsqaUBKTNV-1" style="swimlane;fontStyle=3;align=center;verticalAlign=top;childLayout=stackLayout;horizontal=1;startSize=26;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;rounded=0;shadow=0;strokeWidth=1;" value="CARD" vertex="1">
           <mxGeometry height="220" width="290" x="440" y="80" as="geometry">
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-4" parent="C2dFFJPrkqfnQ3HHl1y2-3" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;" value="Card_ID VARCHAR(10) PK" vertex="1">
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-4" parent="C2dFFJPrkqfnQ3HHl1y2-3" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;fontStyle=4" value="Card_ID VARCHAR(10) PK" vertex="1">
           <mxGeometry height="26" width="290" y="26" as="geometry" />
         </mxCell>
         <mxCell id="C2dFFJPrkqfnQ3HHl1y2-5" parent="C2dFFJPrkqfnQ3HHl1y2-3" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Set_Code VARCHAR(7) NOT NULL, FK &#xa;ON DELETE CASCADE, ON UPDATE CASCADE" vertex="1">
@@ -55,7 +55,7 @@
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-38" parent="C2dFFJPrkqfnQ3HHl1y2-10" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Pokemon_ID INT AUTO INCREMENT PK" vertex="1">
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-38" parent="C2dFFJPrkqfnQ3HHl1y2-10" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=4" value="Pokemon_ID INT AUTO INCREMENT PK" vertex="1">
           <mxGeometry height="26" width="280" y="26" as="geometry" />
         </mxCell>
         <mxCell id="C2dFFJPrkqfnQ3HHl1y2-39" parent="C2dFFJPrkqfnQ3HHl1y2-10" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Card_ID VARCHAR(10) NOT NULL, FK&#xa;ON DELETE CASCADE, ON UPDATE CASCADE" vertex="1">
@@ -69,7 +69,7 @@
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-19" parent="C2dFFJPrkqfnQ3HHl1y2-18" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Type_ID INT AUTO INCREMENT, PK" vertex="1">
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-19" parent="C2dFFJPrkqfnQ3HHl1y2-18" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=4" value="Type_ID INT AUTO INCREMENT, PK" vertex="1">
           <mxGeometry height="26" width="320" y="26" as="geometry" />
         </mxCell>
         <mxCell id="C2dFFJPrkqfnQ3HHl1y2-23" parent="C2dFFJPrkqfnQ3HHl1y2-18" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Type_Name VARCHAR(10) NOT NULL, UNIQUE" vertex="1">
@@ -80,7 +80,7 @@
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-25" parent="C2dFFJPrkqfnQ3HHl1y2-24" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Category_ID INT AUTO INCREMENT, PK" vertex="1">
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-25" parent="C2dFFJPrkqfnQ3HHl1y2-24" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=4" value="Category_ID INT AUTO INCREMENT, PK" vertex="1">
           <mxGeometry height="26" width="320" y="26" as="geometry" />
         </mxCell>
         <mxCell id="C2dFFJPrkqfnQ3HHl1y2-26" parent="C2dFFJPrkqfnQ3HHl1y2-24" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Category_Name VARCHAR(25) NOT NULL, UNIQUE" vertex="1">
@@ -91,7 +91,7 @@
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-28" parent="C2dFFJPrkqfnQ3HHl1y2-27" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Rarity_ID INT AUTO INCREMENT, PK" vertex="1">
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-28" parent="C2dFFJPrkqfnQ3HHl1y2-27" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=4" value="Rarity_ID INT AUTO INCREMENT, PK" vertex="1">
           <mxGeometry height="26" width="320" y="26" as="geometry" />
         </mxCell>
         <mxCell id="C2dFFJPrkqfnQ3HHl1y2-29" parent="C2dFFJPrkqfnQ3HHl1y2-27" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Rarity_Name VARCHAR(25) NOT NULL, UNIQUE" vertex="1">
@@ -102,7 +102,7 @@
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-31" parent="C2dFFJPrkqfnQ3HHl1y2-30" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Variant_ID INT AUTO INCREMENT, PK" vertex="1">
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-31" parent="C2dFFJPrkqfnQ3HHl1y2-30" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=4" value="Variant_ID INT AUTO INCREMENT, PK" vertex="1">
           <mxGeometry height="26" width="320" y="26" as="geometry" />
         </mxCell>
         <mxCell id="C2dFFJPrkqfnQ3HHl1y2-32" parent="C2dFFJPrkqfnQ3HHl1y2-30" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Variant_Name VARCHAR(25) NOT NULL, UNIQUE" vertex="1">
@@ -155,7 +155,7 @@
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-47" parent="C2dFFJPrkqfnQ3HHl1y2-46" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="User_ID INT AUTO INCREMENT, PK" vertex="1">
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-47" parent="C2dFFJPrkqfnQ3HHl1y2-46" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=4" value="User_ID INT AUTO INCREMENT, PK" vertex="1">
           <mxGeometry height="26" width="320" y="26" as="geometry" />
         </mxCell>
         <mxCell id="C2dFFJPrkqfnQ3HHl1y2-48" parent="C2dFFJPrkqfnQ3HHl1y2-46" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Username VARCHAR(20) NOT NULL, UNIQUE" vertex="1">
@@ -172,7 +172,7 @@
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-54" parent="C2dFFJPrkqfnQ3HHl1y2-53" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Collection_ID INT AUTO INCREMENT, PK" vertex="1">
+        <mxCell id="C2dFFJPrkqfnQ3HHl1y2-54" parent="C2dFFJPrkqfnQ3HHl1y2-53" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=4" value="Collection_ID INT AUTO INCREMENT, PK" vertex="1">
           <mxGeometry height="26" width="320" y="26" as="geometry" />
         </mxCell>
         <mxCell id="C2dFFJPrkqfnQ3HHl1y2-55" parent="C2dFFJPrkqfnQ3HHl1y2-53" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="User_ID INT NOT NULL, FK&#xa;ON DELETE CASCADE, ON UPDATE CASCADE" vertex="1">
@@ -205,7 +205,7 @@
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="07TXKxrJiH3bTaJI2Uhx-1" parent="07TXKxrJiH3bTaJI2Uhx-0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Trainer_Subtype_ID INT AUTO INCREMENT, PK" vertex="1">
+        <mxCell id="07TXKxrJiH3bTaJI2Uhx-1" parent="07TXKxrJiH3bTaJI2Uhx-0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=4" value="Trainer_Subtype_ID INT AUTO INCREMENT, PK" vertex="1">
           <mxGeometry height="26" width="340" y="26" as="geometry" />
         </mxCell>
         <mxCell id="07TXKxrJiH3bTaJI2Uhx-2" parent="07TXKxrJiH3bTaJI2Uhx-0" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;shadow=0;html=0;" value="Trainer_Subtype_Name VARCHAR(25) NOT NULL, UNIQUE" vertex="1">
@@ -216,7 +216,7 @@
             <mxRectangle height="26" width="160" x="230" y="140" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="07TXKxrJiH3bTaJI2Uhx-6" parent="07TXKxrJiH3bTaJI2Uhx-5" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Trainer_ID INT AUTO INCREMENT, PK" vertex="1">
+        <mxCell id="07TXKxrJiH3bTaJI2Uhx-6" parent="07TXKxrJiH3bTaJI2Uhx-5" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontStyle=4" value="Trainer_ID INT AUTO INCREMENT, PK" vertex="1">
           <mxGeometry height="26" width="280" y="26" as="geometry" />
         </mxCell>
         <mxCell id="07TXKxrJiH3bTaJI2Uhx-7" parent="07TXKxrJiH3bTaJI2Uhx-5" style="text;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" value="Card_ID VARCHAR(10) NOT NULL, FK&#xa;ON DELETE CASCADE, ON UPDATE CASCADE" vertex="1">
