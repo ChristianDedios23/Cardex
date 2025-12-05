@@ -19,7 +19,7 @@ export default function NavBar({}){
                 <img src={logo1} alt='Cardex Logo' id='logo'/>
                 <nav>
                     <Link to='/Home'>HOME</Link>
-                    <Link to='/Home'>SETS</Link>
+                    <Link to='/Sets'>SETS</Link>
                     <Link to='/Home'>HELP</Link>
                     <Link to='/Search'>SEARCH</Link>
                 </nav>         
