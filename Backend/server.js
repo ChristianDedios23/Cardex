@@ -9,6 +9,8 @@ require('dotenv').config();
 //Create connection
 const app = express();
 
+
+
 //Middleware
 app.use(cors()); //allow frontend to make requests to backend when both on different ports
 app.use(express.json()); //parse JSON bodies
@@ -66,7 +68,7 @@ app.post('/login', async (req, res) => {
         if(!isMatch) return res.status(400).json({message :'Incorrect password'});
 
         //return a token for user to remember who's logged in
-        const token = jwt.sign({email: user.Email_Address, username: user.Username}, JWT_SECRET);
+        const token = jwt.sign({email: user.Email_Address, username: user.Username, id: user.User_ID}, JWT_SECRET);
 
         res.json({ message: 'Login successful', token});
     }
@@ -75,6 +77,56 @@ app.post('/login', async (req, res) => {
         res.status(500).json({message: 'Failure to login'});
     }
 });
+
+// Create get request for card searches
+app.get('/getCard', async (req, res) => {
+    const card = req.query.cardName;
+    const likeTerm = `${card}%`
+    try {
+        const [cards] = await db.query('SELECT * FROM CARD WHERE Card_Name LIKE ?', [likeTerm]);
+        res.status(200).json(cards);
+
+    } catch(err) {
+        console.error("Couldnt get card.", err);
+        res.status(500).json({message: 'Server Error'});
+
+    }
+
+});
+
+// create get request for set searches
+app.get('/getSet', async (req, res) => {
+    const setName = req.query.setName;
+    const likeTerm = `${setName}%`;
+    try {
+        const [cards] = await db.query('SELECT c.* FROM CARD c JOIN EXPANSION e ON e.Set_Code = c.Set_Code WHERE e.Set_Name LIKE ?', [likeTerm]);
+        res.status(200).json(cards);
+    } catch(err) {
+        console.error("Couldnt find set", err);
+        res.status(500).json({message: ' Couldnt find set Server Error'});
+    }
+
+});
+
+// create get request for in collection card searches
+app.get('/getCardInCollection', async (req, res) => {
+    const cardName = req.query.cardName;
+    const userID = req.query.userID;
+    const likeTerm = `${cardName}%`;
+    try {
+        const [cards] = await db.query('SELECT ca.* FROM CARD ca JOIN COLLECTION co ON co.Card_ID = ca.Card_ID WHERE ca.Card_Name LIKE ? AND co.User_ID = ?', [likeTerm, userID]);
+        res.status(200).json(cards);
+    } catch(err) {
+        console.error("Server error", err);
+
+    }
+
+});
+
+
+
+
+
 /*
 JWT Authentication Middleware
 COME BACK TO, EXPLAIN IT
