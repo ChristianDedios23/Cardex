@@ -24,38 +24,29 @@ export default function SearchPageContainer() {
         };
     }, []);
 
-
-
-
-
-    const getImage = async (name) => {
+    const getImage = async (name, cardID) => {
         try {
 
-            const lower = name.toLowerCase();
-
-            console.log(`fetching response for ${name}`);
-            const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${lower}`);
+            console.log(`fetching response for image ${name}`);
+            const res = await fetch(`http://localhost:5000/image?pokemonID=${cardID}`);
             console.log("parsing response");
-            const cardInfo = await res.json();
 
             if (!res.ok) {
-                console.warn(`No PokéAPI entry for "${name}" (status ${res.status})`);
+                console.warn(`No image for "${name}" (status ${res.status})`);
                 return "";   // no image for this card
             }
 
+            const cardInfo = await res.json();
+
             console.log("Finished");
             console.log(cardInfo);
-            return cardInfo.sprites.front_default;
+            return cardInfo.imageLow;
         }
         catch (error) {
             console.error(error);
         }
 
     }
-
-
-
-
 
     const getSearchedCard = async () => {
         try {
@@ -77,7 +68,6 @@ export default function SearchPageContainer() {
 
     const getSearchedSet = async () => {
         try {
-
             const url = `http://localhost:5000/getSet?setName=${encodeURIComponent(searchTerm)}`;
 
             console.log(`fetching response for ${searchTerm}`);
@@ -114,7 +104,9 @@ export default function SearchPageContainer() {
     }
 
     const handleSearch = () => {
-        if (!searchTerm.trim()) {
+        setSearchTerm(searchTerm.trim());
+
+        if (!searchTerm) {
             console.log("Didnt search");
             return
         }
@@ -129,14 +121,12 @@ export default function SearchPageContainer() {
         }
     }
 
-
-
-
     useEffect(() => {
         // fetch images for any cards that don't have one yet
+        //changed getImage(card.card_name) to card.cardNumber && card.cardName
         myData.forEach((card) => {
             if (!images[card.Card_ID]) {
-                getImage(card.Card_Name)
+                getImage(card.Card_Name, card.Card_Number)
                     .then((url) => {
                         setImages((prev) => ({
                             ...prev,
@@ -157,7 +147,6 @@ export default function SearchPageContainer() {
                     <FaSearch id='searchIcon' />
                     <input type='text' placeholder='Search cards...' id='cardSearch' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                     <button onClick={handleSearch}>Search</button>
-                    <button onClick={getImage}>image</button>
                 </div>
 
 
@@ -179,9 +168,6 @@ export default function SearchPageContainer() {
                     In Collection
                 </label>
 
-
-
-
             </div>
             <text className='numCardDisplay'>{myData.length} Cards</text>
             <div className='lineSearch'></div>
@@ -196,7 +182,7 @@ export default function SearchPageContainer() {
                             url={images[data.Card_ID]}
                         />)
                 })}
-
+                
             </div>
 
         </div>
