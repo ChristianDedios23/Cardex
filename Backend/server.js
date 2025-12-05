@@ -6,10 +6,12 @@ const jwt = require('jsonwebtoken');
 const db = require('./dbConfig');
 require('dotenv').config();
 
+
 //Create connection
 const app = express();
 
-
+const TCGdex = require('@tcgdex/sdk').default;
+const tcgdex = new TCGdex('en');
 
 //Middleware
 app.use(cors()); //allow frontend to make requests to backend when both on different ports
@@ -17,6 +19,30 @@ app.use(express.json()); //parse JSON bodies
 
 // JWT secret key
 const JWT_SECRET = process.env.JWT_SECRET;
+
+//Create GET request that retrieves the image for each card
+//Account for trainers and items
+app.get('/image', async (req, res) => {
+    try{
+        const pokemonID = req.query.pokemonID;
+
+        const formatted = String(pokemonID).padStart(3, '0')
+        
+        const card = await tcgdex.card.get('sv01-' + formatted);
+        
+        const lowImg = card.getImageURL('low', 'png');
+
+        res.json({
+            id: card.id,
+            name: card.name,
+            rarity: card.rarity,
+            imageLow: lowImg
+        });
+    }
+    catch(err){
+        console.error('error fetching card image', err);
+    }
+});
 
 //Create POST request that lets user sign-up with username, email, and password
 app.post('/signup', async (req, res) => {

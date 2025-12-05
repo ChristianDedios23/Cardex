@@ -1,18 +1,15 @@
-import { useEffect } from 'react'
+import { FaPlus, FaMinus } from 'react-icons/fa';
 import './CardContainer.css'
 
-export default function CardContainer({ localId, name, rarity, url}){
-
-
-
-
+export default function CardContainer({ name, rarity, url }){
     return(
         <div className="cardContainer">
-            <h3>{name}</h3>
-            <h3>{rarity}</h3>
-            <img src={url}></img>
-            <div>
-                <input type='checkbox' id='currCard' name='addOrRemoveCard' />
+            <img src={url} id='card'></img>
+            
+            <div className='addRemoveCount'>
+                <FaMinus className='minus'/>
+                <p className='count'>Count: 0 </p>
+                <FaPlus className='plus'/>
             </div>
         </div>
         
