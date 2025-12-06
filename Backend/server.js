@@ -46,6 +46,209 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+//Create POST request that lets user sign-up with username, email, and password
+app.post('/signup', async (req, res) => {
+    
+    const email = req.body.email?.trim();
+    const username = req.body.username?.trim();
+    const password = req.body.password?.trim();
+    const connection = await db.getConnection();
+    
+    try {
+        
+        await connection.beginTransaction();
+
+        const [rows] = await connection.query('SELECT * FROM USER WHERE Email_Address = ?', [email]);
+
+        console.log(rows);
+
+        //Check if any fields are empty
+        if (!username || !email || !password) {
+            return res.status(400).json({ message: 'Please fill out all fields' })
+        }
+
+        //Check if user exists
+        if (rows.length > 0) {
+            return res.status(400).json({ message: 'Email already exists' });
+        }
+
+        //hashed password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const [results] = await connection.query(
+            'INSERT INTO USER (Username, Password, Email_Address) VALUES (?, ?, ?)',
+            [username, hashedPassword, email]
+        );
+        
+        await connection.commit();
+
+        res.json({ message: 'User created successfully' });
+    }
+    catch (err) {
+        await connection.rollback();
+        console.error('Error adding user', err);
+        res.status(500).json({ message: 'Error adding user to db' });
+    }
+    finally{
+        connection.release();
+    }
+});
+
+//Create POST request for user to login
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    const connection = await db.getConnection();
+
+    try {
+
+        await connection.beginTransaction();
+
+        const [rows] = await connection.query('SELECT * FROM USER WHERE Email_Address = ?', [email])
+
+        const user = rows[0];
+
+        if (!user) return res.status(400).json({ message: 'Invalid email' });
+
+        const isMatch = await bcrypt.compare(password, user.Password);
+
+        if (!isMatch) return res.status(400).json({ message: 'Incorrect password' });
+
+        await connection.commit();
+
+        //return a token for user to remember who's logged in
+        const token = jwt.sign({ email: user.Email_Address, username: user.Username, id: user.User_ID }, JWT_SECRET);
+
+        res.json({ message: 'Login successful', token });
+    }
+    catch (err) {
+        await connection.rollback();
+        console.error('Failure to login', err);
+        res.status(500).json({ message: 'Failure to login' });
+    }
+    finally{
+        connection.release();
+    }
+});
+
+// Create get request for card searches
+app.get('/getCard', async (req, res) => {
+    const card = req.query.cardName;
+    const likeTerm = `${card}%`
+    try {
+        const [cards] = await db.query('SELECT * FROM CARD WHERE Card_Name LIKE ?', [likeTerm]);
+        res.status(200).json(cards);
+        
+
+    } catch (err) {
+        console.error("Couldnt get card.", err);
+        res.status(500).json({ message: 'Server Error' });
+
+    }
+
+});
+
+// create get request for set searches
+app.get('/getSet', async (req, res) => {
+    const setName = req.query.setName;
+    const likeTerm = `${setName}%`;
+
+    try {
+        const [cards] = await db.query('SELECT c.* FROM CARD c JOIN EXPANSION e ON e.Set_Code = c.Set_Code WHERE e.Set_Name LIKE ?', [likeTerm]);
+        res.status(200).json(cards);
+        
+    } catch (err) {
+        console.error("Couldnt find set", err);
+        res.status(500).json({ message: ' Couldnt find set Server Error' });
+    }
+
+});
+
+// create get request for in collection card searches
+app.get('/getCardInCollection', authenticateToken, async (req, res) => {
+    const cardName = req.query.cardName;
+    const userID = req.user.id;
+    const likeTerm = `${cardName}%`;
+    try {
+        const [cards] = await db.query('SELECT ca.* FROM CARD ca JOIN COLLECTION co ON co.Card_ID = ca.Card_ID WHERE ca.Card_Name LIKE ? AND co.User_ID = ?', [likeTerm, userID]);
+        res.status(200).json(cards);
+    } catch (err) {
+        console.error("Server error", err);
+        res.status(500).json({message:"Couldnt get card"})
+    }
+
+});
+
+
+// create a post request to add a card to the users collection.
+app.post('/addCard', authenticateToken, async (req, res) => {
+    const cardId = req.body.cardId;
+    const userId = req.user.id;
+    const variantId = req.body.variantId;
+    const quantity = req.body.quantity;
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        await connection.query('INSERT INTO COLLECTION (User_ID, Card_ID, Variant_ID, Quantity) VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE Quantity = Quantity + 1', [userId, cardId, variantId, quantity]);
+
+        await connection.commit();
+
+        res.status(200).json({ message: 'Added successfully!' });
+
+
+    } catch (err) {
+        await connection.rollback();
+        console.error("Transaction failed: ",err);
+        res.status(500).json({error:"Transaction failed"});
+    } finally {
+        connection.release();
+    }
+    
+});
+
+// create get request for quantity
+app.get('/getQuantity', authenticateToken, async (req, res) => {
+    const userId = req.user.id;
+    const cardId = req.query.cardId;
+    try {
+        const quantity = await db.query('SELECT Quantity FROM COLLECTION WHERE User_ID = ? AND Card_ID = ?', [userId, cardId]);
+        res.status(200).json(quantity[0]);
+    } catch (err) {
+        res.status(500).json({message:"Couldnt find quantity"})
+        console.error(err);
+    }
+});
+
+// create a delete request to remove a card from the users collection.
+app.delete('/removeCard', authenticateToken, async (req, res) => {
+    const cardId = req.body.cardId;
+    const userId = req.user.id;
+    const variantId = req.body.variantId;
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const [result] = await connection.query('UPDATE COLLECTION SET Quantity = Quantity - 1 WHERE User_ID = ? AND Card_ID = ? AND Variant_ID = ? AND Quantity > 1', [userId, cardId, variantId]);
+        if (result.affectedRows === 0) {
+            console.log('deleted');
+            const [deleted] = await connection.query('DELETE FROM COLLECTION WHERE User_ID = ? AND Card_ID = ? AND Variant_ID = ?', [userId, cardId, variantId]);
+            if (deleted.affectedRows === 0) {
+                console.log('rollback is activated');
+                await connection.rollback();
+                return res.status(404).json({ message: 'Card not found in collection' });
+            }
+        }
+        await connection.commit();
+        res.status(200).json({ message: 'Removed successfully!' });
+    } catch (err) {
+        await connection.rollback();
+        console.error("Removing card failed: ", err);
+        res.status(500).json({ error: "Removing card failed" });
+    } finally {
+        connection.release();
+    }
+});
 
 
 //Create GET request that retrieves the image for each card
@@ -70,195 +273,6 @@ app.get('/image', async (req, res) => {
         console.error('error fetching card image', err);
     }
 });
-
-//Create POST request that lets user sign-up with username, email, and password
-app.post('/signup', async (req, res) => {
-    const { username, email, password } = req.body;
-
-    try {
-        //change to query
-        const [rows] = await db.query('SELECT * FROM USER WHERE Email_Address = ?', [email]);
-
-        //Check if any fields are empty
-        if (!username || !email || !password) {
-            return res.status(400).json({ message: 'Please fill out all fields' })
-        }
-
-        //Check if user exists
-        if (rows.length > 0) {
-            return res.status(400).json({ message: 'Email already exists' });
-        }
-
-        //hashed password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        await db.query(
-            'INSERT INTO USER (Username, Password, Email_Address) VALUES (?, ?, ?)',
-            [username, hashedPassword, email]
-        );
-
-        res.json({ message: 'User created successfully' });
-    }
-    catch (err) {
-        console.error('Error adding user', err);
-        res.status(500).json({ message: 'Error adding user to db' });
-    }
-});
-
-//Create POST request for user to login
-app.post('/login', async (req, res) => {
-    const { email, password } = req.body;
-
-    try {
-        const [rows] = await db.query('SELECT * FROM USER WHERE Email_Address = ?', [email])
-
-        const user = rows[0];
-
-        if (!user) return res.status(400).json({ message: 'Invalid email' });
-
-        const isMatch = await bcrypt.compare(password, user.Password);
-
-        if (!isMatch) return res.status(400).json({ message: 'Incorrect password' });
-
-        //return a token for user to remember who's logged in
-        const token = jwt.sign({ email: user.Email_Address, username: user.Username, id: user.User_ID }, JWT_SECRET);
-
-        res.json({ message: 'Login successful', token });
-    }
-    catch (err) {
-        console.error('Failure to login', err);
-        res.status(500).json({ message: 'Failure to login' });
-    }
-});
-
-// Create get request for card searches
-app.get('/getCard', async (req, res) => {
-    const card = req.query.cardName;
-    const likeTerm = `${card}%`
-    try {
-        const [cards] = await db.query('SELECT * FROM CARD WHERE Card_Name LIKE ?', [likeTerm]);
-        res.status(200).json(cards);
-
-    } catch (err) {
-        console.error("Couldnt get card.", err);
-        res.status(500).json({ message: 'Server Error' });
-
-    }
-
-});
-
-// create get request for set searches
-app.get('/getSet', async (req, res) => {
-    const setName = req.query.setName;
-    const likeTerm = `${setName}%`;
-    try {
-        const [cards] = await db.query('SELECT c.* FROM CARD c JOIN EXPANSION e ON e.Set_Code = c.Set_Code WHERE e.Set_Name LIKE ?', [likeTerm]);
-        res.status(200).json(cards);
-    } catch (err) {
-        console.error("Couldnt find set", err);
-        res.status(500).json({ message: ' Couldnt find set Server Error' });
-    }
-
-});
-
-// create get request for in collection card searches
-app.get('/getCardInCollection', authenticateToken, async (req, res) => {
-    const cardName = req.query.cardName;
-    const userID = req.user.id;
-    const likeTerm = `${cardName}%`;
-    try {
-        const [cards] = await db.query('SELECT ca.* FROM CARD ca JOIN COLLECTION co ON co.Card_ID = ca.Card_ID WHERE ca.Card_Name LIKE ? AND co.User_ID = ?', [likeTerm, userID]);
-        res.status(200).json(cards);
-    } catch (err) {
-        console.error("Server error", err);
-        res.status(500).json({ message: "Couldnt get card" })
-    }
-
-});
-
-
-// create a post request to add a card to the users collection.
-app.post('/addCard', authenticateToken, async (req, res) => {
-    const cardId = req.body.cardId;
-    const userId = req.user.id;
-    const variantId = req.body.variantId;
-    const quantity = req.body.quantity;
-    const connection = await db.getConnection();
-    try {
-        await connection.beginTransaction();
-
-
-        await connection.query('INSERT INTO COLLECTION (User_ID, Card_ID, Variant_ID, Quantity) VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE Quantity = Quantity + 1', [userId, cardId, variantId, quantity]);
-
-        await connection.commit();
-
-        res.status(200).json({ message: 'Added successfully!' });
-
-
-    } catch (err) {
-        await connection.rollback();
-        console.error("Adding card failed: ", err);
-        res.status(500).json({ error: "Adding card failed" });
-    } finally {
-        connection.release();
-    }
-
-});
-
-// create a delete request to remove a card from the users collection.
-app.delete('/removeCard', authenticateToken, async (req, res) => {
-    const cardId = req.body.cardId;
-    const userId = req.user.id;
-    const variantId = req.body.variantId;
-    const connection = await db.getConnection();
-    try {
-        await connection.beginTransaction();
-
-
-        const [result] = await connection.query('UPDATE COLLECTION SET Quantity = Quantity - 1 WHERE User_ID = ? AND Card_ID = ? AND Variant_ID = ? AND Quantity > 1', [userId, cardId, variantId]);
-        if (result.affectedRows === 0) {
-            const [deleted] = await connection.query('DELETE FROM COLLECTION WHERE User_ID = ? AND Card_ID = ? AND Variant_ID = ?', [userId, cardId, variantId]);
-            if (deleteResult.affectedRows === 0) {
-                await connection.rollback();
-                return res.status(404).json({ message: 'Card not found in collection' });
-            }
-        }
-        await connection.commit();
-        res.status(200).json({ message: 'Removed successfully!' });
-    } catch (err) {
-        await connection.rollback();
-        console.error("Removing card failed: ", err);
-        res.status(500).json({ error: "Removing card failed" });
-    } finally {
-        connection.release();
-    }
-
-});
-
-
-// create get request for quantity
-app.get('/getQuantity', authenticateToken, async (req, res) => {
-    const userId = req.user.id;
-    const cardId = req.query.cardId;
-    try {
-        const quantity = await db.query('SELECT Quantity FROM COLLECTION WHERE User_ID = ? AND Card_ID = ?', [userId, cardId]);
-        res.status(200).json(quantity[0]);
-    } catch (err) {
-        res.status(500).json({ message: "Couldnt find quantity" })
-        console.error(err);
-    }
-
-
-});
-
-
-
-
-
-
-
-
-
 
 const PORT = process.env.PORT || 5000;
 
