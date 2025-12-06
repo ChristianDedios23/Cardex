@@ -15,10 +15,8 @@ import { useNavigate } from 'react-router-dom';
 export default function HomePageContainer(){
     const navigate = useNavigate();
 
-    const handleKeyPress = (e) => {
-        if(e.key === 'Enter'){
-            navigate('/Search');
-        }
+    const handleKeyPress = () => {
+        navigate('/Search');
     }
 
     return(
@@ -28,9 +26,8 @@ export default function HomePageContainer(){
             <div className='titleSearchContainer'>
                 <h1>Cardex</h1>
                 <p>A Modern Search Tool For Pokemon</p>
-                <div className='searchBar'>
-                    <FaSearch id='searchIcon'/>
-                    <input type='text' placeholder='Search cards...' id='cardSearchHome' onKeyDown={handleKeyPress}/>
+                <div className='button'>
+                    <input button='text' placeholder='Get Started' id='cardSearchHome' onClick={handleKeyPress}/>
                 </div>
             </div>
         </div>

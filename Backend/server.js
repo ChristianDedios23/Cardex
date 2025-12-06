@@ -218,7 +218,7 @@ app.delete('/removeCard', authenticateToken, async (req, res) => {
         const [result] = await connection.query('UPDATE COLLECTION SET Quantity = Quantity - 1 WHERE User_ID = ? AND Card_ID = ? AND Variant_ID = ? AND Quantity > 1', [userId, cardId, variantId]);
         if (result.affectedRows === 0) {
             const [deleted] = await connection.query('DELETE FROM COLLECTION WHERE User_ID = ? AND Card_ID = ? AND Variant_ID = ?', [userId, cardId, variantId]);
-            if (deleteResult.affectedRows === 0) {
+            if (deleted.affectedRows === 0) {
                 await connection.rollback();
                 return res.status(404).json({ message: 'Card not found in collection' });
             }
@@ -248,6 +248,21 @@ app.get('/getQuantity', authenticateToken, async (req, res) => {
         console.error(err);
     }
 
+
+});
+
+// create get request for cards in my collection
+app.get('/myCards', authenticateToken, async (req,res) => {
+
+    const userId = req.user.id;
+
+    try {
+        const [result] = await db.query('SELECT ca.* FROM CARD ca JOIN COLLECTION co ON ca.Card_ID = co.Card_ID JOIN USER u ON u.User_ID = co.User_ID WHERE co.User_ID = ?', [userId]);
+        res.status(200).json(result);
+    } catch (err) {
+        res.status(500).json({message: "No cards found"});
+        console.error(err);
+    }
 
 });
 
