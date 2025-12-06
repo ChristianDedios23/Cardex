@@ -171,7 +171,7 @@ app.get('/getCardInCollection', authenticateToken, async (req, res) => {
         res.status(200).json(cards);
     } catch (err) {
         console.error("Server error", err);
-
+        res.status(500).json({message:"Couldnt get card"})
     }
 
 });
@@ -183,12 +183,26 @@ app.post('/addCard', authenticateToken, async (req, res) => {
     const userId = req.user.id;
     const variantId = req.body.variantId;
     const quantity = req.body.quantity;
+    const connection = await db.getConnection();
     try {
-        await db.query('INSERT INTO COLLECTION (User_ID, Card_ID, Variant_ID, Quantity) VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE Quantity = Quantity + 1', [userId, cardId, variantId, quantity]);
+        await connection.beginTransaction();
+
+
+        await connection.query('INSERT INTO COLLECTION (User_ID, Card_ID, Variant_ID, Quantity) VALUES(?, ?, ?, ?) ON DUPLICATE KEY UPDATE Quantity = Quantity + 1', [userId, cardId, variantId, quantity]);
+
+        await connection.commit();
+
+        res.status(200).json({ message: 'Added successfully!' });
+
+
     } catch (err) {
-        console.error(err);
+        await connection.rollback();
+        console.error("Transaction failed: ",err);
+        res.status(500).json({error:"Transaction failed"});
+    } finally {
+        connection.release();
     }
-    res.status(200).json({ message: 'Added successfully!' });
+    
 });
 
 // create get request for quantity
@@ -199,6 +213,7 @@ app.get('/getQuantity', authenticateToken, async (req, res) => {
         const quantity = await db.query('SELECT Quantity FROM COLLECTION WHERE User_ID = ? AND Card_ID = ?', [userId, cardId]);
         res.status(200).json(quantity[0]);
     } catch (err) {
+        res.status(500).json({message:"Couldnt find quantity"})
         console.error(err);
     }
 
