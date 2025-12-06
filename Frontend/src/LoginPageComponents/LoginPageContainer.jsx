@@ -2,6 +2,7 @@ import './LoginPageContainer.css'
 import logo2 from '../assets/Cardex-Logo-White.png'
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
+import NavBar from '../NavBar';
 
 /*
     Fixes to consider: 
@@ -75,6 +76,7 @@ export default function LoginPageContainer(){
     
     return(
         <div className="loginContainer">
+            
             <img src={logo2} alt='Cardex Logo' id='logo2'/>
             <div className='loginBoxBorder'>
             <div className="loginInputs">

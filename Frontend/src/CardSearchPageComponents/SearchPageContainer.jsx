@@ -13,6 +13,7 @@ export default function SearchPageContainer() {
     const [image, setImage] = useState("")
     const [images, setImages] = useState({});
     const token = sessionStorage.getItem('token');
+    const isLoggedIn = !!token
 
     useEffect(() => {
         // Enable scrolling for this page
@@ -24,11 +25,13 @@ export default function SearchPageContainer() {
         };
     }, []);
 
-    const getImage = async (name, cardID) => {
+    const getImage = async (name, cardID, setID) => {
         try {
 
+            let id = setID.toLowerCase();
             console.log(`fetching response for image ${name}`);
-            const res = await fetch(`http://localhost:5000/image?pokemonID=${cardID}`);
+            console.log(id);
+            const res = await fetch(`http://localhost:5000/image?pokemonID=${cardID}&setID=${id}`);
             console.log("parsing response");
 
             if (!res.ok) {
@@ -88,9 +91,15 @@ export default function SearchPageContainer() {
             try {
                 const decoded = jwtDecode(token);
                 let id = decoded.id;
-                const url = `http://localhost:5000/getCardInCollection?cardName=${encodeURIComponent(searchTerm)}&userID=${id}`;
+                const url = `http://localhost:5000/getCardInCollection?cardName=${encodeURIComponent(searchTerm)}`;
                 console.log(`fetching response for ${searchTerm}`);
-                const set = await fetch(url);
+                const set = await fetch(url,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
                 console.log("parsing response");
                 const setInfo = await set.json();
                 console.log("Finished");
@@ -126,7 +135,7 @@ export default function SearchPageContainer() {
         //changed getImage(card.card_name) to card.cardNumber && card.cardName
         myData.forEach((card) => {
             if (!images[card.Card_ID]) {
-                getImage(card.Card_Name, card.Card_Number)
+                getImage(card.Card_Name, card.Card_Number, card.Set_Code)
                     .then((url) => {
                         setImages((prev) => ({
                             ...prev,
@@ -177,9 +186,11 @@ export default function SearchPageContainer() {
                     return (
                         <CardContainer
                             key={data.Card_ID}
+                            id={data.Card_ID}
                             name={data.Card_Name}
                             rarity={data.Rarity_ID}
                             url={images[data.Card_ID]}
+                            isLoggedIn={isLoggedIn}
                         />)
                 })}
                 

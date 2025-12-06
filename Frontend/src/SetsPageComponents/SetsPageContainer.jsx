@@ -45,14 +45,7 @@ export default function SetsPageContainer() {
                     </div>
 
                     <div>
-                        <SetContainer/>
-                        <SetContainer/>
-                        <SetContainer/>
-                        <SetContainer/>
-                        <SetContainer/>
-                        <SetContainer/>
-                        <SetContainer/>
-
+                        
                     </div>
                 
                 </div>
