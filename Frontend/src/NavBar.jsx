@@ -18,10 +18,10 @@ export default function NavBar({}){
             <div className='topNavBar'>
                 <img src={logo1} alt='Cardex Logo' id='logo'/>
                 <nav>
-                    <Link to='/Home'>HOME</Link>
-                    <Link to='/Home'>SETS</Link>
-                    <Link to='/Home'>HELP</Link>
-                    <Link to='/Search'>SEARCH</Link>
+                    <Link to='/Home' className='links'>HOME</Link>
+                    <Link to='/Home' className='links'>SETS</Link>
+                    <Link to='/Home' className='links'>HELP</Link>
+                    <Link to='/Search' className='links'>SEARCH</Link>
                 </nav>         
                 <Link to='/' id='loginLink' onClick={() => sessionStorage.removeItem('token')}>{username ? 'Welcome ' + username :'REGISTER / LOGIN'}</Link>
             </div>
