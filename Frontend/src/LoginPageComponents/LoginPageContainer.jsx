@@ -50,6 +50,7 @@ export default function LoginPageContainer(){
             }
 
             setIsSuccess(true); //login/signup was successful
+            
 
             //Login phase
             if(isLogin){
@@ -61,10 +62,7 @@ export default function LoginPageContainer(){
             //Sign-Up phase
             else{
                 setMessage(data.message);
-                setIsLogin(true);
-                setEmail('');
-                setPassword('');
-                setUsername('');
+                setIsLogin(true);          
             }
         }
         catch(err){

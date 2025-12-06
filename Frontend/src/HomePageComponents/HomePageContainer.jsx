@@ -1,5 +1,4 @@
 import './HomePageContainer.css'
-import { FaSearch } from 'react-icons/fa';
 import NavBar from '../NavBar';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 export default function HomePageContainer(){
     const navigate = useNavigate();
 
-    const handleKeyPress = () => {
+    const handleGetStarted = (e) => {
         navigate('/Search');
     }
 
@@ -26,9 +25,8 @@ export default function HomePageContainer(){
             <div className='titleSearchContainer'>
                 <h1>Cardex</h1>
                 <p>A Modern Search Tool For Pokemon</p>
-                <div className='button'>
-                    <input button='text' placeholder='Get Started' id='cardSearchHome' onClick={handleKeyPress}/>
-                </div>
+                <button className='getStartedBtn' onClick={handleGetStarted}>Get Started</button>
+                
             </div>
         </div>
     )
