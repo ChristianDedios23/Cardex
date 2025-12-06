@@ -3,6 +3,7 @@ import logo2 from '../assets/Cardex-Logo-White.png'
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import NavBar from '../NavBar';
+
 /*
     Fixes to consider: 
     - Message takes time to display for server error,
