@@ -9,31 +9,31 @@ export default function CardContainer({ id, name, rarity, url, isLoggedIn }) {
 
 
     const fetchQuantity = async () => {
-            try {
-                const res = await fetch(
-                    `http://localhost:5000/getQuantity?cardId=${id}`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        }
+        try {
+            const res = await fetch(
+                `http://localhost:5000/getQuantity?cardId=${id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
                     }
-                );
-                if (!res.ok) {
-                    console.error(res.status);
                 }
-                const data = await res.json();
-                setQuantity(data[0]?.Quantity ?? 0);
-
-            } catch (err) {
-                console.error(err);
+            );
+            if (!res.ok) {
+                console.error(res.status);
             }
+            const data = await res.json();
+            setQuantity(data[0]?.Quantity ?? 0);
 
-        };
+        } catch (err) {
+            console.error(err);
+        }
+
+    };
 
     useEffect(() => {
         if (!isLoggedIn || !id) return;
         fetchQuantity();
-    },[id,isLoggedIn,token]);
+    }, [id, isLoggedIn, token]);
 
     const addCard = async () => {
         try {
@@ -51,21 +51,46 @@ export default function CardContainer({ id, name, rarity, url, isLoggedIn }) {
                     }),
                 }
             );
-            if(!res.ok) {
+            if (!res.ok) {
                 console.error(res.status);
             } else {
-                console.log('Added/Updated successfully!');   
+                console.log('Added/Updated successfully!');
                 await fetchQuantity();
             }
-            
+
         } catch (err) {
             console.error(err);
         }
-    }
+    };
 
     const removeCard = async () => {
+        if (quantity > 0) {
+            try {
+                const res = await fetch('http://localhost:5000/removeCard',
+                    {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            cardId: id,
+                            variantId: rarity,
+                        }),
+                    }
+                );
+                if (!res.ok) {
+                    console.error(res.status);
+                } else {
+                    console.log('Removed successfully!');
+                    await fetchQuantity();
+                }
 
-    }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+    };
 
 
 
@@ -74,9 +99,9 @@ export default function CardContainer({ id, name, rarity, url, isLoggedIn }) {
             <img src={url} id='card'></img>
             {isLoggedIn && (
                 <div className='addRemoveCount'>
-                    <FaMinus className='minus' />
+                    <FaMinus className='minus' onClick={removeCard}/>
                     <p className='count'>Count: {quantity}</p>
-                    <FaPlus className='plus' onClick={addCard}/>
+                    <FaPlus className='plus' onClick={addCard} />
                 </div>
             )}
         </div>
