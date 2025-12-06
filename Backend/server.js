@@ -3,17 +3,15 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const dbPromise = require('./dbConfig');
+const db = require('./dbConfig');
+require('dotenv').config();
 
-//db will recieve the connection after the promise
-//is fulfulled from dbPromise.
-let db;
-dbPromise.then(connection => {
-    db = connection;
-});
 
 //Create connection
 const app = express();
+
+const TCGdex = require('@tcgdex/sdk').default;
+const tcgdex = new TCGdex('en');
 
 //Middleware
 app.use(cors()); //allow frontend to make requests to backend when both on different ports
@@ -22,12 +20,37 @@ app.use(express.json()); //parse JSON bodies
 // JWT secret key
 const JWT_SECRET = process.env.JWT_SECRET;
 
+//Create GET request that retrieves the image for each card
+//Account for trainers and items
+app.get('/image', async (req, res) => {
+    try{
+        const pokemonID = req.query.pokemonID;
+
+        const formatted = String(pokemonID).padStart(3, '0')
+        
+        const card = await tcgdex.card.get('sv01-' + formatted);
+        
+        const lowImg = card.getImageURL('low', 'png');
+
+        res.json({
+            id: card.id,
+            name: card.name,
+            rarity: card.rarity,
+            imageLow: lowImg
+        });
+    }
+    catch(err){
+        console.error('error fetching card image', err);
+    }
+});
+
 //Create POST request that lets user sign-up with username, email, and password
 app.post('/signup', async (req, res) => {
     const {username, email, password} = req.body;
 
     try {
-        const [rows] = await db.execute('SELECT * FROM USER WHERE Email_Address = ?', [email]);
+        //change to query
+        const [rows] = await db.query('SELECT * FROM USER WHERE Email_Address = ?', [email]);
         
         //Check if any fields are empty
         if(!username || !email || !password){
@@ -42,7 +65,7 @@ app.post('/signup', async (req, res) => {
         //hashed password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await db.execute(
+        await db.query(
             'INSERT INTO USER (Username, Password, Email_Address) VALUES (?, ?, ?)',
             [username, hashedPassword, email]
         );
@@ -60,7 +83,7 @@ app.post('/login', async (req, res) => {
     const {email, password} = req.body;
 
     try{
-        const [rows] = await db.execute('SELECT * FROM USER WHERE Email_Address = ?', [email])
+        const [rows] = await db.query('SELECT * FROM USER WHERE Email_Address = ?', [email])
         
         const user = rows[0];
 
@@ -71,7 +94,7 @@ app.post('/login', async (req, res) => {
         if(!isMatch) return res.status(400).json({message :'Incorrect password'});
 
         //return a token for user to remember who's logged in
-        const token = jwt.sign({email: user.Email_Address, username: user.Username}, JWT_SECRET);
+        const token = jwt.sign({email: user.Email_Address, username: user.Username, id: user.User_ID}, JWT_SECRET);
 
         res.json({ message: 'Login successful', token});
     }
@@ -80,6 +103,56 @@ app.post('/login', async (req, res) => {
         res.status(500).json({message: 'Failure to login'});
     }
 });
+
+// Create get request for card searches
+app.get('/getCard', async (req, res) => {
+    const card = req.query.cardName;
+    const likeTerm = `${card}%`
+    try {
+        const [cards] = await db.query('SELECT * FROM CARD WHERE Card_Name LIKE ?', [likeTerm]);
+        res.status(200).json(cards);
+
+    } catch(err) {
+        console.error("Couldnt get card.", err);
+        res.status(500).json({message: 'Server Error'});
+
+    }
+
+});
+
+// create get request for set searches
+app.get('/getSet', async (req, res) => {
+    const setName = req.query.setName;
+    const likeTerm = `${setName}%`;
+    try {
+        const [cards] = await db.query('SELECT c.* FROM CARD c JOIN EXPANSION e ON e.Set_Code = c.Set_Code WHERE e.Set_Name LIKE ?', [likeTerm]);
+        res.status(200).json(cards);
+    } catch(err) {
+        console.error("Couldnt find set", err);
+        res.status(500).json({message: ' Couldnt find set Server Error'});
+    }
+
+});
+
+// create get request for in collection card searches
+app.get('/getCardInCollection', async (req, res) => {
+    const cardName = req.query.cardName;
+    const userID = req.query.userID;
+    const likeTerm = `${cardName}%`;
+    try {
+        const [cards] = await db.query('SELECT ca.* FROM CARD ca JOIN COLLECTION co ON co.Card_ID = ca.Card_ID WHERE ca.Card_Name LIKE ? AND co.User_ID = ?', [likeTerm, userID]);
+        res.status(200).json(cards);
+    } catch(err) {
+        console.error("Server error", err);
+
+    }
+
+});
+
+
+
+
+
 /*
 JWT Authentication Middleware
 COME BACK TO, EXPLAIN IT
