@@ -2,7 +2,7 @@ import { FaPlus, FaMinus } from 'react-icons/fa';
 import './MyCardsContainer.css'
 import { useEffect, useState } from 'react';
 
-export default function myCardsContainer({ id, name, rarity, url, isLoggedIn}) {
+export default function myCardsContainer({ id, name, rarity, url, isLoggedIn, onRemoved}) {
 
     const [quantity, setQuantity] = useState(0);
     const token = sessionStorage.getItem('token');
@@ -72,25 +72,27 @@ export default function myCardsContainer({ id, name, rarity, url, isLoggedIn}) {
     const removeCard = async () => {
         if (quantity > 0) {
             try {
-                const res = await fetch('http://localhost:5000/removeCard',
+                const res = await fetch(`http://localhost:5000/removeCard?cardId=${id}&variantId=${rarity}`,
                     {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
                             Authorization: `Bearer ${token}`,
                         },
-                        body: JSON.stringify({
-                            cardId: id,
-                            variantId: rarity,
-                        }),
                     }
                 );
                 if (!res.ok) {
                     console.error(res.status);
+                    return;
+                } 
+
+                if(quantity === 1) {
+                    onRemoved?.(id,rarity);
                 } else {
-                    console.log('Removed successfully!');
                     await fetchQuantity();
                 }
+                console.log('Removed successfully!');
+
 
             } catch (err) {
                 console.error(err);
@@ -98,7 +100,7 @@ export default function myCardsContainer({ id, name, rarity, url, isLoggedIn}) {
         }
     };
 
-    
+
 
 
 

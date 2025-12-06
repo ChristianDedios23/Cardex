@@ -20,7 +20,7 @@ export default function NavBar({}){
                 <nav>
                     <Link to='/Home' className='links'>HOME</Link>
                     <Link to='/myCards' className='links'>MY CARDS</Link>
-                    <Link to='/Home' className='links'>HELP</Link>
+                    <Link to='/Help' className='links'>HELP</Link>
                     <Link to='/Search' className='links'>SEARCH</Link>
                 </nav>         
                 <Link to='/' id='loginLink' onClick={() => sessionStorage.removeItem('token')}>{username ? 'Welcome ' + username :'REGISTER / LOGIN'}</Link>

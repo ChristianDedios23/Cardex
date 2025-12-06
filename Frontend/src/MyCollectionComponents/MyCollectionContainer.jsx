@@ -136,6 +136,15 @@ export default function MyCollectionContainer() {
     }
 
 
+    const handleCardRemoved = (cardId, rarityId) => {
+        setData(prev =>
+            prev.filter(
+                card => !(card.Card_ID === cardId && card.Rarity_ID === rarityId)
+            )
+        );
+        displayCards();
+    };
+
 
 
     return (
@@ -164,6 +173,7 @@ export default function MyCollectionContainer() {
                             rarity={data.Rarity_ID}
                             url={images[data.Card_ID]}
                             isLoggedIn={isLoggedIn}
+                            onRemoved={handleCardRemoved}
                         />)
                 })}
 

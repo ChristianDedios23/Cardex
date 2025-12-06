@@ -74,7 +74,6 @@ app.get('/image', async (req, res) => {
 //Create POST request that lets user sign-up with username, email, and password
 app.post('/signup', async (req, res) => {
     const { username, email, password } = req.body;
-
     try {
         //change to query
         const [rows] = await db.query('SELECT * FROM USER WHERE Email_Address = ?', [email]);
@@ -207,9 +206,9 @@ app.post('/addCard', authenticateToken, async (req, res) => {
 
 // create a delete request to remove a card from the users collection.
 app.delete('/removeCard', authenticateToken, async (req, res) => {
-    const cardId = req.body.cardId;
+    const cardId = req.query.cardId;
     const userId = req.user.id;
-    const variantId = req.body.variantId;
+    const variantId = req.query.variantId;
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
@@ -234,7 +233,6 @@ app.delete('/removeCard', authenticateToken, async (req, res) => {
     }
 
 });
-
 
 // create get request for quantity
 app.get('/getQuantity', authenticateToken, async (req, res) => {

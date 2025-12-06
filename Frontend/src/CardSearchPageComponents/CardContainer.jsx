@@ -66,17 +66,13 @@ export default function CardContainer({ id, name, rarity, url, isLoggedIn }) {
     const removeCard = async () => {
         if (quantity > 0) {
             try {
-                const res = await fetch('http://localhost:5000/removeCard',
+                const res = await fetch(`http://localhost:5000/removeCard?cardId=${id}&variantId=${rarity}`,
                     {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json',
                             Authorization: `Bearer ${token}`,
                         },
-                        body: JSON.stringify({
-                            cardId: id,
-                            variantId: rarity,
-                        }),
                     }
                 );
                 if (!res.ok) {
