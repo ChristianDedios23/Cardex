@@ -171,7 +171,7 @@ app.get('/getCardInCollection', authenticateToken, async (req, res) => {
         res.status(200).json(cards);
     } catch (err) {
         console.error("Server error", err);
-        res.status(500).json({message:"Couldnt get card"})
+        res.status(500).json({ message: "Couldnt get card" })
     }
 
 });
@@ -197,13 +197,44 @@ app.post('/addCard', authenticateToken, async (req, res) => {
 
     } catch (err) {
         await connection.rollback();
-        console.error("Transaction failed: ",err);
-        res.status(500).json({error:"Transaction failed"});
+        console.error("Adding card failed: ", err);
+        res.status(500).json({ error: "Adding card failed" });
     } finally {
         connection.release();
     }
-    
+
 });
+
+// create a delete request to remove a card from the users collection.
+app.delete('/removeCard', authenticateToken, async (req, res) => {
+    const cardId = req.body.cardId;
+    const userId = req.user.id;
+    const variantId = req.body.variantId;
+    const connection = await db.getConnection();
+    try {
+        await connection.beginTransaction();
+
+
+        const [result] = await connection.query('UPDATE COLLECTION SET Quantity = Quantity - 1 WHERE User_ID = ? AND Card_ID = ? AND Variant_ID = ? AND Quantity > 1', [userId, cardId, variantId]);
+        if (result.affectedRows === 0) {
+            const [deleted] = await connection.query('DELETE FROM COLLECTION WHERE User_ID = ? AND Card_ID = ? AND Variant_ID = ?', [userId, cardId, variantId]);
+            if (deleteResult.affectedRows === 0) {
+                await connection.rollback();
+                return res.status(404).json({ message: 'Card not found in collection' });
+            }
+        }
+        await connection.commit();
+        res.status(200).json({ message: 'Removed successfully!' });
+    } catch (err) {
+        await connection.rollback();
+        console.error("Removing card failed: ", err);
+        res.status(500).json({ error: "Removing card failed" });
+    } finally {
+        connection.release();
+    }
+
+});
+
 
 // create get request for quantity
 app.get('/getQuantity', authenticateToken, async (req, res) => {
@@ -213,7 +244,7 @@ app.get('/getQuantity', authenticateToken, async (req, res) => {
         const quantity = await db.query('SELECT Quantity FROM COLLECTION WHERE User_ID = ? AND Card_ID = ?', [userId, cardId]);
         res.status(200).json(quantity[0]);
     } catch (err) {
-        res.status(500).json({message:"Couldnt find quantity"})
+        res.status(500).json({ message: "Couldnt find quantity" })
         console.error(err);
     }
 
