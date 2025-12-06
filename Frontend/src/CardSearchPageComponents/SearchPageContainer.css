@@ -87,6 +87,10 @@ input[type="radio"] {
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
 }
 
+#searchIcon{
+    color: white;
+}
+
 .cardSearchBtn{
     border: none;
     border-radius: 5px;

@@ -93,7 +93,7 @@
 }
 
 /* Input focus highlight */
-#user:focus, #pass:focus{
+#user:focus, #pass:focus, #email:focus{
     border-color: #6b9080;
     outline: none;
 }

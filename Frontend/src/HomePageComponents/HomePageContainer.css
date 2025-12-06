@@ -75,29 +75,19 @@ p {
     color: white;
 }
 
-/* container of search bar*/
-.searchBar {
-    background-color: #1e1e1e;
-    min-width: 20%;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 5px;
-    margin-top: 36px;
-}
-
-#searchIcon {
-    color: white;
-}
-
-#cardSearchHome {
-    margin-left: 10px;
-    outline: none;
+.getStartedBtn{
+    margin-top: 3%;
     border: none;
-    height: 95%;
-    width: 90%;
+    border-radius: 5px;
+    background-color: rgb(18, 18, 18);
     color: white;
-    font-size: 25px;
-    background-color: #1e1e1e;
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    width: 350px;
+    height: 15%;
+    font-size: 35px;
+    filter: drop-shadow(0px 0px 15px rgb(0, 0, 0));
+    cursor: pointer;
 }
+
+
+
