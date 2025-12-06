@@ -2,7 +2,8 @@ import LoginPageContainer from './LoginPageComponents/LoginPageContainer'
 import HomePageContainer from './HomePageComponents/HomePageContainer'
 import SearchPageContainer from './CardSearchPageComponents/SearchPageContainer'
 import { Routes , Route} from 'react-router-dom'
-import SetsPageContainer from './SetsPageComponents/SetsPageContainer'
+import MyCollectionContainer from './MyCollectionComponents/MyCollectionContainer'
+import HelpPage from './HelpPageComponents/HelpPage'
 
 export default function App() {
 
@@ -11,7 +12,8 @@ export default function App() {
       <Route path="/" element={<LoginPageContainer/>}/>
       <Route path="/Home" element={ <HomePageContainer/> }/>
       <Route path='/Search' element={ <SearchPageContainer/> }/>
-      <Route path='/Sets' element={<SetsPageContainer/>} />
+      <Route path='/myCards' element={<MyCollectionContainer/>} />
+      <Route path='/Help' element={<HelpPage/>} />
       {/** Add other paths later */}
     </Routes>
   )

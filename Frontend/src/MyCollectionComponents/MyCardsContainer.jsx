@@ -1,8 +1,8 @@
 import { FaPlus, FaMinus } from 'react-icons/fa';
-import './CardContainer.css'
+import './MyCardsContainer.css'
 import { useEffect, useState } from 'react';
 
-export default function CardContainer({ id, name, rarity, url, isLoggedIn }) {
+export default function myCardsContainer({ id, name, rarity, url, isLoggedIn, onRemoved}) {
 
     const [quantity, setQuantity] = useState(0);
     const token = sessionStorage.getItem('token');
@@ -30,10 +30,14 @@ export default function CardContainer({ id, name, rarity, url, isLoggedIn }) {
 
     };
 
+
+
     useEffect(() => {
         if (!isLoggedIn || !id) return;
         fetchQuantity();
     }, [id, isLoggedIn, token]);
+
+
 
     const addCard = async () => {
         try {
@@ -63,6 +67,8 @@ export default function CardContainer({ id, name, rarity, url, isLoggedIn }) {
         }
     };
 
+
+
     const removeCard = async () => {
         if (quantity > 0) {
             try {
@@ -77,16 +83,24 @@ export default function CardContainer({ id, name, rarity, url, isLoggedIn }) {
                 );
                 if (!res.ok) {
                     console.error(res.status);
+                    return;
+                } 
+
+                if(quantity === 1) {
+                    onRemoved?.(id,rarity);
                 } else {
-                    console.log('Removed successfully!');
                     await fetchQuantity();
                 }
+                console.log('Removed successfully!');
+
 
             } catch (err) {
                 console.error(err);
             }
         }
     };
+
+
 
 
 

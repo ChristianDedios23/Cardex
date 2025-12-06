@@ -222,9 +222,9 @@ app.get('/getQuantity', authenticateToken, async (req, res) => {
 
 // create a delete request to remove a card from the users collection.
 app.delete('/removeCard', authenticateToken, async (req, res) => {
-    const cardId = req.body.cardId;
+    const cardId = req.query.cardId;
     const userId = req.user.id;
-    const variantId = req.body.variantId;
+    const variantId = req.query.variantId;
     const connection = await db.getConnection();
     try {
         await connection.beginTransaction();
@@ -272,6 +272,21 @@ app.get('/image', async (req, res) => {
     catch (err) {
         console.error('error fetching card image', err);
     }
+});
+
+// create get request for cards in my collection
+app.get('/myCards', authenticateToken, async (req,res) => {
+
+    const userId = req.user.id;
+
+    try {
+        const [result] = await db.query('SELECT ca.* FROM CARD ca JOIN COLLECTION co ON ca.Card_ID = co.Card_ID JOIN USER u ON u.User_ID = co.User_ID WHERE co.User_ID = ?', [userId]);
+        res.status(200).json(result);
+    } catch (err) {
+        res.status(500).json({message: "No cards found"});
+        console.error(err);
+    }
+
 });
 
 const PORT = process.env.PORT || 5000;
