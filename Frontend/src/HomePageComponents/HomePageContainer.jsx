@@ -1,6 +1,7 @@
 import './HomePageContainer.css'
 import { FaSearch } from 'react-icons/fa';
 import NavBar from '../NavBar';
+import { useNavigate } from 'react-router-dom';
 
 /*
     Fixes to consider: 
@@ -12,15 +13,13 @@ import NavBar from '../NavBar';
     - Include pages 
 */
 export default function HomePageContainer(){
-    
-    // const token = sessionStorage.getItem('token');
-    // let username;
+    const navigate = useNavigate();
 
-    // //Grab username from token
-    // if(token){
-    //     const decoded = jwtDecode(token);
-    //     username = decoded.username;
-    // }
+    const handleKeyPress = (e) => {
+        if(e.key === 'Enter'){
+            navigate('/Search');
+        }
+    }
 
     return(
         <div className='HomePageContainer'>
@@ -31,7 +30,7 @@ export default function HomePageContainer(){
                 <p>A Modern Search Tool For Pokemon</p>
                 <div className='searchBar'>
                     <FaSearch id='searchIcon'/>
-                    <input type='text' placeholder='Search cards...' id='cardSearchHome'/>
+                    <input type='text' placeholder='Search cards...' id='cardSearchHome' onKeyDown={handleKeyPress}/>
                 </div>
             </div>
         </div>

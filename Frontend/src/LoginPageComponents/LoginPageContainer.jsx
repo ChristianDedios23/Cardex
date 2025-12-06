@@ -72,49 +72,50 @@ export default function LoginPageContainer(){
             setMessage('Server error. Try again');    
         }
     }
-
     
     return(
-        <div className="loginContainer">
-            
-            <img src={logo2} alt='Cardex Logo' id='logo2'/>
-            <div className='loginBoxBorder'>
-            <div className="loginInputs">
-                
+        <div className='loginContainer'>
+            <NavBar/>
+            <div className="loginContent">
+                <img src={logo2} alt='Cardex Logo' id='logo2'/>
+                <div className='loginBoxBorder'>
+                    <div className="loginInputs">
+                        
 
-                <div className='emailInput'>
-                    <label htmlFor="email" className='inputLabel'>Email</label>
-                    <input type='text' id='email' onChange={(e) => {setEmail(e.target.value)}} placeholder='Enter Email...'/>
+                        <div className='emailInput'>
+                            <label htmlFor="email" className='inputLabel'>Email</label>
+                            <input type='text' id='email' onChange={(e) => {setEmail(e.target.value)}} placeholder='Enter Email...'/>
+                        </div>
+
+                        {!isLogin && (
+                            <div className='userNameInput'>
+                                <label htmlFor="user" className='inputLabel'>Username</label>
+                                <input type='text' id='user' onChange={(e) => {setUsername(e.target.value)}}placeholder='Enter Username...'/>
+                            </div>   
+                        )}
+                        
+                        <div className='passwordInput'>    
+                            <label htmlFor='pass' className='inputLabel'>Password</label>
+                            <input type='password' id='pass' onChange={(e) => {setPassword(e.target.value)}} placeholder='Enter Password...'/>
+                        </div>
+                        
+                        <div className='loginButton'>
+                            <input type='Button' value={isLogin ? 'Login' : 'Sign-Up'} id='login' onClick={handleSubmit}/>
+                        </div> 
+
+                        <div className='line'></div>
+                        
+                        {/*Change the text color based on error or success*/}
+                        {message && <p className='loginSignUpText' style={ isSuccess ? {color : 'green'} : {color : 'red'}}>{message}</p>}
+
+                        {isLogin ? 
+                            <p className='loginSignUpText'>Need an account? <span className='linkSL' onClick={() => {setIsLogin(false); setMessage('');}}>SIGN-UP</span></p> : 
+                            <p className='loginSignUpText'>Already a user? <span className='linkSL' onClick={() => {setIsLogin(true); setMessage('');}}>LOGIN</span></p>
+                            }
+                        
+                    </div>
                 </div>
-
-                {!isLogin && (
-                    <div className='userNameInput'>
-                        <label htmlFor="user" className='inputLabel'>Username</label>
-                        <input type='text' id='user' onChange={(e) => {setUsername(e.target.value)}}placeholder='Enter Username...'/>
-                    </div>   
-                )}
-                
-                <div className='passwordInput'>    
-                    <label htmlFor='pass' className='inputLabel'>Password</label>
-                    <input type='password' id='pass' onChange={(e) => {setPassword(e.target.value)}} placeholder='Enter Password...'/>
-                </div>
-                
-                <div className='loginButton'>
-                    <input type='Button' value={isLogin ? 'Login' : 'Sign-Up'} id='login' onClick={handleSubmit}/>
-                </div> 
-
-                <div className='line'></div>
-                
-                {/*Change the text color based on error or success*/}
-                {message && <p className='loginSignUpText' style={ isSuccess ? {color : 'green'} : {color : 'red'}}>{message}</p>}
-
-                {isLogin ? 
-                    <p className='loginSignUpText'>Need an account? <span className='linkSL' onClick={() => {setIsLogin(false); setMessage('');}}>SIGN-UP</span></p> : 
-                    <p className='loginSignUpText'>Already a user? <span className='linkSL' onClick={() => {setIsLogin(true); setMessage('');}}>LOGIN</span></p>
-                    }
-                
             </div>
-        </div>
-        </div>
+        </div>    
     )
 }

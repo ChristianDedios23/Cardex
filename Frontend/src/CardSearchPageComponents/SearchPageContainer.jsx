@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import NavBar from '../NavBar';
 import CardContainer from './CardContainer';
 
+
 export default function SearchPageContainer() {
 
     const [myData, setData] = useState([])
@@ -48,7 +49,6 @@ export default function SearchPageContainer() {
         catch (error) {
             console.error(error);
         }
-
     }
 
     const getSearchedCard = async () => {
@@ -56,30 +56,31 @@ export default function SearchPageContainer() {
 
             const url = `http://localhost:5000/getCard?cardName=${encodeURIComponent(searchTerm)}`;
 
-            console.log(`fetching response for ${searchTerm}`);
             const card = await fetch(url);
-            console.log("parsing response");
+            
             const cardInfo = await card.json();
-            console.log("Finished");
-            console.log(cardInfo);
+            
+            if(!cardInfo || cardInfo.length === 0){
+                alert(`There are no cards available for "${searchTerm}"`);
+            }
             setData(cardInfo);
         }
         catch (error) {
             console.error(error);
         }
-    }
+    };
 
     const getSearchedSet = async () => {
         try {
             const url = `http://localhost:5000/getSet?setName=${encodeURIComponent(searchTerm)}`;
-
-            console.log(`fetching response for ${searchTerm}`);
             const set = await fetch(url);
-            console.log("parsing response");
-            const setInfo = await set.json();
-            console.log("Finished");
-            console.log(setInfo);
-            setData(setInfo);
+            const setInfo = await set.json();        
+            
+            if(!setInfo || setInfo.length === 0){
+                alert(`There are no cards available for set "${searchTerm}"`)
+            }
+
+            setData(setInfo); 
         }
         catch (error) {
             console.error(error);
@@ -102,9 +103,11 @@ export default function SearchPageContainer() {
                 );
                 console.log("parsing response");
                 const setInfo = await set.json();
-                console.log("Finished");
-                console.log(setInfo);
-                setData(setInfo);
+             
+                if(!setInfo){
+                    alert(`There are no cards available for "${searchTerm}"`)
+                }
+                setData(setInfo || setInfo.length === 0);
             }
             catch (error) {
                 console.error(error);
@@ -116,7 +119,7 @@ export default function SearchPageContainer() {
         setSearchTerm(searchTerm.trim());
 
         if (!searchTerm) {
-            console.log("Didnt search");
+            alert(`There are no cards available for '${searchTerm}'`)
             return
         }
         if (filter == 'card') {
@@ -155,24 +158,24 @@ export default function SearchPageContainer() {
                 <div className='searchBarBox'>
                     <FaSearch id='searchIcon' />
                     <input type='text' placeholder='Search cards...' id='cardSearch' value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                    <button onClick={handleSearch}>Search</button>
                 </div>
-
+                
+                <button onClick={handleSearch} className='cardSearchBtn'>Search</button>
 
                 <label>
-                    <input defaultChecked type='radio' id='allOption' name='filter' onChange={(e) => setFilter("card")} />
+                    <input defaultChecked type='radio' name='filter' onChange={(e) => setFilter("card")} />
                     <span className='checkmark'></span>
                     Card
                 </label>
 
                 <label>
-                    <input type='radio' id='inCollectionOption' name='filter' onChange={(e) => setFilter("set")} />
+                    <input type='radio' name='filter' onChange={(e) => setFilter("set")} />
                     <span className='checkmark'></span>
                     Set
                 </label>
 
                 <label>
-                    <input type='radio' id='InCollection' name='filter' onChange={(e) => setFilter("collectionSearch")} />
+                    <input type='radio' name='filter' onChange={(e) => setFilter("collectionSearch")} />
                     <span className='checkmark'></span>
                     In Collection
                 </label>
