@@ -1,0 +1,130 @@
+.loginContainer{
+    width: 100%;
+    height: 100%;
+    background-image: url('../assets/Sparkling-Shiny-Background.jpg');
+}
+
+/* Main container for entire login page background & layout */
+.loginContent{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 80%;
+    overflow: hidden;
+}
+
+/* Logo sizing and spacing */
+#logo2{
+    width: 15%;
+    min-width: 290px;
+    margin-bottom: 5px;
+}
+
+/* Outer login box styling (border, background, size) */
+.loginBoxBorder{
+    min-width: 300px;
+    min-height: 390px;
+    background-color: #333333;
+    margin-bottom: 5%;
+    border-radius: 9px;
+    border: 3px solid #6b9080;
+}
+
+/* Layout for inputs inside the login box */
+.loginInputs{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    width: 100%;
+    height: 100%;
+}
+
+/* Shared layout for input sections and button containers */
+.userNameInput, .passwordInput, .loginButton, .emailInput{
+    display: flex;
+    flex-direction: column;
+    width: 80%;
+    margin-top: 25px;
+}
+
+/* Fixed height for each input block */
+.userNameInput, .passwordInput, .emailInput{
+    height: 75px;
+}
+
+/* Fixed height for login button container */
+.loginButton {
+    height: 80px;
+}
+
+/* Login button base styling */
+#login{
+    background-color: #6b9080;
+    color: #e0e0e0;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
+    height: 50%;
+    transition: background-color 1s ease-in, color 1s ease-in-out;
+}
+
+/* Login button hover effect */
+#login:hover{
+    background-color: #e0e0e0;
+    color: #6b9080;
+    cursor: pointer;
+}
+
+/* Styles for text input fields (email, user, password) */
+#user, #pass, #email{
+    background-color: #1f1f1f;
+    color: #e0e0e0;
+    font-family: 'Roboto', sans-serif;
+    font-size: 100%;
+    margin-top: 5px;
+    height: 100%;
+    padding-left: 5px;
+    border-radius: 10px;
+    border: 3px solid #555555;
+    transition: border-color 0.3s ease-in;
+}
+
+/* Input focus highlight */
+#user:focus, #pass:focus, #email:focus{
+    border-color: #6b9080;
+    outline: none;
+}
+
+/* Label styling for input titles */
+.inputLabel{
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold;
+    color:#e0e0e0;
+}
+
+/* Text for toggling login/sign-up */
+.loginSignUpText{
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold;
+    color:#e0e0e0;
+    margin-bottom: 30px;
+    font-size: 18px;
+}
+
+/* Clickable text link for switching login/sign-up */
+.linkSL{
+    color:#5191e6;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Divider line between form sections */
+.line{
+    background-color: white;
+    width: 80%;
+    height: 1px;
+    margin-bottom: 20px;
+}
