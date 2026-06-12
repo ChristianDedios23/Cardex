@@ -1,23 +1,33 @@
 {
-  "name": "backend",
-  "version": "1.0.0",
-  "main": "dbConfig.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "@tcgdex/sdk": "^2.7.1",
-    "bcrypt": "^6.0.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.15.3",
-    "nodemon": "^3.1.11"
-  }
+    "name": "backend",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "dev": "ts-node-dev --respawn src/index.ts",
+        "start": "ts-node src/index.ts",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "typecheck": "tsc --noEmit",
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "dependencies": {
+        "@scalar/express-api-reference": "^0.10.3",
+        "@supabase/supabase-js": "^2.108.1",
+        "cors": "^2.8.6",
+        "dotenv": "^17.4.2",
+        "express": "^5.2.1",
+        "yaml": "^2.9.0"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.6",
+        "@types/node": "^25.9.3",
+        "prettier": "^3.8.4",
+        "ts-node-dev": "^2.0.0",
+        "typescript": "^6.0.3"
+    }
 }

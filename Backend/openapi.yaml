@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+    title: Cardex API
+    version: 1.0.0
+    description: API for the Cardex trading card collection application.
+servers:
+    - url: /
+      description: API server
+paths:
+    /v1/heartbeat:
+        get:
+            tags:
+                - Health
+            summary: Server heartbeat
+            description: Returns a simple message confirming the API is running.
+            operationId: getHeartbeat
+            responses:
+                '200':
+                    description: Server is running
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+                                required:
+                                    - message
+                                properties:
+                                    message:
+                                        type: string
+                                        example: Server is running
