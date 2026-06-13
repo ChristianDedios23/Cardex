@@ -2,10 +2,23 @@ openapi: 3.0.3
 info:
     title: Cardex API
     version: 1.0.0
-    description: API for the Cardex trading card collection application.
+    description: |
+        API for the Cardex trading card collection application.
+
+        Card data is sourced from the [Pokémon TCG API](https://api.pokemontcg.io/v2).
+        User collection and wishlist data is stored in Supabase.
+
+        User card endpoints require a Supabase access token in the `Authorization` header.
 servers:
     - url: /
       description: API server
+tags:
+    - name: Health
+      description: Server health endpoints
+    - name: Cards
+      description: Search and retrieve Pokémon cards from the external TCG API
+    - name: User Cards
+      description: Manage a user's owned cards and wishlist
 paths:
     /v1/heartbeat:
         get:
@@ -20,10 +33,416 @@ paths:
                     content:
                         application/json:
                             schema:
-                                type: object
-                                required:
-                                    - message
-                                properties:
-                                    message:
-                                        type: string
-                                        example: Server is running
+                                $ref: '#/components/schemas/HeartbeatResponse'
+    /v1/cards/search:
+        get:
+            tags:
+                - Cards
+            summary: Search Pokémon cards
+            description: |
+                Search for cards by name using the Pokémon TCG API.
+                Results are proxied through the backend and are not stored in Supabase.
+            operationId: searchCards
+            parameters:
+                - name: query
+                  in: query
+                  required: true
+                  description: Card name to search for
+                  schema:
+                      type: string
+                  example: giratina
+            responses:
+                '200':
+                    description: List of matching cards from the Pokémon TCG API
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/PokemonCard'
+                '400':
+                    description: Missing or invalid search query
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Search query is required
+                '500':
+                    description: Server or upstream API error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+    /v1/cards/{id}:
+        get:
+            tags:
+                - Cards
+            summary: Get Pokémon card by ID
+            description: |
+                Retrieve a single card from the Pokémon TCG API by its external ID
+                (e.g. `swsh11-131`). Does not store anything in Supabase.
+            operationId: getCardById
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  description: Pokémon TCG API card ID
+                  schema:
+                      type: string
+                  example: swsh11-131
+            responses:
+                '200':
+                    description: Card details from the Pokémon TCG API
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PokemonCard'
+                '400':
+                    description: Missing or invalid card ID
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Card ID is required
+                '500':
+                    description: Server or upstream API error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+    /v1/user-cards:
+        post:
+            tags:
+                - User Cards
+            summary: Add card to collection or wishlist
+            description: |
+                Adds a card to the user's owned collection or wishlist.
+                Fetches the card from the Pokémon TCG API and stores a snapshot
+                (`card_name`, `card_image_url`) in Supabase.
+            operationId: createUserCard
+            security:
+                - bearerAuth: []
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/CreateUserCardRequest'
+                        examples:
+                            owned:
+                                summary: Owned card
+                                value:
+                                    external_card_id: swsh11-131
+                                    status: owned
+                                    quantity: 1
+                                    condition: near_mint
+                                    notes: Pulled from a pack
+                            wishlist:
+                                summary: Wishlist card
+                                value:
+                                    external_card_id: swsh11-131
+                                    status: wishlist
+                                    notes: Want this card later
+            responses:
+                '201':
+                    description: Card added successfully
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserCard'
+                '400':
+                    description: Validation error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                '401':
+                    description: Authentication required
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Authorization token is required
+                '500':
+                    description: Server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+    /v1/user-cards/me:
+        get:
+            tags:
+                - User Cards
+            summary: Get current user's cards
+            description: |
+                Returns the authenticated user's saved cards, newest first.
+                Optionally filter by `status`.
+            operationId: getMyUserCards
+            security:
+                - bearerAuth: []
+            parameters:
+                - name: status
+                  in: query
+                  required: false
+                  description: Filter by owned or wishlist cards
+                  schema:
+                      $ref: '#/components/schemas/CardStatus'
+            responses:
+                '200':
+                    description: List of user cards
+                    content:
+                        application/json:
+                            schema:
+                                type: array
+                                items:
+                                    $ref: '#/components/schemas/UserCard'
+                '400':
+                    description: Invalid status filter
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                '401':
+                    description: Authentication required
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                '500':
+                    description: Server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+    /v1/user-cards/{id}:
+        patch:
+            tags:
+                - User Cards
+            summary: Update a user card
+            description: Updates one or more fields on a user card owned by the authenticated user.
+            operationId: updateUserCard
+            security:
+                - bearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  description: User card row ID
+                  schema:
+                      type: string
+                      format: uuid
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/UpdateUserCardRequest'
+            responses:
+                '200':
+                    description: Updated user card
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/UserCard'
+                '400':
+                    description: Validation error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                '401':
+                    description: Authentication required
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                '404':
+                    description: User card not found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: User card not found
+                '500':
+                    description: Server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+        delete:
+            tags:
+                - User Cards
+            summary: Remove a user card
+            description: Deletes a card from the user's collection or wishlist.
+            operationId: deleteUserCard
+            security:
+                - bearerAuth: []
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  description: User card row ID
+                  schema:
+                      type: string
+                      format: uuid
+            responses:
+                '204':
+                    description: User card deleted
+                '401':
+                    description: Authentication required
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                '404':
+                    description: User card not found
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                '500':
+                    description: Server error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+components:
+    securitySchemes:
+        bearerAuth:
+            type: http
+            scheme: bearer
+            bearerFormat: JWT
+            description: Supabase access token from sign-in
+    schemas:
+        ErrorResponse:
+            type: object
+            required:
+                - error
+            properties:
+                error:
+                    type: string
+                    example: Something went wrong
+        HeartbeatResponse:
+            type: object
+            required:
+                - message
+            properties:
+                message:
+                    type: string
+                    example: Server is running
+        CardCondition:
+            type: string
+            enum:
+                - mint
+                - near_mint
+                - lightly_played
+                - moderately_played
+                - heavily_played
+                - damaged
+        CardStatus:
+            type: string
+            enum:
+                - owned
+                - wishlist
+        PokemonCard:
+            type: object
+            description: Card object returned by the Pokémon TCG API (subset of fields)
+            properties:
+                id:
+                    type: string
+                    example: swsh11-131
+                name:
+                    type: string
+                    example: Giratina V
+                images:
+                    type: object
+                    properties:
+                        small:
+                            type: string
+                            format: uri
+                        large:
+                            type: string
+                            format: uri
+        UserCard:
+            type: object
+            required:
+                - id
+                - user_id
+                - external_card_id
+                - status
+                - created_at
+                - updated_at
+            properties:
+                id:
+                    type: string
+                    format: uuid
+                user_id:
+                    type: string
+                    format: uuid
+                external_card_id:
+                    type: string
+                    example: swsh11-131
+                status:
+                    $ref: '#/components/schemas/CardStatus'
+                quantity:
+                    type: integer
+                    nullable: true
+                    example: 1
+                condition:
+                    allOf:
+                        - $ref: '#/components/schemas/CardCondition'
+                    nullable: true
+                notes:
+                    type: string
+                    nullable: true
+                card_name:
+                    type: string
+                    nullable: true
+                    example: Giratina V
+                card_image_url:
+                    type: string
+                    format: uri
+                    nullable: true
+                created_at:
+                    type: string
+                    format: date-time
+                updated_at:
+                    type: string
+                    format: date-time
+        CreateUserCardRequest:
+            type: object
+            required:
+                - external_card_id
+                - status
+            properties:
+                external_card_id:
+                    type: string
+                    example: swsh11-131
+                status:
+                    $ref: '#/components/schemas/CardStatus'
+                quantity:
+                    type: integer
+                    description: Defaults to 1 when status is owned
+                    example: 1
+                condition:
+                    $ref: '#/components/schemas/CardCondition'
+                notes:
+                    type: string
+        UpdateUserCardRequest:
+            type: object
+            properties:
+                status:
+                    $ref: '#/components/schemas/CardStatus'
+                quantity:
+                    type: integer
+                condition:
+                    allOf:
+                        - $ref: '#/components/schemas/CardCondition'
+                    nullable: true
+                notes:
+                    type: string
+                    nullable: true

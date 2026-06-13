@@ -1,0 +1,26 @@
+@import 'tailwindcss';
+
+:root {
+    --background: #0f1419;
+    --foreground: #e7ecf3;
+    --card: #171d26;
+    --border: #2a3441;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --muted: #8b98a8;
+    --success: #22c55e;
+    --danger: #ef4444;
+}
+
+body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+input,
+select,
+textarea,
+button {
+    font: inherit;
+}
