@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import type { Session } from '@supabase/supabase-js';
-import { getSupabase } from '@/lib/supabase';
+import type { User } from '@supabase/supabase-js';
+import { createClient, getAccessToken } from '@/lib/supabase/client';
 import {
     createUserCard,
     deleteUserCard,
@@ -24,11 +24,11 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 function AuthPanel({
-    session,
-    onSessionChange,
+    user,
+    onAuthChange,
 }: {
-    session: Session | null;
-    onSessionChange: (session: Session | null) => void;
+    user: User | null;
+    onAuthChange: (user: User | null) => void;
 }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -39,7 +39,8 @@ function AuthPanel({
         setLoading(true);
         setMessage(null);
 
-        const { data, error } = await getSupabase().auth.signInWithPassword({ email, password });
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
         setLoading(false);
 
@@ -48,7 +49,12 @@ function AuthPanel({
             return;
         }
 
-        onSessionChange(data.session);
+        if (!data.session) {
+            setMessage('Sign in succeeded but no session was returned. Confirm your email first.');
+            return;
+        }
+
+        onAuthChange(data.user);
         setMessage('Signed in successfully.');
     }
 
@@ -56,7 +62,8 @@ function AuthPanel({
         setLoading(true);
         setMessage(null);
 
-        const { data, error } = await getSupabase().auth.signUp({ email, password });
+        const supabase = createClient();
+        const { data, error } = await supabase.auth.signUp({ email, password });
 
         setLoading(false);
 
@@ -65,8 +72,8 @@ function AuthPanel({
             return;
         }
 
-        if (data.session) {
-            onSessionChange(data.session);
+        if (data.session && data.user) {
+            onAuthChange(data.user);
             setMessage('Account created and signed in.');
         } else {
             setMessage('Account created. Check your email if confirmation is required.');
@@ -74,15 +81,16 @@ function AuthPanel({
     }
 
     async function handleSignOut() {
-        await getSupabase().auth.signOut();
-        onSessionChange(null);
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        onAuthChange(null);
         setMessage('Signed out.');
     }
 
-    if (session) {
+    if (user) {
         return (
             <Panel title="Signed in">
-                <p className="text-sm text-[var(--muted)]">{session.user.email}</p>
+                <p className="text-sm text-[var(--muted)]">{user.email}</p>
                 <button
                     type="button"
                     onClick={handleSignOut}
@@ -135,33 +143,36 @@ function AuthPanel({
     );
 }
 
-function CardResult({
-    card,
-    token,
-    onSaved,
-}: {
-    card: PokemonCard;
-    token: string;
-    onSaved: () => void;
-}) {
+function CardResult({ card, onSaved }: { card: PokemonCard; onSaved: () => void }) {
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const imageUrl = card.images?.small ?? card.images?.large;
 
     async function save(status: 'owned' | 'wishlist') {
         setLoading(true);
-        setMessage(null);
+        setSuccessMessage(null);
+        setErrorMessage(null);
 
         try {
+            const token = await getAccessToken();
+
+            if (!token) {
+                setErrorMessage('You are not signed in. Sign in again and retry.');
+                return;
+            }
+
             await createUserCard(token, {
                 external_card_id: card.id,
                 status,
                 quantity: status === 'owned' ? 1 : undefined,
             });
-            setMessage(status === 'owned' ? 'Added to collection.' : 'Added to wishlist.');
+            setSuccessMessage(
+                status === 'owned' ? 'Added to your collection.' : 'Added to your wishlist.',
+            );
             onSaved();
         } catch (error) {
-            setMessage(error instanceof Error ? error.message : 'Failed to save card.');
+            setErrorMessage(error instanceof Error ? error.message : 'Failed to save card.');
         } finally {
             setLoading(false);
         }
@@ -180,7 +191,6 @@ function CardResult({
             <div className="flex flex-1 flex-col justify-between">
                 <div>
                     <p className="font-medium">{card.name}</p>
-                    <p className="text-sm text-[var(--muted)]">{card.id}</p>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                     <button
@@ -200,30 +210,45 @@ function CardResult({
                         Add wishlist
                     </button>
                 </div>
-                {message && <p className="mt-2 text-xs text-[var(--muted)]">{message}</p>}
+                {successMessage && (
+                    <p className="mt-2 text-xs text-[var(--success)]">{successMessage}</p>
+                )}
+                {errorMessage && (
+                    <p className="mt-2 text-xs text-[var(--danger)]">{errorMessage}</p>
+                )}
             </div>
         </div>
     );
 }
 
-function UserCardRow({
-    card,
-    token,
-    onDeleted,
-}: {
-    card: UserCard;
-    token: string;
-    onDeleted: () => void;
-}) {
+function formatCardStatus(status: UserCard['status']): string {
+    return status === 'owned' ? 'In collection' : 'On wishlist';
+}
+
+function formatCondition(condition: string): string {
+    return condition.replace(/_/g, ' ');
+}
+
+function UserCardRow({ card, onDeleted }: { card: UserCard; onDeleted: () => void }) {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     async function handleDelete() {
         setLoading(true);
+        setError(null);
 
         try {
+            const token = await getAccessToken();
+
+            if (!token) {
+                setError('You are not signed in.');
+                return;
+            }
+
             await deleteUserCard(token, card.id);
             onDeleted();
-        } catch {
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to delete card.');
             setLoading(false);
         }
     }
@@ -234,7 +259,7 @@ function UserCardRow({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                     src={card.card_image_url}
-                    alt={card.card_name ?? card.external_card_id}
+                    alt={card.card_name ?? 'Card'}
                     className="h-20 w-auto rounded object-contain"
                 />
             ) : (
@@ -243,13 +268,14 @@ function UserCardRow({
                 </div>
             )}
             <div className="flex-1">
-                <p className="font-medium">{card.card_name ?? card.external_card_id}</p>
+                <p className="font-medium">{card.card_name ?? 'Unknown card'}</p>
                 <p className="text-sm text-[var(--muted)]">
-                    {card.status}
-                    {card.quantity != null ? ` · qty ${card.quantity}` : ''}
-                    {card.condition ? ` · ${card.condition}` : ''}
+                    {formatCardStatus(card.status)}
+                    {card.quantity != null ? ` · ${card.quantity} copy${card.quantity === 1 ? '' : 'ies'}` : ''}
+                    {card.condition ? ` · ${formatCondition(card.condition)}` : ''}
                 </p>
                 {card.notes && <p className="mt-1 text-sm text-[var(--muted)]">{card.notes}</p>}
+                {error && <p className="mt-1 text-xs text-[var(--danger)]">{error}</p>}
             </div>
             <button
                 type="button"
@@ -264,7 +290,7 @@ function UserCardRow({
 }
 
 export function TestApp() {
-    const [session, setSession] = useState<Session | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [configError, setConfigError] = useState<string | null>(null);
     const [tab, setTab] = useState<Tab>('search');
     const [query, setQuery] = useState('pikachu');
@@ -275,14 +301,20 @@ export function TestApp() {
 
     useEffect(() => {
         try {
-            getSupabase()
-                .auth.getSession()
-                .then(({ data }) => setSession(data.session));
+            const supabase = createClient();
+
+            supabase.auth.getUser().then(({ data, error }) => {
+                if (error) {
+                    setUser(null);
+                    return;
+                }
+                setUser(data.user);
+            });
 
             const {
                 data: { subscription },
-            } = getSupabase().auth.onAuthStateChange((_event, nextSession) => {
-                setSession(nextSession);
+            } = supabase.auth.onAuthStateChange((_event, session) => {
+                setUser(session?.user ?? null);
             });
 
             return () => subscription.unsubscribe();
@@ -292,13 +324,21 @@ export function TestApp() {
     }, []);
 
     async function loadUserCards(status?: 'owned' | 'wishlist') {
-        if (!session?.access_token) return;
+        if (!user) return;
 
         setLoading(true);
         setMessage(null);
 
         try {
-            const cards = await getMyUserCards(session.access_token, status);
+            const token = await getAccessToken();
+
+            if (!token) {
+                setMessage('You are not signed in. Sign in again and retry.');
+                setUser(null);
+                return;
+            }
+
+            const cards = await getMyUserCards(token, status);
             setUserCards(cards);
         } catch (error) {
             setMessage(error instanceof Error ? error.message : 'Failed to load cards.');
@@ -308,7 +348,7 @@ export function TestApp() {
     }
 
     useEffect(() => {
-        if (!session?.access_token) {
+        if (!user) {
             setUserCards([]);
             return;
         }
@@ -319,15 +359,23 @@ export function TestApp() {
             loadUserCards('wishlist');
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [session, tab]);
+    }, [user, tab]);
 
     async function handleSearch(event: React.FormEvent) {
         event.preventDefault();
+
+        const trimmed = query.trim();
+
+        if (trimmed.length < 3) {
+            setMessage('Search query must be at least 3 characters.');
+            return;
+        }
+
         setLoading(true);
         setMessage(null);
 
         try {
-            const cards = await searchCards(query.trim());
+            const cards = await searchCards(trimmed);
             setSearchResults(cards);
             if (cards.length === 0) {
                 setMessage('No cards found.');
@@ -352,13 +400,11 @@ export function TestApp() {
         );
     }
 
-    const token = session?.access_token;
-
     return (
         <div className="grid gap-6">
-            <AuthPanel session={session} onSessionChange={setSession} />
+            <AuthPanel user={user} onAuthChange={setUser} />
 
-            {session && (
+            {user && (
                 <>
                     <div className="flex flex-wrap gap-2">
                         {(['search', 'collection', 'wishlist'] as Tab[]).map((item) => (
@@ -388,18 +434,20 @@ export function TestApp() {
                                 />
                                 <button
                                     type="submit"
-                                    disabled={loading || !query.trim()}
+                                    disabled={loading || query.trim().length < 3}
                                     className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50"
                                 >
                                     Search
                                 </button>
                             </form>
+                            <p className="mb-4 text-sm text-[var(--muted)]">
+                                Enter at least 3 characters to search.
+                            </p>
                             <div className="grid gap-3">
                                 {searchResults.map((card) => (
                                     <CardResult
                                         key={card.id}
                                         card={card}
-                                        token={token!}
                                         onSaved={() => {
                                             if (tab !== 'search') loadUserCards();
                                         }}
@@ -420,7 +468,6 @@ export function TestApp() {
                                     <UserCardRow
                                         key={card.id}
                                         card={card}
-                                        token={token!}
                                         onDeleted={() =>
                                             loadUserCards(tab === 'collection' ? 'owned' : 'wishlist')
                                         }

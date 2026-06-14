@@ -1,5 +1,10 @@
 import { Request, Response } from 'express';
-import { getPokemonCardById } from '../services/pokemonTcg.service';
+import {
+    getPokemonCardById,
+    PokemonTcgNotFoundError,
+    PokemonTcgTimeoutError,
+    PokemonTcgUpstreamError,
+} from '../services/pokemonTcg.service';
 import {
     deleteUserCardById,
     findUserCards,
@@ -23,28 +28,58 @@ function getAuthenticatedUserId(req: Request): string | undefined {
     return req.user?.id;
 }
 
+function duplicateCardMessage(status: CardStatus): string {
+    return status === 'owned'
+        ? 'This card is already in your collection.'
+        : 'This card is already on your wishlist.';
+}
+
+function handlePokemonTcgError(error: unknown, res: Response) {
+    if (error instanceof PokemonTcgNotFoundError) {
+        return res.status(404).json({
+            error: 'We could not find that card. Try searching again.',
+        });
+    }
+
+    if (error instanceof PokemonTcgTimeoutError) {
+        return res.status(504).json({
+            error: 'Card lookup timed out. Please try again.',
+        });
+    }
+
+    if (error instanceof PokemonTcgUpstreamError) {
+        return res.status(502).json({
+            error: 'Unable to look up card details right now. Please try again.',
+        });
+    }
+
+    return res.status(500).json({
+        error: error instanceof Error ? error.message : 'Something went wrong',
+    });
+}
+
 export const createUserCard = async (req: Request, res: Response) => {
     try {
         const { external_card_id, status, quantity, condition, notes } = req.body;
 
         if (!external_card_id || typeof external_card_id !== 'string') {
-            return res.status(400).json({ error: 'external_card_id is required' });
+            return res.status(400).json({ error: 'A card must be selected before saving.' });
         }
 
         if (!status || !allowedStatuses.includes(status)) {
             return res.status(400).json({
-                error: "status must be either 'owned' or 'wishlist'",
+                error: "Choose whether to add the card to your collection or wishlist.",
             });
         }
 
         if (condition && !allowedConditions.includes(condition)) {
-            return res.status(400).json({ error: 'Invalid card condition' });
+            return res.status(400).json({ error: 'Please choose a valid card condition.' });
         }
 
         const userId = getAuthenticatedUserId(req);
 
         if (!userId) {
-            return res.status(401).json({ error: 'User authentication is required' });
+            return res.status(401).json({ error: 'Sign in to save cards.' });
         }
 
         const card = await getPokemonCardById(external_card_id);
@@ -62,14 +97,18 @@ export const createUserCard = async (req: Request, res: Response) => {
         });
 
         if (error) {
-            return res.status(500).json({ error: error.message });
+            if (error.code === '23505') {
+                return res.status(409).json({ error: duplicateCardMessage(status) });
+            }
+
+            return res.status(500).json({
+                error: 'Unable to save the card. Please try again.',
+            });
         }
 
         return res.status(201).json(data);
     } catch (error) {
-        return res.status(500).json({
-            error: error instanceof Error ? error.message : 'Something went wrong',
-        });
+        return handlePokemonTcgError(error, res);
     }
 };
 
@@ -78,7 +117,7 @@ export const getMyUserCards = async (req: Request, res: Response) => {
         const userId = getAuthenticatedUserId(req);
 
         if (!userId) {
-            return res.status(401).json({ error: 'User authentication is required' });
+            return res.status(401).json({ error: 'Sign in to view your cards.' });
         }
 
         const statusParam = req.query.status;
@@ -90,7 +129,7 @@ export const getMyUserCards = async (req: Request, res: Response) => {
                 !allowedStatuses.includes(statusParam as CardStatus)
             ) {
                 return res.status(400).json({
-                    error: "status must be either 'owned' or 'wishlist'",
+                    error: "Filter by collection or wishlist only.",
                 });
             }
             status = statusParam as CardStatus;
@@ -99,7 +138,9 @@ export const getMyUserCards = async (req: Request, res: Response) => {
         const { data, error } = await findUserCards(userId, status);
 
         if (error) {
-            return res.status(500).json({ error: error.message });
+            return res.status(500).json({
+                error: 'Unable to load your cards. Please try again.',
+            });
         }
 
         return res.json(data);
@@ -115,13 +156,13 @@ export const updateUserCard = async (req: Request, res: Response) => {
         const userId = getAuthenticatedUserId(req);
 
         if (!userId) {
-            return res.status(401).json({ error: 'User authentication is required' });
+            return res.status(401).json({ error: 'Sign in to update cards.' });
         }
 
         const { id } = req.params;
 
         if (!id || typeof id !== 'string') {
-            return res.status(400).json({ error: 'User card ID is required' });
+            return res.status(400).json({ error: 'Card not found.' });
         }
 
         const { status, quantity, condition, notes } = req.body;
@@ -135,7 +176,7 @@ export const updateUserCard = async (req: Request, res: Response) => {
         if (status !== undefined) {
             if (!allowedStatuses.includes(status)) {
                 return res.status(400).json({
-                    error: "status must be either 'owned' or 'wishlist'",
+                    error: "Choose whether the card belongs in your collection or wishlist.",
                 });
             }
             updates.status = status;
@@ -147,7 +188,7 @@ export const updateUserCard = async (req: Request, res: Response) => {
 
         if (condition !== undefined) {
             if (condition !== null && !allowedConditions.includes(condition)) {
-                return res.status(400).json({ error: 'Invalid card condition' });
+                return res.status(400).json({ error: 'Please choose a valid card condition.' });
             }
             updates.condition = condition;
         }
@@ -157,17 +198,25 @@ export const updateUserCard = async (req: Request, res: Response) => {
         }
 
         if (Object.keys(updates).length === 0) {
-            return res.status(400).json({ error: 'No valid fields to update' });
+            return res.status(400).json({ error: 'No changes were provided.' });
         }
 
         const { data, error } = await updateUserCardById(userId, id, updates);
 
         if (error) {
-            return res.status(500).json({ error: error.message });
+            if (error.code === '23505' && updates.status) {
+                return res.status(409).json({
+                    error: duplicateCardMessage(updates.status),
+                });
+            }
+
+            return res.status(500).json({
+                error: 'Unable to update the card. Please try again.',
+            });
         }
 
         if (!data) {
-            return res.status(404).json({ error: 'User card not found' });
+            return res.status(404).json({ error: 'Card not found in your list.' });
         }
 
         return res.json(data);
@@ -183,23 +232,25 @@ export const deleteUserCard = async (req: Request, res: Response) => {
         const userId = getAuthenticatedUserId(req);
 
         if (!userId) {
-            return res.status(401).json({ error: 'User authentication is required' });
+            return res.status(401).json({ error: 'Sign in to remove cards.' });
         }
 
         const { id } = req.params;
 
         if (!id || typeof id !== 'string') {
-            return res.status(400).json({ error: 'User card ID is required' });
+            return res.status(400).json({ error: 'Card not found.' });
         }
 
         const { data, error } = await deleteUserCardById(userId, id);
 
         if (error) {
-            return res.status(500).json({ error: error.message });
+            return res.status(500).json({
+                error: 'Unable to remove the card. Please try again.',
+            });
         }
 
         if (!data) {
-            return res.status(404).json({ error: 'User card not found' });
+            return res.status(404).json({ error: 'Card not found in your list.' });
         }
 
         return res.status(204).send();

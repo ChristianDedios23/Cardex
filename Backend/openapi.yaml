@@ -42,14 +42,17 @@ paths:
             description: |
                 Search for cards by name using the Pokémon TCG API.
                 Results are proxied through the backend and are not stored in Supabase.
+                Responses include only `id`, `name`, and `images`. Repeat searches are
+                cached by the backend for up to 5 minutes.
             operationId: searchCards
             parameters:
                 - name: query
                   in: query
                   required: true
-                  description: Card name to search for
+                  description: Card name to search for (minimum 3 characters)
                   schema:
                       type: string
+                      minLength: 3
                   example: giratina
             responses:
                 '200':
@@ -66,14 +69,31 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
-                            example:
-                                error: Search query is required
-                '500':
-                    description: Server or upstream API error
+                            examples:
+                                missing:
+                                    summary: Missing query
+                                    value:
+                                        error: Search query is required
+                                tooShort:
+                                    summary: Query too short
+                                    value:
+                                        error: Search query must be at least 3 characters
+                '502':
+                    description: Upstream Pokémon TCG API error
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Failed to search Pokémon cards
+                '504':
+                    description: Upstream Pokémon TCG API timed out
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Pokémon TCG API timed out
     /v1/cards/{id}:
         get:
             tags:
@@ -82,6 +102,7 @@ paths:
             description: |
                 Retrieve a single card from the Pokémon TCG API by its external ID
                 (e.g. `swsh11-131`). Does not store anything in Supabase.
+                Responses include only `id`, `name`, and `images`.
             operationId: getCardById
             parameters:
                 - name: id
@@ -106,12 +127,22 @@ paths:
                                 $ref: '#/components/schemas/ErrorResponse'
                             example:
                                 error: Card ID is required
-                '500':
-                    description: Server or upstream API error
+                '502':
+                    description: Upstream Pokémon TCG API error
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Failed to fetch Pokémon card
+                '504':
+                    description: Upstream Pokémon TCG API timed out
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Pokémon TCG API timed out
     /v1/user-cards:
         post:
             tags:
@@ -165,13 +196,54 @@ paths:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
                             example:
-                                error: Authorization token is required
+                                error: Sign in to save cards.
+                '404':
+                    description: Card not found in the Pokémon TCG API
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: We could not find that card. Try searching again.
+                '409':
+                    description: Card already saved with this status
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            examples:
+                                owned:
+                                    summary: Already in collection
+                                    value:
+                                        error: This card is already in your collection.
+                                wishlist:
+                                    summary: Already on wishlist
+                                    value:
+                                        error: This card is already on your wishlist.
+                '502':
+                    description: Upstream Pokémon TCG API error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Unable to look up card details right now. Please try again.
+                '504':
+                    description: Upstream Pokémon TCG API timed out
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Card lookup timed out. Please try again.
                 '500':
                     description: Server error
                     content:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Unable to save the card. Please try again.
     /v1/user-cards/me:
         get:
             tags:
