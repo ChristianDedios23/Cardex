@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import type { User } from '@supabase/supabase-js';
 import { useApp, type AppTab } from '@/components/app-shell/AppProvider';
+import { CardDetailModal } from '@/components/CardDetailModal';
 import { createClient, getAccessToken } from '@/lib/supabase/client';
 import {
     createUserCard,
@@ -19,6 +20,24 @@ import {
 type UserCardPatch =
     | { action: 'add'; card: UserCard }
     | { action: 'remove'; userCardId: string; externalCardId: string };
+
+type CardDetailSelection = {
+    cardId: string;
+    preview: PokemonCard | null;
+};
+
+function userCardToPreview(card: UserCard): PokemonCard {
+    return {
+        id: card.external_card_id,
+        name: card.card_name ?? 'Unknown card',
+        number: null,
+        setSymbol: null,
+        marketPrice: card.market_price,
+        images: card.card_image_url
+            ? { small: card.card_image_url, large: card.card_image_url }
+            : undefined,
+    };
+}
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
     return (
@@ -196,12 +215,14 @@ function CardResult({
     wishlistUserCardId,
     onOwnedChange,
     onWishlistChange,
+    onViewDetails,
 }: {
     card: PokemonCard;
     ownedUserCardId: string | null;
     wishlistUserCardId: string | null;
     onOwnedChange: (patch: UserCardPatch) => void;
     onWishlistChange: (patch: UserCardPatch) => void;
+    onViewDetails: (card: PokemonCard) => void;
 }) {
     const [savingAction, setSavingAction] = useState<'owned' | 'wishlist' | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -284,14 +305,19 @@ function CardResult({
         <article className="flex flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card-frame)]">
             <div className="card-tile-art flex aspect-[3/4] items-center justify-center overflow-hidden rounded-t-lg bg-[var(--background)] p-2">
                 {imageUrl ? (
-                    <span className="card-tile-shine">
+                    <button
+                        type="button"
+                        onClick={() => onViewDetails(card)}
+                        aria-label={`View details for ${card.name}`}
+                        className="card-tile-shine block max-h-full max-w-full border-0 bg-transparent p-0"
+                    >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={imageUrl}
                             alt={card.name}
                             className="block max-h-full max-w-full object-contain"
                         />
-                    </span>
+                    </button>
                 ) : (
                     <div className="flex h-full w-full items-center justify-center text-xs text-[var(--muted)]">
                         No image
@@ -431,9 +457,11 @@ function getCollectionTotal(cards: UserCard[]): number {
 function UserCardRow({
     card,
     onDeleted,
+    onViewDetails,
 }: {
     card: UserCard;
     onDeleted: (patch: UserCardPatch) => void;
+    onViewDetails: (card: UserCard) => void;
 }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -466,12 +494,19 @@ function UserCardRow({
     return (
         <div className="flex items-center gap-4 rounded-lg border border-[var(--border)] p-3">
             {card.card_image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                    src={card.card_image_url}
-                    alt={card.card_name ?? 'Card'}
-                    className="h-20 w-auto rounded object-contain"
-                />
+                <button
+                    type="button"
+                    onClick={() => onViewDetails(card)}
+                    aria-label={`View details for ${card.card_name ?? 'card'}`}
+                    className="shrink-0 rounded border-0 bg-transparent p-0"
+                >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                        src={card.card_image_url}
+                        alt={card.card_name ?? 'Card'}
+                        className="h-20 w-auto rounded object-contain transition-opacity hover:opacity-90"
+                    />
+                </button>
             ) : (
                 <div className="flex h-20 w-14 items-center justify-center rounded bg-white/5 text-xs text-[var(--muted)]">
                     No image
@@ -657,6 +692,7 @@ function SearchPagination({
 
 export function TestApp() {
     const { user, setUser, tab, configError, setPageLoading } = useApp();
+    const [detailSelection, setDetailSelection] = useState<CardDetailSelection | null>(null);
     const [query, setQuery] = useState('pikachu');
     const [activeQuery, setActiveQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -1020,6 +1056,14 @@ export function TestApp() {
 
     return (
         <div className="mx-auto grid max-w-6xl gap-6">
+            {detailSelection && (
+                <CardDetailModal
+                    cardId={detailSelection.cardId}
+                    preview={detailSelection.preview}
+                    onClose={() => setDetailSelection(null)}
+                />
+            )}
+
             {!user && <AuthPanel onAuthChange={setUser} />}
 
             {user && (
@@ -1064,6 +1108,12 @@ export function TestApp() {
                                         wishlistUserCardId={wishlistByExternalId[card.id] ?? null}
                                         onOwnedChange={handleOwnedChange}
                                         onWishlistChange={handleWishlistChange}
+                                        onViewDetails={(selected) =>
+                                            setDetailSelection({
+                                                cardId: selected.id,
+                                                preview: selected,
+                                            })
+                                        }
                                     />
                                 ))}
                             </div>
@@ -1102,6 +1152,12 @@ export function TestApp() {
                                         key={card.id}
                                         card={card}
                                         onDeleted={handleUserCardDeleted}
+                                        onViewDetails={(selected) =>
+                                            setDetailSelection({
+                                                cardId: selected.external_card_id,
+                                                preview: userCardToPreview(selected),
+                                            })
+                                        }
                                     />
                                 ))}
                             </div>

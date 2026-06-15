@@ -12,6 +12,33 @@ export type PokemonCard = {
     marketPrice: number | null;
 };
 
+export type PokemonCardAttack = {
+    name: string;
+    damage: string | null;
+    text: string | null;
+};
+
+export type PokemonCardAbility = {
+    name: string;
+    text: string | null;
+};
+
+export type PokemonCardDetail = PokemonCard & {
+    setName: string | null;
+    setSeries: string | null;
+    setLogo: string | null;
+    rarity: string | null;
+    artist: string | null;
+    supertype: string | null;
+    subtypes: string[];
+    types: string[];
+    hp: string | null;
+    flavorText: string | null;
+    tcgplayerUrl: string | null;
+    attacks: PokemonCardAttack[];
+    abilities: PokemonCardAbility[];
+};
+
 export type PaginatedPokemonCardSearch = {
     data: PokemonCard[];
     page: number;
@@ -70,6 +97,9 @@ async function apiFetch<T>(
     return data as T;
 }
 
+const cardDetailCache = new Map<string, PokemonCardDetail>();
+const cardDetailInflight = new Map<string, Promise<PokemonCardDetail>>();
+
 export async function searchCards(query: string, page = 1, pageSize = 20) {
     const params = new URLSearchParams({
         query,
@@ -78,6 +108,33 @@ export async function searchCards(query: string, page = 1, pageSize = 20) {
     });
 
     return apiFetch<PaginatedPokemonCardSearch>(`/v1/cards/search?${params.toString()}`);
+}
+
+export async function getCardById(id: string) {
+    const key = id.toLowerCase();
+    const cached = cardDetailCache.get(key);
+
+    if (cached) {
+        return cached;
+    }
+
+    const inflight = cardDetailInflight.get(key);
+
+    if (inflight) {
+        return inflight;
+    }
+
+    const promise = apiFetch<PokemonCardDetail>(`/v1/cards/${encodeURIComponent(id)}`)
+        .then((detail) => {
+            cardDetailCache.set(key, detail);
+            return detail;
+        })
+        .finally(() => {
+            cardDetailInflight.delete(key);
+        });
+
+    cardDetailInflight.set(key, promise);
+    return promise;
 }
 
 export function createUserCardSnapshot(card: PokemonCard) {

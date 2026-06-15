@@ -3,6 +3,8 @@ import { getCacheTtlMs, getOrFetch } from './pokemonTcgCache';
 
 const POKEMON_TCG_BASE_URL = 'https://api.pokemontcg.io/v2';
 const CARD_SELECT = 'id,name,number,images,tcgplayer,set';
+const CARD_DETAIL_SELECT =
+    'id,name,number,images,tcgplayer,set,rarity,artist,supertype,subtypes,types,hp,flavorText,attacks,abilities';
 
 export type PokemonCard = {
     id: string;
@@ -14,6 +16,33 @@ export type PokemonCard = {
         large?: string;
     };
     marketPrice: number | null;
+};
+
+export type PokemonCardAttack = {
+    name: string;
+    damage: string | null;
+    text: string | null;
+};
+
+export type PokemonCardAbility = {
+    name: string;
+    text: string | null;
+};
+
+export type PokemonCardDetail = PokemonCard & {
+    setName: string | null;
+    setSeries: string | null;
+    setLogo: string | null;
+    rarity: string | null;
+    artist: string | null;
+    supertype: string | null;
+    subtypes: string[];
+    types: string[];
+    hp: string | null;
+    flavorText: string | null;
+    tcgplayerUrl: string | null;
+    attacks: PokemonCardAttack[];
+    abilities: PokemonCardAbility[];
 };
 
 export type PokemonCardSearchResult = {
@@ -43,14 +72,33 @@ type UpstreamPokemonCard = {
         large?: string;
     };
     tcgplayer?: {
+        url?: string;
         prices?: Record<string, TcgPlayerPriceVariant>;
     };
     set?: {
+        name?: string;
+        series?: string;
         images?: {
             symbol?: string;
             logo?: string;
         };
     };
+    rarity?: string;
+    artist?: string;
+    supertype?: string;
+    subtypes?: string[];
+    types?: string[];
+    hp?: string;
+    flavorText?: string;
+    attacks?: Array<{
+        name: string;
+        damage?: string;
+        text?: string;
+    }>;
+    abilities?: Array<{
+        name: string;
+        text?: string;
+    }>;
 };
 
 const TCGPLAYER_VARIANT_PRIORITY = [
@@ -103,6 +151,36 @@ function mapPokemonCard(card: UpstreamPokemonCard): PokemonCard {
     }
 
     return mapped;
+}
+
+function mapPokemonCardDetail(card: UpstreamPokemonCard): PokemonCardDetail {
+    const base = mapPokemonCard(card);
+
+    return {
+        ...base,
+        setName: card.set?.name?.trim() ? card.set.name.trim() : null,
+        setSeries: card.set?.series?.trim() ? card.set.series.trim() : null,
+        setLogo: card.set?.images?.logo?.trim() ? card.set.images.logo.trim() : null,
+        rarity: card.rarity?.trim() ? card.rarity.trim() : null,
+        artist: card.artist?.trim() ? card.artist.trim() : null,
+        supertype: card.supertype?.trim() ? card.supertype.trim() : null,
+        subtypes: card.subtypes?.filter(Boolean) ?? [],
+        types: card.types?.filter(Boolean) ?? [],
+        hp: card.hp?.trim() ? card.hp.trim() : null,
+        flavorText: card.flavorText?.trim() ? card.flavorText.trim() : null,
+        tcgplayerUrl: card.tcgplayer?.url?.trim() ? card.tcgplayer.url.trim() : null,
+        attacks:
+            card.attacks?.map((attack) => ({
+                name: attack.name,
+                damage: attack.damage?.trim() ? attack.damage.trim() : null,
+                text: attack.text?.trim() ? attack.text.trim() : null,
+            })) ?? [],
+        abilities:
+            card.abilities?.map((ability) => ({
+                name: ability.name,
+                text: ability.text?.trim() ? ability.text.trim() : null,
+            })) ?? [],
+    };
 }
 
 export class PokemonTcgTimeoutError extends Error {
@@ -216,14 +294,14 @@ export async function searchPokemonCards(
     );
 }
 
-export async function getPokemonCardById(cardId: string): Promise<PokemonCard> {
-    const cacheKey = `card:${cardId.toLowerCase()}`;
+export async function getPokemonCardById(cardId: string): Promise<PokemonCardDetail> {
+    const cacheKey = `card-detail:${cardId.toLowerCase()}`;
 
     return getOrFetch(
         cacheKey,
         async () => {
             const url = new URL(`${POKEMON_TCG_BASE_URL}/cards/${encodeURIComponent(cardId)}`);
-            url.searchParams.set('select', CARD_SELECT);
+            url.searchParams.set('select', CARD_DETAIL_SELECT);
 
             const response = await fetchUpstreamWithRetry(url.toString());
 
@@ -236,7 +314,7 @@ export async function getPokemonCardById(cardId: string): Promise<PokemonCard> {
             }
 
             const data = await response.json();
-            return mapPokemonCard(data.data as UpstreamPokemonCard);
+            return mapPokemonCardDetail(data.data as UpstreamPokemonCard);
         },
         getCacheTtlMs(),
     );
