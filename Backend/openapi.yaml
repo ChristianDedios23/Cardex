@@ -42,7 +42,7 @@ paths:
             description: |
                 Search for cards by name using the Pokémon TCG API.
                 Results are proxied through the backend and are not stored in Supabase.
-                Responses include only `id`, `name`, and `images`. Repeat searches are
+                Responses include `id`, `name`, `number`, `setSymbol`, `images`, and `marketPrice`. Repeat searches are
                 cached by the backend for up to 30 minutes (configurable via `POKEMON_TCG_CACHE_TTL_MS`).
             operationId: searchCards
             parameters:
@@ -127,7 +127,7 @@ paths:
             description: |
                 Retrieve a single card from the Pokémon TCG API by its external ID
                 (e.g. `swsh11-131`). Does not store anything in Supabase.
-                Responses include only `id`, `name`, and `images`.
+                Responses include `id`, `name`, `number`, `setSymbol`, `images`, and `marketPrice`.
             operationId: getCardById
             parameters:
                 - name: id
@@ -462,6 +462,17 @@ components:
                 name:
                     type: string
                     example: Giratina V
+                number:
+                    type: string
+                    nullable: true
+                    description: Card number within its set (e.g. "131", "TG12")
+                    example: '131'
+                setSymbol:
+                    type: string
+                    format: uri
+                    nullable: true
+                    description: URL to the set symbol image from the Pokémon TCG API
+                    example: https://images.pokemontcg.io/swsh11/symbol.png
                 marketPrice:
                     type: number
                     nullable: true

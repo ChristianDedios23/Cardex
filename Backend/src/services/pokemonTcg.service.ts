@@ -2,11 +2,13 @@ import { escapeLucene } from '../utils/lucene';
 import { getCacheTtlMs, getOrFetch } from './pokemonTcgCache';
 
 const POKEMON_TCG_BASE_URL = 'https://api.pokemontcg.io/v2';
-const CARD_SELECT = 'id,name,images,tcgplayer';
+const CARD_SELECT = 'id,name,number,images,tcgplayer,set';
 
 export type PokemonCard = {
     id: string;
     name: string;
+    number: string | null;
+    setSymbol: string | null;
     images?: {
         small?: string;
         large?: string;
@@ -35,12 +37,19 @@ type TcgPlayerPriceVariant = {
 type UpstreamPokemonCard = {
     id: string;
     name: string;
+    number?: string;
     images?: {
         small?: string;
         large?: string;
     };
     tcgplayer?: {
         prices?: Record<string, TcgPlayerPriceVariant>;
+    };
+    set?: {
+        images?: {
+            symbol?: string;
+            logo?: string;
+        };
     };
 };
 
@@ -86,6 +95,8 @@ function mapPokemonCard(card: UpstreamPokemonCard): PokemonCard {
     const mapped: PokemonCard = {
         id: card.id,
         name: card.name,
+        number: card.number?.trim() ? card.number.trim() : null,
+        setSymbol: card.set?.images?.symbol?.trim() ? card.set.images.symbol.trim() : null,
         marketPrice: extractTcgPlayerMarketPrice(card.tcgplayer),
     };
 

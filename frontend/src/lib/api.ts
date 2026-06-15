@@ -3,6 +3,8 @@ const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').rep
 export type PokemonCard = {
     id: string;
     name: string;
+    number: string | null;
+    setSymbol: string | null;
     images?: {
         small?: string;
         large?: string;

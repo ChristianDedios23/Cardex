@@ -301,8 +301,25 @@ function CardResult({
                 {card.name}
             </p>
 
+            {(card.setSymbol || card.number) && (
+                <p className="flex items-center justify-center gap-1 px-2 pt-0.5 text-center text-xs text-[var(--muted)]">
+                    {card.setSymbol && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={card.setSymbol}
+                            alt=""
+                            className="h-4 w-auto max-w-[1.25rem] shrink-0 object-contain"
+                            aria-hidden="true"
+                        />
+                    )}
+                    {card.number && (
+                        <span>{card.setSymbol ? ` · #${card.number}` : `#${card.number}`}</span>
+                    )}
+                </p>
+            )}
+
             {card.marketPrice != null ? (
-                <p className="truncate px-2 pb-2 text-center text-xs text-[var(--muted)]">
+                <p className="truncate px-2 pb-2 pt-0.5 text-center text-xs text-[var(--muted)]">
                     {formatTcgPlayerMarketPrice(card.marketPrice)} · TCGPlayer
                 </p>
             ) : (
