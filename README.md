@@ -21,7 +21,7 @@ Card data comes from the [Pokémon TCG API](https://dev.pokemontcg.io/). Your sa
 **Backend** — http://localhost:3000
 
 ```bash
-cd Backend
+cd backend
 cp .env.example .env   # fill in your keys
 npm install
 npm run dev
@@ -36,14 +36,14 @@ npm install
 npm run dev
 ```
 
-Local API docs: [http://localhost:3000/api-docs](http://localhost:3000/api-docs). OpenAPI spec: [`Backend/openapi.yaml`](Backend/openapi.yaml).
+Local API docs: [http://localhost:3000/api-docs](http://localhost:3000/api-docs). OpenAPI spec: [`backend/openapi.yaml`](backend/openapi.yaml).
 
 ## Deployment
 
 | Service | Host | Root directory | Build | Start |
 |---------|------|----------------|-------|-------|
 | Frontend | Vercel | `frontend` | default | default |
-| Backend | Render | `Backend` | `npm install && npm run build` | `npm start` |
+| Backend | Render | `backend` | `npm install && npm run build` | `npm start` |
 
 **Frontend (Vercel):** set `NEXT_PUBLIC_API_URL=https://cardex-78ts.onrender.com` plus your Supabase vars.
 
