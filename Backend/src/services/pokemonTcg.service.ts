@@ -63,9 +63,7 @@ const TCGPLAYER_VARIANT_PRIORITY = [
     'unlimited',
 ];
 
-function extractTcgPlayerMarketPrice(
-    tcgplayer: UpstreamPokemonCard['tcgplayer'],
-): number | null {
+function extractTcgPlayerMarketPrice(tcgplayer: UpstreamPokemonCard['tcgplayer']): number | null {
     const prices = tcgplayer?.prices;
 
     if (!prices) {
@@ -145,10 +143,7 @@ function normalizeSearchQuery(query: string): string {
 }
 
 function isTimeoutError(error: unknown): boolean {
-    return (
-        error instanceof Error &&
-        (error.name === 'TimeoutError' || error.name === 'AbortError')
-    );
+    return error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
 }
 
 async function fetchUpstream(url: string): Promise<Response> {
@@ -187,56 +182,62 @@ export async function searchPokemonCards(
     const normalized = normalizeSearchQuery(query);
     const cacheKey = `search:${normalized}:page:${page}:size:${pageSize}`;
 
-    return getOrFetch(cacheKey, async () => {
-        const url = new URL(`${POKEMON_TCG_BASE_URL}/cards`);
-        const escaped = escapeLucene(normalized);
+    return getOrFetch(
+        cacheKey,
+        async () => {
+            const url = new URL(`${POKEMON_TCG_BASE_URL}/cards`);
+            const escaped = escapeLucene(normalized);
 
-        url.searchParams.set('q', `name:${escaped}*`);
-        url.searchParams.set('page', String(page));
-        url.searchParams.set('pageSize', String(pageSize));
-        url.searchParams.set('select', CARD_SELECT);
+            url.searchParams.set('q', `name:${escaped}*`);
+            url.searchParams.set('page', String(page));
+            url.searchParams.set('pageSize', String(pageSize));
+            url.searchParams.set('select', CARD_SELECT);
 
-        const response = await fetchUpstreamWithRetry(url.toString());
+            const response = await fetchUpstreamWithRetry(url.toString());
 
-        if (!response.ok) {
-            throw new PokemonTcgUpstreamError('Failed to search Pokémon cards');
-        }
+            if (!response.ok) {
+                throw new PokemonTcgUpstreamError('Failed to search Pokémon cards');
+            }
 
-        const body = await response.json();
-        const totalCount = body.totalCount ?? 0;
-        const currentPage = body.page ?? page;
-        const currentPageSize = body.pageSize ?? pageSize;
+            const body = await response.json();
+            const totalCount = body.totalCount ?? 0;
+            const currentPage = body.page ?? page;
+            const currentPageSize = body.pageSize ?? pageSize;
 
-        return {
-            data: (body.data ?? []).map(mapPokemonCard),
-            page: currentPage,
-            pageSize: currentPageSize,
-            totalCount,
-            hasMore: currentPage * currentPageSize < totalCount,
-        };
-    }, getCacheTtlMs());
+            return {
+                data: (body.data ?? []).map(mapPokemonCard),
+                page: currentPage,
+                pageSize: currentPageSize,
+                totalCount,
+                hasMore: currentPage * currentPageSize < totalCount,
+            };
+        },
+        getCacheTtlMs(),
+    );
 }
 
 export async function getPokemonCardById(cardId: string): Promise<PokemonCard> {
     const cacheKey = `card:${cardId.toLowerCase()}`;
 
-    return getOrFetch(cacheKey, async () => {
-        const url = new URL(
-            `${POKEMON_TCG_BASE_URL}/cards/${encodeURIComponent(cardId)}`,
-        );
-        url.searchParams.set('select', CARD_SELECT);
+    return getOrFetch(
+        cacheKey,
+        async () => {
+            const url = new URL(`${POKEMON_TCG_BASE_URL}/cards/${encodeURIComponent(cardId)}`);
+            url.searchParams.set('select', CARD_SELECT);
 
-        const response = await fetchUpstreamWithRetry(url.toString());
+            const response = await fetchUpstreamWithRetry(url.toString());
 
-        if (response.status === 404) {
-            throw new PokemonTcgNotFoundError();
-        }
+            if (response.status === 404) {
+                throw new PokemonTcgNotFoundError();
+            }
 
-        if (!response.ok) {
-            throw new PokemonTcgUpstreamError('Failed to fetch Pokémon card');
-        }
+            if (!response.ok) {
+                throw new PokemonTcgUpstreamError('Failed to fetch Pokémon card');
+            }
 
-        const data = await response.json();
-        return mapPokemonCard(data.data as UpstreamPokemonCard);
-    }, getCacheTtlMs());
+            const data = await response.json();
+            return mapPokemonCard(data.data as UpstreamPokemonCard);
+        },
+        getCacheTtlMs(),
+    );
 }

@@ -102,7 +102,7 @@ export const createUserCard = async (req: Request, res: Response) => {
 
         if (!status || !allowedStatuses.includes(status)) {
             return res.status(400).json({
-                error: "Choose whether to add the card to your collection or wishlist.",
+                error: 'Choose whether to add the card to your collection or wishlist.',
             });
         }
 
@@ -177,7 +177,7 @@ export const getMyUserCards = async (req: Request, res: Response) => {
                 !allowedStatuses.includes(statusParam as CardStatus)
             ) {
                 return res.status(400).json({
-                    error: "Filter by collection or wishlist only.",
+                    error: 'Filter by collection or wishlist only.',
                 });
             }
             status = statusParam as CardStatus;
@@ -224,7 +224,7 @@ export const updateUserCard = async (req: Request, res: Response) => {
         if (status !== undefined) {
             if (!allowedStatuses.includes(status)) {
                 return res.status(400).json({
-                    error: "Choose whether the card belongs in your collection or wishlist.",
+                    error: 'Choose whether the card belongs in your collection or wishlist.',
                 });
             }
             updates.status = status;
