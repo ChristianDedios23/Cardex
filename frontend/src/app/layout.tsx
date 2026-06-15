@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist } from 'next/font/google';
+import { AppProvider } from '@/components/app-shell/AppProvider';
+import { AppShell } from '@/components/app-shell/AppShell';
 import './globals.css';
 
 const geistSans = Geist({
@@ -7,21 +9,16 @@ const geistSans = Geist({
     subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
-    variable: '--font-geist-mono',
-    subsets: ['latin'],
-});
-
 export const metadata: Metadata = {
-    title: 'Cardex Test UI',
-    description: 'Test UI for Cardex backend features',
+    title: 'Cardex',
+    description: 'Pokémon card collection app',
 };
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                {children}
+            <body className={`${geistSans.variable} antialiased`}>                <AppProvider>
+                    <AppShell>{children}</AppShell>
+                </AppProvider>
             </body>
         </html>
     );

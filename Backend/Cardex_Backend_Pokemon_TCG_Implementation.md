@@ -127,20 +127,20 @@ We are not storing full card info such as attacks, HP, rarity, set data, prices,
 Implement these routes first:
 
 ```txt
-GET    /health
-GET    /cards/search?query=giratina
-GET    /cards/:id
-POST   /user-cards
-GET    /user-cards/me
-PATCH  /user-cards/:id
-DELETE /user-cards/:id
+GET    /v1/heartbeat
+GET    /v1/cards/search?query=giratina
+GET    /v1/cards/:id
+POST   /v1/user-cards
+GET    /v1/user-cards/me
+PATCH  /v1/user-cards/:id
+DELETE /v1/user-cards/:id
 ```
 
 ---
 
 ## Route Behavior
 
-### `GET /cards/search?query=giratina`
+### `GET /v1/cards/search?query=giratina`
 
 Searches for cards using the Pokémon TCG API.
 
@@ -157,14 +157,14 @@ This route does **not** insert anything into Supabase.
 
 ---
 
-### `GET /cards/:id`
+### `GET /v1/cards/:id`
 
 Gets one card from the Pokémon TCG API by ID.
 
 Example:
 
 ```txt
-GET /cards/swsh11-131
+GET /v1/cards/swsh11-131
 ```
 
 Backend flow:
@@ -179,7 +179,7 @@ This route does **not** insert anything into Supabase.
 
 ---
 
-### `POST /user-cards`
+### `POST /v1/user-cards`
 
 Adds a card to the signed-in user's collection or wishlist.
 
@@ -191,7 +191,10 @@ Request body example for owned card:
     "status": "owned",
     "quantity": 1,
     "condition": "near_mint",
-    "notes": "Pulled from a pack"
+    "notes": "Pulled from a pack",
+    "card_name": "Giratina V",
+    "card_image_url": "https://images.pokemontcg.io/swsh11/131_hires.png",
+    "market_price": 12.5
 }
 ```
 
@@ -201,9 +204,14 @@ Request body example for wishlist card:
 {
     "external_card_id": "swsh11-131",
     "status": "wishlist",
-    "notes": "Want this card later"
+    "notes": "Want this card later",
+    "card_name": "Giratina V",
+    "card_image_url": "https://images.pokemontcg.io/swsh11/131_hires.png",
+    "market_price": 12.5
 }
 ```
+
+When `card_name` is included (e.g. from search results), skip the upstream Pokémon TCG lookup and store the snapshot directly. If omitted, fetch the card by ID upstream first.
 
 Backend flow:
 
@@ -212,10 +220,9 @@ Backend flow:
 2. Validate external_card_id.
 3. Validate status is either owned or wishlist.
 4. Validate condition if provided.
-5. Call the Pokémon TCG API to get the card by external_card_id.
-6. Extract card.name and card.images.large or card.images.small.
-7. Insert into Supabase user_cards table.
-8. Return the inserted row.
+5. Use client snapshot when `card_name` is provided; otherwise call the Pokémon TCG API.
+6. Insert into Supabase user_cards table.
+7. Return the inserted row.
 ```
 
 Important: cards should only be inserted into Supabase when the user chooses to add the card to their collection or wishlist. Do not insert cards just because they were displayed or searched.
@@ -286,7 +293,7 @@ export async function getPokemonCardById(cardId: string) {
 Create:
 
 ```txt
-src/routes/cards.routes.ts
+src/routes/cards.ts
 ```
 
 Suggested implementation:
@@ -335,7 +342,7 @@ export { cardsRouter };
 Create:
 
 ```txt
-src/routes/userCards.routes.ts
+src/routes/userCards.ts
 ```
 
 Suggested implementation:
@@ -427,20 +434,34 @@ Update `src/app.ts`:
 ```ts
 import express from 'express';
 import cors from 'cors';
-import { cardsRouter } from './routes/cards.routes';
-import { userCardsRouter } from './routes/userCards.routes';
+import { router } from './routes';
 
 export const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-app.get('/health', (_req, res) => {
-    res.json({ status: 'ok' });
-});
+app.use(router);
+```
 
-app.use('/cards', cardsRouter);
-app.use('/user-cards', userCardsRouter);
+Routes are mounted under `/v1` in `src/routes/index.ts`:
+
+```ts
+import { Router } from 'express';
+import { cardsRouter } from './cards';
+import { heartbeatRouter } from './heartbeat';
+import { userCardsRouter } from './userCards';
+
+const router = Router();
+
+const v1Router = Router();
+v1Router.use('/heartbeat', heartbeatRouter);
+v1Router.use('/cards', cardsRouter);
+v1Router.use('/user-cards', userCardsRouter);
+
+router.use('/v1', v1Router);
+
+export { router };
 ```
 
 ---

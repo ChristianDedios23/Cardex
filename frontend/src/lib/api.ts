@@ -78,8 +78,12 @@ export async function searchCards(query: string, page = 1, pageSize = 20) {
     return apiFetch<PaginatedPokemonCardSearch>(`/v1/cards/search?${params.toString()}`);
 }
 
-export async function getCardById(id: string) {
-    return apiFetch<PokemonCard>(`/v1/cards/${encodeURIComponent(id)}`);
+export function createUserCardSnapshot(card: PokemonCard) {
+    return {
+        card_name: card.name,
+        card_image_url: card.images?.large ?? card.images?.small ?? null,
+        market_price: card.marketPrice,
+    };
 }
 
 export async function createUserCard(
@@ -90,6 +94,9 @@ export async function createUserCard(
         quantity?: number;
         condition?: string;
         notes?: string;
+        card_name?: string;
+        card_image_url?: string | null;
+        market_price?: number | null;
     },
 ) {
     return apiFetch<UserCard>(

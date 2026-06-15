@@ -160,19 +160,20 @@ This keeps the database simple and avoids duplicating the external card API.
 The backend should use this table for routes like:
 
 ```txt
-POST   /user-cards
-GET    /user-cards/me
-GET    /user-cards/me?status=owned
-GET    /user-cards/me?status=wishlist
-PATCH  /user-cards/:id
-DELETE /user-cards/:id
+POST   /v1/user-cards
+GET    /v1/user-cards/me
+GET    /v1/user-cards/me?status=owned
+GET    /v1/user-cards/me?status=wishlist
+PATCH  /v1/user-cards/:id
+DELETE /v1/user-cards/:id
 ```
 
 Searching and viewing card details should use the Pokémon TCG API routes instead:
 
 ```txt
-GET /cards/search?query=giratina
-GET /cards/:id
+GET /v1/cards/search?query=giratina
+GET /v1/cards/:id
+GET /v1/heartbeat
 ```
 
 ## Notes for Cursor
@@ -186,15 +187,17 @@ src/
   config/
     supabase.ts
   routes/
-    cards.routes.ts
-    userCards.routes.ts
+    index.ts
+    cards.ts
+    userCards.ts
+    heartbeat.ts
   services/
     pokemonTcg.service.ts
     userCards.service.ts
   middleware/
     requireAuth.ts
   app.ts
-  server.ts
+  index.ts
 ```
 
 Do not create separate `collection_items` and `wishlist_items` tables for the MVP. Use the single `user_cards` table with the `status` column.

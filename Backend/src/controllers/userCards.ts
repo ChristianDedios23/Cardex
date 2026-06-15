@@ -34,6 +34,40 @@ function duplicateCardMessage(status: CardStatus): string {
         : 'This card is already on your wishlist.';
 }
 
+type ClientCardSnapshot = {
+    cardName: string;
+    cardImageUrl: string | null;
+    marketPrice: number | null;
+};
+
+function parseClientCardSnapshot(body: {
+    card_name?: unknown;
+    card_image_url?: unknown;
+    market_price?: unknown;
+}): ClientCardSnapshot | null {
+    if (typeof body.card_name !== 'string' || body.card_name.trim().length === 0) {
+        return null;
+    }
+
+    let cardImageUrl: string | null = null;
+
+    if (typeof body.card_image_url === 'string' && body.card_image_url.trim().length > 0) {
+        cardImageUrl = body.card_image_url.trim();
+    }
+
+    let marketPrice: number | null = null;
+
+    if (typeof body.market_price === 'number' && Number.isFinite(body.market_price)) {
+        marketPrice = body.market_price;
+    }
+
+    return {
+        cardName: body.card_name.trim(),
+        cardImageUrl,
+        marketPrice,
+    };
+}
+
 function handlePokemonTcgError(error: unknown, res: Response) {
     if (error instanceof PokemonTcgNotFoundError) {
         return res.status(404).json({
@@ -82,8 +116,21 @@ export const createUserCard = async (req: Request, res: Response) => {
             return res.status(401).json({ error: 'Sign in to save cards.' });
         }
 
-        const card = await getPokemonCardById(external_card_id);
-        const cardImageUrl = card.images?.large ?? card.images?.small ?? null;
+        const clientSnapshot = parseClientCardSnapshot(req.body);
+        let cardName: string;
+        let cardImageUrl: string | null;
+        let marketPrice: number | null;
+
+        if (clientSnapshot) {
+            cardName = clientSnapshot.cardName;
+            cardImageUrl = clientSnapshot.cardImageUrl;
+            marketPrice = clientSnapshot.marketPrice;
+        } else {
+            const card = await getPokemonCardById(external_card_id);
+            cardName = card.name;
+            cardImageUrl = card.images?.large ?? card.images?.small ?? null;
+            marketPrice = card.marketPrice;
+        }
 
         const { data, error } = await insertUserCard({
             userId,
@@ -92,9 +139,9 @@ export const createUserCard = async (req: Request, res: Response) => {
             quantity: status === 'owned' ? (quantity ?? 1) : null,
             condition: status === 'owned' ? (condition ?? null) : null,
             notes: notes ?? null,
-            cardName: card.name,
+            cardName,
             cardImageUrl,
-            marketPrice: card.marketPrice,
+            marketPrice,
         });
 
         if (error) {

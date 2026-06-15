@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import type { User } from '@supabase/supabase-js';
+import { useApp, type AppTab } from '@/components/app-shell/AppProvider';
 import { createClient, getAccessToken } from '@/lib/supabase/client';
 import {
     createUserCard,
+    createUserCardSnapshot,
     deleteUserCard,
     getMyUserCards,
     searchCards,
@@ -12,8 +15,6 @@ import {
     type PokemonCard,
     type UserCard,
 } from '@/lib/api';
-
-type Tab = 'search' | 'collection' | 'wishlist';
 
 type UserCardPatch =
     | { action: 'add'; card: UserCard }
@@ -28,13 +29,7 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
     );
 }
 
-function AuthPanel({
-    user,
-    onAuthChange,
-}: {
-    user: User | null;
-    onAuthChange: (user: User | null) => void;
-}) {
+function AuthPanel({ onAuthChange }: { onAuthChange: (user: User | null) => void }) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState<string | null>(null);
@@ -83,28 +78,6 @@ function AuthPanel({
         } else {
             setMessage('Account created. Check your email if confirmation is required.');
         }
-    }
-
-    async function handleSignOut() {
-        const supabase = createClient();
-        await supabase.auth.signOut();
-        onAuthChange(null);
-        setMessage('Signed out.');
-    }
-
-    if (user) {
-        return (
-            <Panel title="Signed in">
-                <p className="text-sm text-[var(--muted)]">{user.email}</p>
-                <button
-                    type="button"
-                    onClick={handleSignOut}
-                    className="mt-4 rounded-lg border border-[var(--border)] px-4 py-2 text-sm hover:bg-white/5"
-                >
-                    Sign out
-                </button>
-            </Panel>
-        );
     }
 
     return (
@@ -262,6 +235,7 @@ function CardResult({
                     external_card_id: card.id,
                     status: 'owned',
                     quantity: 1,
+                    ...createUserCardSnapshot(card),
                 });
                 onOwnedChange({ action: 'add', card: saved });
             }
@@ -295,6 +269,7 @@ function CardResult({
                 const saved = await createUserCard(token, {
                     external_card_id: card.id,
                     status: 'wishlist',
+                    ...createUserCardSnapshot(card),
                 });
                 onWishlistChange({ action: 'add', card: saved });
             }
@@ -601,7 +576,7 @@ function SearchPagination({
                     aria-label="Previous page"
                     className={`${pageButtonClass} border border-[var(--border)] hover:bg-white/5 disabled:opacity-50`}
                 >
-                    &lt;
+                    <IoIosArrowBack className="h-5 w-5" aria-hidden="true" />
                 </button>
 
                 {pageItems.map((page) => (
@@ -629,7 +604,7 @@ function SearchPagination({
                     aria-label="Next page"
                     className={`${pageButtonClass} border border-[var(--border)] hover:bg-white/5 disabled:opacity-50`}
                 >
-                    &gt;
+                    <IoIosArrowForward className="h-5 w-5" aria-hidden="true" />
                 </button>
             </nav>
 
@@ -662,9 +637,7 @@ function SearchPagination({
 }
 
 export function TestApp() {
-    const [user, setUser] = useState<User | null>(null);
-    const [configError, setConfigError] = useState<string | null>(null);
-    const [tab, setTab] = useState<Tab>('search');
+    const { user, setUser, tab, configError, setPageLoading } = useApp();
     const [query, setQuery] = useState('pikachu');
     const [activeQuery, setActiveQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -679,9 +652,9 @@ export function TestApp() {
         owned: UserCard[];
         wishlist: UserCard[];
     } | null>(null);
-    const tabRef = useRef<Tab>(tab);
+    const tabRef = useRef<AppTab>(tab);
     tabRef.current = tab;
-    const loadedUserIdRef = useRef<string | null>(null);
+    const userCardsInFlightRef = useRef<string | null>(null);
     const [userCards, setUserCards] = useState<UserCard[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [collectionLoading, setCollectionLoading] = useState(false);
@@ -689,34 +662,7 @@ export function TestApp() {
     const [wishlistByExternalId, setWishlistByExternalId] = useState<Record<string, string>>({});
     const [ownedByExternalId, setOwnedByExternalId] = useState<Record<string, string>>({});
 
-    useEffect(() => {
-        try {
-            const supabase = createClient();
-
-            supabase.auth.getUser().then(({ data, error }) => {
-                if (error) {
-                    setUser(null);
-                    return;
-                }
-                setUser(data.user);
-            });
-
-            const {
-                data: { subscription },
-            } = supabase.auth.onAuthStateChange((_event, session) => {
-                const nextUser = session?.user ?? null;
-                setUser((current) =>
-                    current?.id === nextUser?.id ? current : nextUser,
-                );
-            });
-
-            return () => subscription.unsubscribe();
-        } catch (error) {
-            setConfigError(error instanceof Error ? error.message : 'Configuration error');
-        }
-    }, []);
-
-    function applyUserCardsCache(activeTab: Tab) {
+    function applyUserCardsCache(activeTab: AppTab) {
         const cache = userCardsCacheRef.current;
 
         if (!cache) {
@@ -796,6 +742,16 @@ export function TestApp() {
             return;
         }
 
+        if (userCardsCacheRef.current?.userId === user.id) {
+            applyUserCardsCache(tabRef.current);
+            return;
+        }
+
+        if (userCardsInFlightRef.current === user.id) {
+            return;
+        }
+
+        userCardsInFlightRef.current = user.id;
         setCollectionLoading(true);
         setMessage(null);
 
@@ -822,13 +778,26 @@ export function TestApp() {
         } catch (error) {
             setMessage(error instanceof Error ? error.message : 'Failed to load cards.');
         } finally {
+            userCardsInFlightRef.current = null;
             setCollectionLoading(false);
         }
     }
 
+    function ensureUserCardsLoaded() {
+        if (!user || userCardsCacheRef.current?.userId === user.id) {
+            return;
+        }
+
+        if (userCardsInFlightRef.current === user.id) {
+            return;
+        }
+
+        void refreshUserCards();
+    }
+
     useEffect(() => {
         if (!user) {
-            loadedUserIdRef.current = null;
+            userCardsInFlightRef.current = null;
             userCardsCacheRef.current = null;
             setUserCards([]);
             setWishlistByExternalId({});
@@ -836,13 +805,9 @@ export function TestApp() {
             return;
         }
 
-        if (loadedUserIdRef.current === user.id && userCardsCacheRef.current) {
+        if (userCardsCacheRef.current?.userId === user.id) {
             applyUserCardsCache(tabRef.current);
-            return;
         }
-
-        loadedUserIdRef.current = user.id;
-        void refreshUserCards();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user]);
 
@@ -851,9 +816,22 @@ export function TestApp() {
             return;
         }
 
-        applyUserCardsCache(tab);
+        if (userCardsCacheRef.current?.userId === user.id) {
+            applyUserCardsCache(tab);
+            return;
+        }
+
+        if (tab === 'collection' || tab === 'wishlist') {
+            void refreshUserCards();
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tab, user]);
+
+    useEffect(() => {
+        setPageLoading(searchLoading || collectionLoading);
+
+        return () => setPageLoading(false);
+    }, [searchLoading, collectionLoading, setPageLoading]);
 
     function normalizeQuery(value: string) {
         return value.trim().toLowerCase();
@@ -930,10 +908,6 @@ export function TestApp() {
             storePageInCache(normalized, page, result);
             applySearchResult(result);
             prefetchNextPage(trimmed, result);
-
-            if (result.data.length > 0) {
-                setMessage(null);
-            }
         } catch (error) {
             setMessage(error instanceof Error ? error.message : 'Search failed.');
         } finally {
@@ -963,6 +937,7 @@ export function TestApp() {
 
         setActiveQuery(trimmed);
         setCurrentPage(1);
+        ensureUserCardsLoaded();
         await fetchSearchPage(trimmed, 1);
     }
 
@@ -1025,28 +1000,11 @@ export function TestApp() {
     }
 
     return (
-        <div className="grid gap-6">
-            <AuthPanel user={user} onAuthChange={setUser} />
+        <div className="mx-auto grid max-w-6xl gap-6">
+            {!user && <AuthPanel onAuthChange={setUser} />}
 
             {user && (
                 <>
-                    <div className="flex flex-wrap gap-2">
-                        {(['search', 'collection', 'wishlist'] as Tab[]).map((item) => (
-                            <button
-                                key={item}
-                                type="button"
-                                onClick={() => setTab(item)}
-                                className={`rounded-lg px-4 py-2 text-sm capitalize ${
-                                    tab === item
-                                        ? 'bg-[var(--accent)] text-white'
-                                        : 'border border-[var(--border)] hover:bg-white/5'
-                                }`}
-                            >
-                                {item}
-                            </button>
-                        ))}
-                    </div>
-
                     {tab === 'search' && (
                         <Panel title="Search cards">
                             <form onSubmit={handleSearch} className="mb-4 flex gap-2">

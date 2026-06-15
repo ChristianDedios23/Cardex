@@ -175,8 +175,9 @@ paths:
             summary: Add card to collection or wishlist
             description: |
                 Adds a card to the user's owned collection or wishlist.
-                Fetches the card from the Pokémon TCG API and stores a snapshot
-                (`card_name`, `card_image_url`) in Supabase.
+                When `card_name` is included (e.g. from search results), the backend
+                stores that snapshot in Supabase without calling the Pokémon TCG API.
+                If `card_name` is omitted, the backend fetches the card upstream first.
             operationId: createUserCard
             security:
                 - bearerAuth: []
@@ -195,12 +196,18 @@ paths:
                                     quantity: 1
                                     condition: near_mint
                                     notes: Pulled from a pack
+                                    card_name: Giratina V
+                                    card_image_url: https://images.pokemontcg.io/swsh11/131_hires.png
+                                    market_price: 12.5
                             wishlist:
                                 summary: Wishlist card
                                 value:
                                     external_card_id: swsh11-131
                                     status: wishlist
                                     notes: Want this card later
+                                    card_name: Giratina V
+                                    card_image_url: https://images.pokemontcg.io/swsh11/131_hires.png
+                                    market_price: 12.5
             responses:
                 '201':
                     description: Card added successfully
@@ -564,6 +571,17 @@ components:
                     $ref: '#/components/schemas/CardCondition'
                 notes:
                     type: string
+                card_name:
+                    type: string
+                    description: |
+                        Display name from search results. When provided, skips an upstream
+                        Pokémon TCG API lookup on add.
+                card_image_url:
+                    type: string
+                    nullable: true
+                market_price:
+                    type: number
+                    nullable: true
         UpdateUserCardRequest:
             type: object
             properties:
