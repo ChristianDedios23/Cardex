@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import YAML from 'yaml';
@@ -12,8 +13,11 @@ app.use(cors());
 app.use(express.json());
 app.use(logger);
 
-// OpenAPI documentation
-const specFile = fs.readFileSync('./openapi.yaml', 'utf8');
+// OpenAPI documentation (openapi.yaml lives at project root, not in dist/)
+const specFile = fs.readFileSync(
+    path.join(__dirname, '..', 'openapi.yaml'),
+    'utf8',
+);
 const spec = YAML.parse(specFile);
 app.get('/openapi.json', (_req: Request, res: Response) => {
     res.json(spec);
