@@ -281,15 +281,17 @@ function CardResult({
     }
 
     return (
-        <article className="flex flex-col rounded-lg border border-[var(--border)] bg-[var(--card-frame)]">
-            <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-t-lg bg-[var(--background)] p-2">
+        <article className="flex flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--card-frame)]">
+            <div className="card-tile-art flex aspect-[3/4] items-center justify-center overflow-hidden rounded-t-lg bg-[var(--background)] p-2">
                 {imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                        src={imageUrl}
-                        alt={card.name}
-                        className="max-h-full max-w-full object-contain"
-                    />
+                    <span className="card-tile-shine">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={imageUrl}
+                            alt={card.name}
+                            className="block max-h-full max-w-full object-contain"
+                        />
+                    </span>
                 ) : (
                     <div className="flex h-full w-full items-center justify-center text-xs text-[var(--muted)]">
                         No image
@@ -326,8 +328,8 @@ function CardResult({
                 <p className="px-2 pb-2 text-center text-xs text-[var(--muted)]">Price unavailable</p>
             )}
 
-            <div className="overflow-hidden rounded-b-lg border-t border-[var(--border)]">
-                <div className="grid grid-cols-2 divide-x divide-[var(--border)]">
+            <div className="mt-auto shrink-0 border-t border-[var(--border)]">
+                <div className="grid min-h-12 grid-cols-2">
                     <button
                         type="button"
                         disabled={isSavingOwned}
@@ -338,7 +340,7 @@ function CardResult({
                                 ? `Remove ${card.name} from collection`
                                 : `Add ${card.name} to collection`
                         }
-                        className={`group flex w-full min-w-0 items-center justify-center py-3 transition-colors ${
+                        className={`group flex h-full min-h-12 w-full items-center justify-center transition-colors ${
                             isOwned
                                 ? 'text-[var(--success)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]'
                                 : 'text-[var(--success)] hover:bg-[var(--success)]/10'
@@ -369,7 +371,7 @@ function CardResult({
                                 ? `Remove ${card.name} from wishlist`
                                 : `Add ${card.name} to wishlist`
                         }
-                        className={`flex w-full min-w-0 items-center justify-center py-3 text-[var(--star)] transition-colors hover:bg-[var(--star)]/10 ${
+                        className={`flex h-full min-h-12 w-full items-center justify-center border-l border-[var(--border)] text-[var(--star)] transition-colors hover:bg-[var(--star)]/10 ${
                             isSavingWishlist ? 'opacity-50' : ''
                         }`}
                     >
