@@ -21,6 +21,20 @@ body {
     font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+button:not(:disabled),
+[type='button']:not(:disabled),
+[type='submit']:not(:disabled),
+a[href],
+label[for] {
+    cursor: pointer;
+}
+
+button:disabled,
+[type='button']:disabled,
+[type='submit']:disabled {
+    cursor: not-allowed;
+}
+
 input:focus,
 input:focus-visible,
 textarea:focus,

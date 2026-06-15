@@ -2,7 +2,8 @@
 
 A Pokémon TCG collection companion. Search cards, track what you own, build a wishlist, and see TCGPlayer market prices.
 
-**Live app:** [https://cardex-companion.vercel.app/](https://cardex-companion.vercel.app/)
+**Live app:** [https://cardex-companion.vercel.app/](https://cardex-companion.vercel.app/)  
+**Live API:** [https://cardex-78ts.onrender.com](https://cardex-78ts.onrender.com) · [API docs](https://cardex-78ts.onrender.com/api-docs)
 
 ## What you can do
 
@@ -13,17 +14,11 @@ A Pokémon TCG collection companion. Search cards, track what you own, build a w
 
 Card data comes from the [Pokémon TCG API](https://dev.pokemontcg.io/). Your saved cards are stored in Supabase.
 
-## API docs
-
-When the backend is running locally, interactive docs are at [http://localhost:3000/api-docs](http://localhost:3000/api-docs).
-
-The full spec is in [`Backend/openapi.yaml`](Backend/openapi.yaml).
-
 ## Run locally
 
 **Requirements:** Node.js 20+, a Supabase project, and a Pokémon TCG API key.
 
-**Backend**
+**Backend** — http://localhost:3000
 
 ```bash
 cd Backend
@@ -32,9 +27,7 @@ npm install
 npm run dev
 ```
 
-Runs at http://localhost:3000
-
-**Frontend**
+**Frontend** — http://localhost:3001
 
 ```bash
 cd frontend
@@ -43,6 +36,17 @@ npm install
 npm run dev
 ```
 
-Runs at http://localhost:3001
+Local API docs: [http://localhost:3000/api-docs](http://localhost:3000/api-docs). OpenAPI spec: [`Backend/openapi.yaml`](Backend/openapi.yaml).
 
-See each folder’s `.env.example` for the variables you need.
+## Deployment
+
+| Service | Host | Root directory | Build | Start |
+|---------|------|----------------|-------|-------|
+| Frontend | Vercel | `frontend` | default | default |
+| Backend | Render | `Backend` | `npm install && npm run build` | `npm start` |
+
+**Frontend (Vercel):** set `NEXT_PUBLIC_API_URL=https://cardex-78ts.onrender.com` plus your Supabase vars.
+
+**Backend (Render):** set `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, and `POKEMON_TCG_API_KEY`. CORS allows `https://cardex-companion.vercel.app` and local dev origins by default (`CORS_ORIGINS` in `.env.example`).
+
+See each folder’s `.env.example` for all variables.

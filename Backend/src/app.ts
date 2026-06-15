@@ -1,15 +1,15 @@
 import fs from 'fs';
 import path from 'path';
 import express, { Request, Response } from 'express';
-import cors from 'cors';
 import YAML from 'yaml';
 import { apiReference } from '@scalar/express-api-reference';
+import { corsMiddleware } from './config/cors';
 import { logger } from './middleware/logger';
 import { router } from './routes';
 
 const app = express();
 
-app.use(cors());
+app.use(corsMiddleware);
 app.use(express.json());
 app.use(logger);
 
