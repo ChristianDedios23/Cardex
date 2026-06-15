@@ -281,8 +281,8 @@ function CardResult({
     }
 
     return (
-        <article className="flex flex-col rounded-lg border border-[var(--border)] bg-[var(--background)]">
-            <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-t-lg bg-[var(--card)] p-2">
+        <article className="flex flex-col rounded-lg border border-[var(--border)] bg-[var(--card-frame)]">
+            <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-t-lg bg-[var(--background)] p-2">
                 {imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
