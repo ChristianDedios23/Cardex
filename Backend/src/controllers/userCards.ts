@@ -94,6 +94,7 @@ export const createUserCard = async (req: Request, res: Response) => {
             notes: notes ?? null,
             cardName: card.name,
             cardImageUrl,
+            marketPrice: card.marketPrice,
         });
 
         if (error) {

@@ -7,6 +7,7 @@ export type PokemonCard = {
         small?: string;
         large?: string;
     };
+    marketPrice: number | null;
 };
 
 export type PaginatedPokemonCardSearch = {
@@ -27,6 +28,7 @@ export type UserCard = {
     notes: string | null;
     card_name: string | null;
     card_image_url: string | null;
+    market_price: number | null;
     created_at: string;
     updated_at: string;
 };

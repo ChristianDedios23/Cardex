@@ -322,9 +322,17 @@ function CardResult({
                 )}
             </div>
 
-            <p className="truncate px-2 py-2 text-center text-sm font-medium" title={card.name}>
+            <p className="truncate px-2 pt-2 text-center text-sm font-medium" title={card.name}>
                 {card.name}
             </p>
+
+            {card.marketPrice != null ? (
+                <p className="truncate px-2 pb-2 text-center text-xs text-[var(--muted)]">
+                    {formatTcgPlayerMarketPrice(card.marketPrice)} · TCGPlayer
+                </p>
+            ) : (
+                <p className="px-2 pb-2 text-center text-xs text-[var(--muted)]">Price unavailable</p>
+            )}
 
             <div className="overflow-hidden rounded-b-lg border-t border-[var(--border)]">
                 <div className="grid grid-cols-2 divide-x divide-[var(--border)]">
@@ -399,6 +407,33 @@ function formatCondition(condition: string): string {
     return condition.replace(/_/g, ' ');
 }
 
+function formatTcgPlayerMarketPrice(price: number): string {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    }).format(price);
+}
+
+function getCollectionTotal(cards: UserCard[]): number {
+    return cards.reduce((total, card) => {
+        if (card.market_price == null) {
+            return total;
+        }
+
+        const price =
+            typeof card.market_price === 'number'
+                ? card.market_price
+                : Number(card.market_price);
+
+        if (!Number.isFinite(price)) {
+            return total;
+        }
+
+        const quantity = card.quantity ?? 1;
+        return total + price * quantity;
+    }, 0);
+}
+
 function UserCardRow({
     card,
     onDeleted,
@@ -450,6 +485,11 @@ function UserCardRow({
             )}
             <div className="flex-1">
                 <p className="font-medium">{card.card_name ?? 'Unknown card'}</p>
+                {card.market_price != null && (
+                    <p className="text-sm text-[var(--muted)]">
+                        {formatTcgPlayerMarketPrice(card.market_price)} · TCGPlayer
+                    </p>
+                )}
                 <p className="text-sm text-[var(--muted)]">
                     {formatCardStatus(card.status)}
                     {card.quantity != null ? ` · ${card.quantity} copy${card.quantity === 1 ? '' : 'ies'}` : ''}
@@ -968,6 +1008,8 @@ export function TestApp() {
             jumpInputId="search-jump-bottom"
         />
     ) : null;
+    const collectionTotal = tab === 'collection' ? getCollectionTotal(userCards) : 0;
+    const collectionPricedCount = userCards.filter((card) => card.market_price != null).length;
 
     if (configError) {
         return (
@@ -1055,6 +1097,22 @@ export function TestApp() {
 
                     {(tab === 'collection' || tab === 'wishlist') && (
                         <Panel title={tab === 'collection' ? 'My collection' : 'My wishlist'}>
+                            {tab === 'collection' && !collectionLoading && userCards.length > 0 && (
+                                <div className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3">
+                                    <p className="text-sm text-[var(--muted)]">
+                                        Collection total · TCGPlayer
+                                    </p>
+                                    <p className="text-lg font-medium">
+                                        {formatTcgPlayerMarketPrice(collectionTotal)}
+                                    </p>
+                                    {collectionPricedCount < userCards.length && (
+                                        <p className="mt-1 text-xs text-[var(--muted)]">
+                                            Based on {collectionPricedCount} of {userCards.length}{' '}
+                                            cards with price data
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                             {collectionLoading && (
                                 <p className="text-sm text-[var(--muted)]">Loading...</p>
                             )}

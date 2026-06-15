@@ -19,6 +19,7 @@ export type CreateUserCardInput = {
     notes: string | null;
     cardName: string;
     cardImageUrl: string | null;
+    marketPrice: number | null;
 };
 
 export type UpdateUserCardInput = {
@@ -40,6 +41,7 @@ export async function insertUserCard(input: CreateUserCardInput) {
             notes: input.notes,
             card_name: input.cardName,
             card_image_url: input.cardImageUrl,
+            market_price: input.marketPrice,
         })
         .select()
         .single();

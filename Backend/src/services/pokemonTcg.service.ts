@@ -2,20 +2,99 @@ import { escapeLucene } from '../utils/lucene';
 import { getCacheTtlMs, getOrFetch } from './pokemonTcgCache';
 
 const POKEMON_TCG_BASE_URL = 'https://api.pokemontcg.io/v2';
-const CARD_SELECT = 'id,name,images';
+const CARD_SELECT = 'id,name,images,tcgplayer';
+
+export type PokemonCard = {
+    id: string;
+    name: string;
+    images?: {
+        small?: string;
+        large?: string;
+    };
+    marketPrice: number | null;
+};
+
+export type PokemonCardSearchResult = {
+    data: PokemonCard[];
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    hasMore: boolean;
+};
+
 export const UPSTREAM_TIMEOUT_MS = 15_000;
 export const MIN_QUERY_LENGTH = 3;
 export const DEFAULT_PAGE = 1;
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_PAGE_SIZE = 50;
 
-export type PokemonCardSearchResult = {
-    data: unknown[];
-    page: number;
-    pageSize: number;
-    totalCount: number;
-    hasMore: boolean;
+type TcgPlayerPriceVariant = {
+    market?: number;
 };
+
+type UpstreamPokemonCard = {
+    id: string;
+    name: string;
+    images?: {
+        small?: string;
+        large?: string;
+    };
+    tcgplayer?: {
+        prices?: Record<string, TcgPlayerPriceVariant>;
+    };
+};
+
+const TCGPLAYER_VARIANT_PRIORITY = [
+    'normal',
+    'holofoil',
+    'reverseHolofoil',
+    '1stEditionHolofoil',
+    '1stEditionNormal',
+    'unlimitedHolofoil',
+    'unlimited',
+];
+
+function extractTcgPlayerMarketPrice(
+    tcgplayer: UpstreamPokemonCard['tcgplayer'],
+): number | null {
+    const prices = tcgplayer?.prices;
+
+    if (!prices) {
+        return null;
+    }
+
+    for (const variant of TCGPLAYER_VARIANT_PRIORITY) {
+        const market = prices[variant]?.market;
+
+        if (typeof market === 'number' && Number.isFinite(market)) {
+            return market;
+        }
+    }
+
+    for (const variant of Object.values(prices)) {
+        const market = variant?.market;
+
+        if (typeof market === 'number' && Number.isFinite(market)) {
+            return market;
+        }
+    }
+
+    return null;
+}
+
+function mapPokemonCard(card: UpstreamPokemonCard): PokemonCard {
+    const mapped: PokemonCard = {
+        id: card.id,
+        name: card.name,
+        marketPrice: extractTcgPlayerMarketPrice(card.tcgplayer),
+    };
+
+    if (card.images) {
+        mapped.images = card.images;
+    }
+
+    return mapped;
+}
 
 export class PokemonTcgTimeoutError extends Error {
     constructor() {
@@ -118,7 +197,7 @@ export async function searchPokemonCards(
         const currentPageSize = body.pageSize ?? pageSize;
 
         return {
-            data: body.data ?? [],
+            data: (body.data ?? []).map(mapPokemonCard),
             page: currentPage,
             pageSize: currentPageSize,
             totalCount,
@@ -127,7 +206,7 @@ export async function searchPokemonCards(
     }, getCacheTtlMs());
 }
 
-export async function getPokemonCardById(cardId: string) {
+export async function getPokemonCardById(cardId: string): Promise<PokemonCard> {
     const cacheKey = `card:${cardId.toLowerCase()}`;
 
     return getOrFetch(cacheKey, async () => {
@@ -147,6 +226,6 @@ export async function getPokemonCardById(cardId: string) {
         }
 
         const data = await response.json();
-        return data.data;
+        return mapPokemonCard(data.data as UpstreamPokemonCard);
     }, getCacheTtlMs());
 }

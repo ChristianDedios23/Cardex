@@ -455,6 +455,11 @@ components:
                 name:
                     type: string
                     example: Giratina V
+                marketPrice:
+                    type: number
+                    nullable: true
+                    description: TCGPlayer market price in USD (English/US market)
+                    example: 8.01
                 images:
                     type: object
                     properties:
@@ -529,6 +534,11 @@ components:
                     type: string
                     format: uri
                     nullable: true
+                market_price:
+                    type: number
+                    nullable: true
+                    description: Cached TCGPlayer market price in USD at time of save
+                    example: 8.01
                 created_at:
                     type: string
                     format: date-time

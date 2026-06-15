@@ -53,6 +53,7 @@ create table user_cards (
 
   card_name text,
   card_image_url text,
+  market_price numeric,
 
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now(),
@@ -74,6 +75,7 @@ create table user_cards (
 | `notes`            |                     `text` | Optional user notes about the card.                                  |
 | `card_name`        |                     `text` | Cached card name from the Pokémon TCG API for faster display.        |
 | `card_image_url`   |                     `text` | Cached card image URL from the Pokémon TCG API for faster display.   |
+| `market_price`     |                  `numeric` | Cached TCGPlayer market price in USD at time of save.                |
 | `created_at`       | `timestamp with time zone` | When the row was created.                                            |
 | `updated_at`       | `timestamp with time zone` | When the row was last updated.                                       |
 
