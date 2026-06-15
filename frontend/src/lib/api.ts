@@ -125,6 +125,7 @@ export async function getCardById(id: string) {
     }
 
     const promise = apiFetch<PokemonCardDetail>(`/v1/cards/${encodeURIComponent(id)}`)
+        .then(normalizeCardDetail)
         .then((detail) => {
             cardDetailCache.set(key, detail);
             return detail;
@@ -135,6 +136,16 @@ export async function getCardById(id: string) {
 
     cardDetailInflight.set(key, promise);
     return promise;
+}
+
+function normalizeCardDetail(raw: PokemonCardDetail): PokemonCardDetail {
+    return {
+        ...raw,
+        subtypes: raw.subtypes ?? [],
+        types: raw.types ?? [],
+        attacks: raw.attacks ?? [],
+        abilities: raw.abilities ?? [],
+    };
 }
 
 export function createUserCardSnapshot(card: PokemonCard) {

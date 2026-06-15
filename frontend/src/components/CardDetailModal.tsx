@@ -112,6 +112,10 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
     const card = detail ?? preview;
     const imageUrl = card?.images?.large ?? card?.images?.small;
     const title = card?.name ?? 'Card details';
+    const types = detail?.types ?? [];
+    const subtypes = detail?.subtypes ?? [];
+    const abilities = detail?.abilities ?? [];
+    const attacks = detail?.attacks ?? [];
 
     return (
         <div
@@ -198,14 +202,14 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                 <DetailRow
                                     label="Type"
                                     value={
-                                        detail?.types.length
-                                            ? detail.types.join(', ')
+                                        types.length > 0
+                                            ? types.join(', ')
                                             : detail?.supertype ?? null
                                     }
                                 />
                                 <DetailRow
                                     label="Subtype"
-                                    value={detail?.subtypes.length ? detail.subtypes.join(', ') : null}
+                                    value={subtypes.length > 0 ? subtypes.join(', ') : null}
                                 />
                                 <DetailRow label="HP" value={detail?.hp} />
                                 <DetailRow
@@ -224,11 +228,11 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                 </blockquote>
                             )}
 
-                            {detail && detail.abilities.length > 0 && (
+                            {abilities.length > 0 && (
                                 <div>
                                     <h3 className="mb-2 text-sm font-medium">Abilities</h3>
                                     <ul className="space-y-2">
-                                        {detail.abilities.map((ability) => (
+                                        {abilities.map((ability) => (
                                             <li
                                                 key={ability.name}
                                                 className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-3 text-sm"
@@ -245,11 +249,11 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                 </div>
                             )}
 
-                            {detail && detail.attacks.length > 0 && (
+                            {attacks.length > 0 && (
                                 <div>
                                     <h3 className="mb-2 text-sm font-medium">Attacks</h3>
                                     <ul className="space-y-2">
-                                        {detail.attacks.map((attack) => (
+                                        {attacks.map((attack) => (
                                             <li
                                                 key={attack.name}
                                                 className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-3 text-sm"
