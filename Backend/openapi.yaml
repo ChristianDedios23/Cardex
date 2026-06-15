@@ -43,7 +43,7 @@ paths:
                 Search for cards by name using the Pokémon TCG API.
                 Results are proxied through the backend and are not stored in Supabase.
                 Responses include only `id`, `name`, and `images`. Repeat searches are
-                cached by the backend for up to 5 minutes.
+                cached by the backend for up to 30 minutes (configurable via `POKEMON_TCG_CACHE_TTL_MS`).
             operationId: searchCards
             parameters:
                 - name: query
@@ -54,15 +54,32 @@ paths:
                       type: string
                       minLength: 3
                   example: giratina
+                - name: page
+                  in: query
+                  required: false
+                  description: Page number (1-based)
+                  schema:
+                      type: integer
+                      minimum: 1
+                      default: 1
+                  example: 1
+                - name: pageSize
+                  in: query
+                  required: false
+                  description: Number of cards per page (max 50)
+                  schema:
+                      type: integer
+                      minimum: 1
+                      maximum: 50
+                      default: 20
+                  example: 20
             responses:
                 '200':
-                    description: List of matching cards from the Pokémon TCG API
+                    description: Paginated list of matching cards from the Pokémon TCG API
                     content:
                         application/json:
                             schema:
-                                type: array
-                                items:
-                                    $ref: '#/components/schemas/PokemonCard'
+                                $ref: '#/components/schemas/PaginatedPokemonCardSearch'
                 '400':
                     description: Missing or invalid search query
                     content:
@@ -78,6 +95,14 @@ paths:
                                     summary: Query too short
                                     value:
                                         error: Search query must be at least 3 characters
+                                invalidPage:
+                                    summary: Invalid page
+                                    value:
+                                        error: page must be a positive integer
+                                invalidPageSize:
+                                    summary: Invalid pageSize
+                                    value:
+                                        error: pageSize must be a positive integer
                 '502':
                     description: Upstream Pokémon TCG API error
                     content:
@@ -439,6 +464,31 @@ components:
                         large:
                             type: string
                             format: uri
+        PaginatedPokemonCardSearch:
+            type: object
+            required:
+                - data
+                - page
+                - pageSize
+                - totalCount
+                - hasMore
+            properties:
+                data:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/PokemonCard'
+                page:
+                    type: integer
+                    example: 1
+                pageSize:
+                    type: integer
+                    example: 20
+                totalCount:
+                    type: integer
+                    example: 200
+                hasMore:
+                    type: boolean
+                    example: true
         UserCard:
             type: object
             required:

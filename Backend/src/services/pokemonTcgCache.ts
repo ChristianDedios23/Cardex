@@ -1,4 +1,20 @@
-const DEFAULT_TTL_MS = 5 * 60 * 1000;
+const DEFAULT_TTL_MS = 30 * 60 * 1000;
+
+export function getCacheTtlMs(): number {
+    const raw = process.env.POKEMON_TCG_CACHE_TTL_MS;
+
+    if (!raw) {
+        return DEFAULT_TTL_MS;
+    }
+
+    const parsed = Number.parseInt(raw, 10);
+
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+        return DEFAULT_TTL_MS;
+    }
+
+    return parsed;
+}
 
 type CacheEntry = {
     data: unknown;
@@ -23,7 +39,7 @@ export function getCached<T>(key: string): T | undefined {
     return entry.data as T;
 }
 
-export function setCached<T>(key: string, data: T, ttlMs = DEFAULT_TTL_MS): void {
+export function setCached<T>(key: string, data: T, ttlMs = getCacheTtlMs()): void {
     cache.set(key, {
         data,
         expiresAt: Date.now() + ttlMs,
@@ -33,13 +49,16 @@ export function setCached<T>(key: string, data: T, ttlMs = DEFAULT_TTL_MS): void
 export async function getOrFetch<T>(
     key: string,
     fetchFn: () => Promise<T>,
-    ttlMs = DEFAULT_TTL_MS,
+    ttlMs = getCacheTtlMs(),
 ): Promise<T> {
     const cached = getCached<T>(key);
 
     if (cached !== undefined) {
+        console.log(`[pokemon-tcg] cache hit: ${key}`);
         return cached;
     }
+
+    console.log(`[pokemon-tcg] upstream fetch: ${key}`);
 
     const pending = inFlight.get(key);
 

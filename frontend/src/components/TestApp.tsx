@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { createClient, getAccessToken } from '@/lib/supabase/client';
 import {
@@ -8,11 +8,16 @@ import {
     deleteUserCard,
     getMyUserCards,
     searchCards,
+    type PaginatedPokemonCardSearch,
     type PokemonCard,
     type UserCard,
 } from '@/lib/api';
 
 type Tab = 'search' | 'collection' | 'wishlist';
+
+type UserCardPatch =
+    | { action: 'add'; card: UserCard }
+    | { action: 'remove'; userCardId: string; externalCardId: string };
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
     return (
@@ -143,81 +148,246 @@ function AuthPanel({
     );
 }
 
-function CardResult({ card, onSaved }: { card: PokemonCard; onSaved: () => void }) {
-    const [loading, setLoading] = useState(false);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+function PlusIcon() {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            className="h-5 w-5"
+            aria-hidden="true"
+        >
+            <path d="M12 5v14M5 12h14" />
+        </svg>
+    );
+}
+
+function CheckIcon() {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-5 w-5"
+            aria-hidden="true"
+        >
+            <path d="M5 13l4 4L19 7" />
+        </svg>
+    );
+}
+
+function XIcon() {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            className="h-5 w-5"
+            aria-hidden="true"
+        >
+            <path d="M6 6l12 12M18 6L6 18" />
+        </svg>
+    );
+}
+
+function StarIcon({ filled = false }: { filled?: boolean }) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill={filled ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth={filled ? '0' : '2'}
+            strokeLinejoin="round"
+            className="h-5 w-5"
+            aria-hidden="true"
+        >
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z" />
+        </svg>
+    );
+}
+
+function CardResult({
+    card,
+    ownedUserCardId,
+    wishlistUserCardId,
+    onOwnedChange,
+    onWishlistChange,
+}: {
+    card: PokemonCard;
+    ownedUserCardId: string | null;
+    wishlistUserCardId: string | null;
+    onOwnedChange: (patch: UserCardPatch) => void;
+    onWishlistChange: (patch: UserCardPatch) => void;
+}) {
+    const [savingAction, setSavingAction] = useState<'owned' | 'wishlist' | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const imageUrl = card.images?.small ?? card.images?.large;
+    const isSavingOwned = savingAction === 'owned';
+    const isSavingWishlist = savingAction === 'wishlist';
+    const isOwned = ownedUserCardId !== null;
+    const isWishlisted = wishlistUserCardId !== null;
 
-    async function save(status: 'owned' | 'wishlist') {
-        setLoading(true);
-        setSuccessMessage(null);
+    async function toggleOwned() {
+        setSavingAction('owned');
         setErrorMessage(null);
 
         try {
             const token = await getAccessToken();
 
             if (!token) {
-                setErrorMessage('You are not signed in. Sign in again and retry.');
+                setErrorMessage('Sign in to save cards.');
                 return;
             }
 
-            await createUserCard(token, {
-                external_card_id: card.id,
-                status,
-                quantity: status === 'owned' ? 1 : undefined,
-            });
-            setSuccessMessage(
-                status === 'owned' ? 'Added to your collection.' : 'Added to your wishlist.',
-            );
-            onSaved();
+            if (ownedUserCardId) {
+                await deleteUserCard(token, ownedUserCardId);
+                onOwnedChange({
+                    action: 'remove',
+                    userCardId: ownedUserCardId,
+                    externalCardId: card.id,
+                });
+            } else {
+                const saved = await createUserCard(token, {
+                    external_card_id: card.id,
+                    status: 'owned',
+                    quantity: 1,
+                });
+                onOwnedChange({ action: 'add', card: saved });
+            }
         } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Failed to save card.');
+            setErrorMessage(error instanceof Error ? error.message : 'Failed to update collection.');
         } finally {
-            setLoading(false);
+            setSavingAction(null);
+        }
+    }
+
+    async function toggleWishlist() {
+        setSavingAction('wishlist');
+        setErrorMessage(null);
+
+        try {
+            const token = await getAccessToken();
+
+            if (!token) {
+                setErrorMessage('Sign in to save cards.');
+                return;
+            }
+
+            if (wishlistUserCardId) {
+                await deleteUserCard(token, wishlistUserCardId);
+                onWishlistChange({
+                    action: 'remove',
+                    userCardId: wishlistUserCardId,
+                    externalCardId: card.id,
+                });
+            } else {
+                const saved = await createUserCard(token, {
+                    external_card_id: card.id,
+                    status: 'wishlist',
+                });
+                onWishlistChange({ action: 'add', card: saved });
+            }
+        } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : 'Failed to update wishlist.');
+        } finally {
+            setSavingAction(null);
         }
     }
 
     return (
-        <div className="flex gap-4 rounded-lg border border-[var(--border)] p-3">
-            {imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={imageUrl} alt={card.name} className="h-24 w-auto rounded object-contain" />
-            ) : (
-                <div className="flex h-24 w-16 items-center justify-center rounded bg-white/5 text-xs text-[var(--muted)]">
-                    No image
-                </div>
-            )}
-            <div className="flex flex-1 flex-col justify-between">
-                <div>
-                    <p className="font-medium">{card.name}</p>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-2">
-                    <button
-                        type="button"
-                        disabled={loading}
-                        onClick={() => save('owned')}
-                        className="rounded-md bg-[var(--success)] px-3 py-1.5 text-xs font-medium text-black disabled:opacity-50"
-                    >
-                        Add owned
-                    </button>
-                    <button
-                        type="button"
-                        disabled={loading}
-                        onClick={() => save('wishlist')}
-                        className="rounded-md border border-[var(--border)] px-3 py-1.5 text-xs hover:bg-white/5 disabled:opacity-50"
-                    >
-                        Add wishlist
-                    </button>
-                </div>
-                {successMessage && (
-                    <p className="mt-2 text-xs text-[var(--success)]">{successMessage}</p>
-                )}
-                {errorMessage && (
-                    <p className="mt-2 text-xs text-[var(--danger)]">{errorMessage}</p>
+        <article className="flex flex-col rounded-lg border border-[var(--border)] bg-[var(--background)]">
+            <div className="flex aspect-[3/4] items-center justify-center overflow-hidden rounded-t-lg bg-[var(--card)] p-2">
+                {imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={imageUrl}
+                        alt={card.name}
+                        className="max-h-full max-w-full object-contain"
+                    />
+                ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-[var(--muted)]">
+                        No image
+                    </div>
                 )}
             </div>
-        </div>
+
+            <p className="truncate px-2 py-2 text-center text-sm font-medium" title={card.name}>
+                {card.name}
+            </p>
+
+            <div className="overflow-hidden rounded-b-lg border-t border-[var(--border)]">
+                <div className="grid grid-cols-2 divide-x divide-[var(--border)]">
+                    <button
+                        type="button"
+                        disabled={isSavingOwned}
+                        onClick={toggleOwned}
+                        title={isOwned ? 'Remove from collection' : 'Add to collection'}
+                        aria-label={
+                            isOwned
+                                ? `Remove ${card.name} from collection`
+                                : `Add ${card.name} to collection`
+                        }
+                        className={`group flex w-full min-w-0 items-center justify-center py-3 transition-colors ${
+                            isOwned
+                                ? 'text-[var(--success)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]'
+                                : 'text-[var(--success)] hover:bg-[var(--success)]/10'
+                        } ${isSavingOwned ? 'opacity-50' : ''}`}
+                    >
+                        {isSavingOwned ? (
+                            <span className="text-xs text-[var(--muted)]">…</span>
+                        ) : isOwned ? (
+                            <>
+                                <span className="group-hover:hidden">
+                                    <CheckIcon />
+                                </span>
+                                <span className="hidden group-hover:block">
+                                    <XIcon />
+                                </span>
+                            </>
+                        ) : (
+                            <PlusIcon />
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        disabled={isSavingWishlist}
+                        onClick={toggleWishlist}
+                        title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                        aria-label={
+                            isWishlisted
+                                ? `Remove ${card.name} from wishlist`
+                                : `Add ${card.name} to wishlist`
+                        }
+                        className={`flex w-full min-w-0 items-center justify-center py-3 text-[var(--star)] transition-colors hover:bg-[var(--star)]/10 ${
+                            isSavingWishlist ? 'opacity-50' : ''
+                        }`}
+                    >
+                        {savingAction === 'wishlist' ? (
+                            <span className="text-xs text-[var(--muted)]">…</span>
+                        ) : (
+                            <StarIcon filled={isWishlisted} />
+                        )}
+                    </button>
+                </div>
+
+                {errorMessage && (
+                    <p className="border-t border-[var(--border)] px-2 py-1.5 text-center text-[10px] leading-tight text-[var(--danger)]">
+                        {errorMessage}
+                    </p>
+                )}
+            </div>
+        </article>
     );
 }
 
@@ -229,7 +399,13 @@ function formatCondition(condition: string): string {
     return condition.replace(/_/g, ' ');
 }
 
-function UserCardRow({ card, onDeleted }: { card: UserCard; onDeleted: () => void }) {
+function UserCardRow({
+    card,
+    onDeleted,
+}: {
+    card: UserCard;
+    onDeleted: (patch: UserCardPatch) => void;
+}) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -246,9 +422,14 @@ function UserCardRow({ card, onDeleted }: { card: UserCard; onDeleted: () => voi
             }
 
             await deleteUserCard(token, card.id);
-            onDeleted();
+            onDeleted({
+                action: 'remove',
+                userCardId: card.id,
+                externalCardId: card.external_card_id,
+            });
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete card.');
+        } finally {
             setLoading(false);
         }
     }
@@ -289,15 +470,184 @@ function UserCardRow({ card, onDeleted }: { card: UserCard; onDeleted: () => voi
     );
 }
 
+function getEffectiveTotalPages(
+    meta: Omit<PaginatedPokemonCardSearch, 'data'>,
+    currentPage: number,
+): number {
+    if (meta.totalCount > 0) {
+        return Math.max(1, Math.ceil(meta.totalCount / meta.pageSize));
+    }
+
+    if (meta.hasMore) {
+        return currentPage + 1;
+    }
+
+    return Math.max(1, currentPage);
+}
+
+function canGoToPage(
+    page: number,
+    currentPage: number,
+    meta: Omit<PaginatedPokemonCardSearch, 'data'>,
+): boolean {
+    if (page < 1 || page === currentPage) {
+        return false;
+    }
+
+    if (page === currentPage + 1 && meta.hasMore) {
+        return true;
+    }
+
+    if (page === currentPage - 1) {
+        return true;
+    }
+
+    return page <= getEffectiveTotalPages(meta, currentPage);
+}
+
+function getFixedPageWindow(current: number, total: number): number[] {
+    const windowSize = Math.min(7, total);
+    let start = current - 3;
+    start = Math.max(1, Math.min(start, total - windowSize + 1));
+
+    return Array.from({ length: windowSize }, (_, index) => start + index);
+}
+
+function SearchPagination({
+    currentPage,
+    totalPages,
+    hasMore,
+    onPageChange,
+    disabled = false,
+    jumpInputId = 'jump-to-page',
+}: {
+    currentPage: number;
+    totalPages: number;
+    hasMore: boolean;
+    onPageChange: (page: number) => void;
+    disabled?: boolean;
+    jumpInputId?: string;
+}) {
+    const [jumpValue, setJumpValue] = useState('');
+
+    const pageItems = getFixedPageWindow(currentPage, totalPages);
+    const pageButtonClass =
+        'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg px-2 text-sm tabular-nums';
+    const canGoNext = currentPage < totalPages || hasMore;
+
+    function handleJump(event: FormEvent) {
+        event.preventDefault();
+
+        const parsed = Number.parseInt(jumpValue, 10);
+
+        if (!Number.isFinite(parsed) || parsed < 1) {
+            return;
+        }
+
+        setJumpValue('');
+        onPageChange(parsed);
+    }
+
+    return (
+        <div className="flex flex-col items-center gap-3">
+            <nav
+                aria-label="Search results pagination"
+                className="flex items-center justify-center gap-1"
+            >
+                <button
+                    type="button"
+                    onClick={() => onPageChange(currentPage - 1)}
+                    disabled={disabled || currentPage <= 1}
+                    aria-label="Previous page"
+                    className={`${pageButtonClass} border border-[var(--border)] hover:bg-white/5 disabled:opacity-50`}
+                >
+                    &lt;
+                </button>
+
+                {pageItems.map((page) => (
+                    <button
+                        key={page}
+                        type="button"
+                        onClick={() => onPageChange(page)}
+                        disabled={disabled || page === currentPage}
+                        aria-label={`Page ${page}`}
+                        aria-current={page === currentPage ? 'page' : undefined}
+                        className={`${pageButtonClass} ${
+                            page === currentPage
+                                ? 'bg-[var(--accent)] font-medium text-white'
+                                : 'border border-[var(--border)] hover:bg-white/5'
+                        } disabled:opacity-100`}
+                    >
+                        {page}
+                    </button>
+                ))}
+
+                <button
+                    type="button"
+                    onClick={() => onPageChange(currentPage + 1)}
+                    disabled={disabled || !canGoNext}
+                    aria-label="Next page"
+                    className={`${pageButtonClass} border border-[var(--border)] hover:bg-white/5 disabled:opacity-50`}
+                >
+                    &gt;
+                </button>
+            </nav>
+
+            <form
+                onSubmit={handleJump}
+                className="flex flex-wrap items-center justify-center gap-2 text-sm text-[var(--muted)]"
+            >
+                <label htmlFor={jumpInputId}>Go to page</label>
+                <input
+                    id={jumpInputId}
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={jumpValue}
+                    onChange={(event) => setJumpValue(event.target.value)}
+                    disabled={disabled}
+                    placeholder={String(currentPage)}
+                    className="w-16 rounded-lg border border-[var(--border)] bg-[var(--background)] px-2 py-1.5 text-center text-[var(--foreground)] disabled:opacity-50"
+                />
+                <button
+                    type="submit"
+                    disabled={disabled || !jumpValue.trim()}
+                    className="rounded-lg border border-[var(--border)] px-3 py-1.5 hover:bg-white/5 disabled:opacity-50"
+                >
+                    Go
+                </button>
+            </form>
+        </div>
+    );
+}
+
 export function TestApp() {
     const [user, setUser] = useState<User | null>(null);
     const [configError, setConfigError] = useState<string | null>(null);
     const [tab, setTab] = useState<Tab>('search');
     const [query, setQuery] = useState('pikachu');
+    const [activeQuery, setActiveQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const [searchResults, setSearchResults] = useState<PokemonCard[]>([]);
+    const [searchMeta, setSearchMeta] = useState<Omit<PaginatedPokemonCardSearch, 'data'> | null>(
+        null,
+    );
+    const pageCacheRef = useRef(new Map<string, Map<number, PaginatedPokemonCardSearch>>());
+    const searchInFlightRef = useRef<string | null>(null);
+    const userCardsCacheRef = useRef<{
+        userId: string;
+        owned: UserCard[];
+        wishlist: UserCard[];
+    } | null>(null);
+    const tabRef = useRef<Tab>(tab);
+    tabRef.current = tab;
+    const loadedUserIdRef = useRef<string | null>(null);
     const [userCards, setUserCards] = useState<UserCard[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const [collectionLoading, setCollectionLoading] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
+    const [wishlistByExternalId, setWishlistByExternalId] = useState<Record<string, string>>({});
+    const [ownedByExternalId, setOwnedByExternalId] = useState<Record<string, string>>({});
 
     useEffect(() => {
         try {
@@ -314,7 +664,10 @@ export function TestApp() {
             const {
                 data: { subscription },
             } = supabase.auth.onAuthStateChange((_event, session) => {
-                setUser(session?.user ?? null);
+                const nextUser = session?.user ?? null;
+                setUser((current) =>
+                    current?.id === nextUser?.id ? current : nextUser,
+                );
             });
 
             return () => subscription.unsubscribe();
@@ -323,10 +676,87 @@ export function TestApp() {
         }
     }, []);
 
-    async function loadUserCards(status?: 'owned' | 'wishlist') {
-        if (!user) return;
+    function applyUserCardsCache(activeTab: Tab) {
+        const cache = userCardsCacheRef.current;
 
-        setLoading(true);
+        if (!cache) {
+            return;
+        }
+
+        setWishlistByExternalId(
+            Object.fromEntries(cache.wishlist.map((entry) => [entry.external_card_id, entry.id])),
+        );
+        setOwnedByExternalId(
+            Object.fromEntries(cache.owned.map((entry) => [entry.external_card_id, entry.id])),
+        );
+
+        if (activeTab === 'collection') {
+            setUserCards(cache.owned);
+        } else if (activeTab === 'wishlist') {
+            setUserCards(cache.wishlist);
+        }
+    }
+
+    function patchUserCardsCache(status: 'owned' | 'wishlist', patch: UserCardPatch) {
+        if (!user) {
+            return;
+        }
+
+        if (!userCardsCacheRef.current) {
+            userCardsCacheRef.current = {
+                userId: user.id,
+                owned: [],
+                wishlist: [],
+            };
+        }
+
+        const cache = userCardsCacheRef.current;
+        const listKey = status === 'owned' ? 'owned' : 'wishlist';
+
+        if (patch.action === 'add') {
+            cache[listKey] = [
+                patch.card,
+                ...cache[listKey].filter(
+                    (entry) => entry.external_card_id !== patch.card.external_card_id,
+                ),
+            ];
+        } else {
+            cache[listKey] = cache[listKey].filter((entry) => entry.id !== patch.userCardId);
+        }
+
+        applyUserCardsCache(tabRef.current);
+    }
+
+    function handleOwnedChange(patch: UserCardPatch) {
+        patchUserCardsCache('owned', patch);
+    }
+
+    function handleWishlistChange(patch: UserCardPatch) {
+        patchUserCardsCache('wishlist', patch);
+    }
+
+    function handleUserCardDeleted(patch: UserCardPatch) {
+        if (patch.action !== 'remove' || !userCardsCacheRef.current) {
+            return;
+        }
+
+        const removedFromOwned = userCardsCacheRef.current.owned.some(
+            (entry) => entry.id === patch.userCardId,
+        );
+
+        patchUserCardsCache(removedFromOwned ? 'owned' : 'wishlist', patch);
+    }
+
+    async function refreshUserCards() {
+        if (!user) {
+            userCardsCacheRef.current = null;
+            setUserCards([]);
+            setWishlistByExternalId({});
+            setOwnedByExternalId({});
+            return;
+        }
+
+        setCollectionLoading(true);
         setMessage(null);
 
         try {
@@ -338,28 +768,139 @@ export function TestApp() {
                 return;
             }
 
-            const cards = await getMyUserCards(token, status);
-            setUserCards(cards);
+            const [wishlistCards, ownedCards] = await Promise.all([
+                getMyUserCards(token, 'wishlist'),
+                getMyUserCards(token, 'owned'),
+            ]);
+
+            userCardsCacheRef.current = {
+                userId: user.id,
+                owned: ownedCards,
+                wishlist: wishlistCards,
+            };
+            applyUserCardsCache(tabRef.current);
         } catch (error) {
             setMessage(error instanceof Error ? error.message : 'Failed to load cards.');
         } finally {
-            setLoading(false);
+            setCollectionLoading(false);
         }
     }
 
     useEffect(() => {
         if (!user) {
+            loadedUserIdRef.current = null;
+            userCardsCacheRef.current = null;
             setUserCards([]);
+            setWishlistByExternalId({});
+            setOwnedByExternalId({});
             return;
         }
 
-        if (tab === 'collection') {
-            loadUserCards('owned');
-        } else if (tab === 'wishlist') {
-            loadUserCards('wishlist');
+        if (loadedUserIdRef.current === user.id && userCardsCacheRef.current) {
+            applyUserCardsCache(tabRef.current);
+            return;
         }
+
+        loadedUserIdRef.current = user.id;
+        void refreshUserCards();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, tab]);
+    }, [user]);
+
+    useEffect(() => {
+        if (!user) {
+            return;
+        }
+
+        applyUserCardsCache(tab);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tab, user]);
+
+    function normalizeQuery(value: string) {
+        return value.trim().toLowerCase();
+    }
+
+    function applySearchResult(result: PaginatedPokemonCardSearch) {
+        setSearchResults(result.data);
+        setSearchMeta({
+            page: result.page,
+            pageSize: result.pageSize,
+            totalCount: result.totalCount,
+            hasMore: result.hasMore,
+        });
+        setCurrentPage(result.page);
+    }
+
+    function storePageInCache(normalized: string, page: number, result: PaginatedPokemonCardSearch) {
+        let queryCache = pageCacheRef.current.get(normalized);
+
+        if (!queryCache) {
+            queryCache = new Map();
+            pageCacheRef.current.set(normalized, queryCache);
+        }
+
+        queryCache.set(page, result);
+    }
+
+    function prefetchNextPage(searchQuery: string, result: PaginatedPokemonCardSearch) {
+        if (!result.hasMore) {
+            return;
+        }
+
+        const trimmed = searchQuery.trim();
+        const normalized = normalizeQuery(trimmed);
+        const nextPage = result.page + 1;
+
+        if (pageCacheRef.current.get(normalized)?.has(nextPage)) {
+            return;
+        }
+
+        void searchCards(trimmed, nextPage)
+            .then((nextResult) => {
+                storePageInCache(normalized, nextPage, nextResult);
+            })
+            .catch(() => {
+                // Prefetch failures are silent; the user can still click Next to retry.
+            });
+    }
+
+    async function fetchSearchPage(searchQuery: string, page: number) {
+        const trimmed = searchQuery.trim();
+        const normalized = normalizeQuery(trimmed);
+        const cached = pageCacheRef.current.get(normalized)?.get(page);
+
+        if (cached) {
+            applySearchResult(cached);
+            setMessage(null);
+            prefetchNextPage(trimmed, cached);
+            return;
+        }
+
+        const inFlightKey = `${normalized}:${page}`;
+
+        if (searchInFlightRef.current === inFlightKey) {
+            return;
+        }
+
+        searchInFlightRef.current = inFlightKey;
+        setSearchLoading(true);
+        setMessage(null);
+
+        try {
+            const result = await searchCards(trimmed, page);
+            storePageInCache(normalized, page, result);
+            applySearchResult(result);
+            prefetchNextPage(trimmed, result);
+
+            if (result.data.length > 0) {
+                setMessage(null);
+            }
+        } catch (error) {
+            setMessage(error instanceof Error ? error.message : 'Search failed.');
+        } finally {
+            searchInFlightRef.current = null;
+            setSearchLoading(false);
+        }
+    }
 
     async function handleSearch(event: React.FormEvent) {
         event.preventDefault();
@@ -371,21 +912,62 @@ export function TestApp() {
             return;
         }
 
-        setLoading(true);
-        setMessage(null);
+        const normalized = normalizeQuery(trimmed);
+        const previousNormalized = activeQuery ? normalizeQuery(activeQuery) : null;
 
-        try {
-            const cards = await searchCards(trimmed);
-            setSearchResults(cards);
-            if (cards.length === 0) {
-                setMessage('No cards found.');
-            }
-        } catch (error) {
-            setMessage(error instanceof Error ? error.message : 'Search failed.');
-        } finally {
-            setLoading(false);
+        if (previousNormalized && previousNormalized !== normalized) {
+            pageCacheRef.current.delete(previousNormalized);
         }
+
+        pageCacheRef.current.delete(normalized);
+
+        setActiveQuery(trimmed);
+        setCurrentPage(1);
+        await fetchSearchPage(trimmed, 1);
     }
+
+    async function goToPage(page: number) {
+        if (!activeQuery || searchLoading || !searchMeta) {
+            return;
+        }
+
+        if (!canGoToPage(page, currentPage, searchMeta)) {
+            return;
+        }
+
+        await fetchSearchPage(activeQuery, page);
+    }
+
+    const totalPages = searchMeta ? getEffectiveTotalPages(searchMeta, currentPage) : null;
+    const hasSearchResults = searchResults.length > 0;
+    const hasNoSearchResults =
+        Boolean(activeQuery && searchMeta && !searchLoading && searchResults.length === 0);
+    const showSearchPagination = Boolean(
+        searchMeta &&
+            activeQuery &&
+            hasSearchResults &&
+            (currentPage > 1 || searchMeta.hasMore || (totalPages ?? 0) > 1),
+    );
+    const paginationTop = showSearchPagination ? (
+        <SearchPagination
+            currentPage={currentPage}
+            totalPages={totalPages!}
+            hasMore={searchMeta!.hasMore}
+            onPageChange={goToPage}
+            disabled={searchLoading}
+            jumpInputId="search-jump-top"
+        />
+    ) : null;
+    const paginationBottom = showSearchPagination ? (
+        <SearchPagination
+            currentPage={currentPage}
+            totalPages={totalPages!}
+            hasMore={searchMeta!.hasMore}
+            onPageChange={goToPage}
+            disabled={searchLoading}
+            jumpInputId="search-jump-bottom"
+        />
+    ) : null;
 
     if (configError) {
         return (
@@ -434,33 +1016,49 @@ export function TestApp() {
                                 />
                                 <button
                                     type="submit"
-                                    disabled={loading || query.trim().length < 3}
+                                    disabled={searchLoading || query.trim().length < 3}
                                     className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50"
                                 >
                                     Search
                                 </button>
                             </form>
-                            <p className="mb-4 text-sm text-[var(--muted)]">
-                                Enter at least 3 characters to search.
-                            </p>
-                            <div className="grid gap-3">
+                            {paginationTop && <div className="mb-4">{paginationTop}</div>}
+                            {searchLoading && (
+                                <p className="mb-4 text-sm text-[var(--muted)]">
+                                    Searching… first lookup can take a few seconds.
+                                </p>
+                            )}
+                            {hasNoSearchResults && (
+                                <div className="rounded-lg border border-[var(--border)] p-6 text-center">
+                                    <p className="text-lg font-semibold">
+                                        No results with the provided search query.
+                                    </p>
+                                </div>
+                            )}
+                            {hasSearchResults && (
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                                 {searchResults.map((card) => (
                                     <CardResult
                                         key={card.id}
                                         card={card}
-                                        onSaved={() => {
-                                            if (tab !== 'search') loadUserCards();
-                                        }}
+                                        ownedUserCardId={ownedByExternalId[card.id] ?? null}
+                                        wishlistUserCardId={wishlistByExternalId[card.id] ?? null}
+                                        onOwnedChange={handleOwnedChange}
+                                        onWishlistChange={handleWishlistChange}
                                     />
                                 ))}
                             </div>
+                            )}
+                            {paginationBottom && <div className="mt-4">{paginationBottom}</div>}
                         </Panel>
                     )}
 
                     {(tab === 'collection' || tab === 'wishlist') && (
                         <Panel title={tab === 'collection' ? 'My collection' : 'My wishlist'}>
-                            {loading && <p className="text-sm text-[var(--muted)]">Loading...</p>}
-                            {!loading && userCards.length === 0 && (
+                            {collectionLoading && (
+                                <p className="text-sm text-[var(--muted)]">Loading...</p>
+                            )}
+                            {!collectionLoading && userCards.length === 0 && (
                                 <p className="text-sm text-[var(--muted)]">No cards yet.</p>
                             )}
                             <div className="grid gap-3">
@@ -468,9 +1066,7 @@ export function TestApp() {
                                     <UserCardRow
                                         key={card.id}
                                         card={card}
-                                        onDeleted={() =>
-                                            loadUserCards(tab === 'collection' ? 'owned' : 'wishlist')
-                                        }
+                                        onDeleted={handleUserCardDeleted}
                                     />
                                 ))}
                             </div>

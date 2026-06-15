@@ -5,7 +5,7 @@ export default function Home() {
         <main className="min-h-screen px-4 py-8">
             <div className="mx-auto max-w-4xl">
                 <header className="mb-8">
-                    <p className="text-sm font-medium uppercase tracking-wider text-blue-400">
+                    <p className="text-sm font-medium uppercase tracking-wider text-[var(--accent)]">
                         Cardex
                     </p>
                     <h1 className="mt-1 text-3xl font-semibold">Backend Test UI</h1>

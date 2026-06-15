@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 
 export type PokemonCard = {
     id: string;
@@ -7,6 +7,14 @@ export type PokemonCard = {
         small?: string;
         large?: string;
     };
+};
+
+export type PaginatedPokemonCardSearch = {
+    data: PokemonCard[];
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    hasMore: boolean;
 };
 
 export type UserCard = {
@@ -58,10 +66,14 @@ async function apiFetch<T>(
     return data as T;
 }
 
-export async function searchCards(query: string) {
-    return apiFetch<PokemonCard[]>(
-        `/v1/cards/search?query=${encodeURIComponent(query)}`,
-    );
+export async function searchCards(query: string, page = 1, pageSize = 20) {
+    const params = new URLSearchParams({
+        query,
+        page: String(page),
+        pageSize: String(pageSize),
+    });
+
+    return apiFetch<PaginatedPokemonCardSearch>(`/v1/cards/search?${params.toString()}`);
 }
 
 export async function getCardById(id: string) {
