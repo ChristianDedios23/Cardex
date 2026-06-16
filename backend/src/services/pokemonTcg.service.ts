@@ -161,9 +161,7 @@ function extractTcgPlayerMarketPrice(tcgplayer: UpstreamPokemonCard['tcgplayer']
     return null;
 }
 
-function mapTypeModifiers(
-    modifiers: UpstreamPokemonCard['weaknesses'],
-): PokemonCardTypeModifier[] {
+function mapTypeModifiers(modifiers: UpstreamPokemonCard['weaknesses']): PokemonCardTypeModifier[] {
     return (
         modifiers
             ?.map((modifier) => ({
