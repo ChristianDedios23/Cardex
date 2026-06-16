@@ -14,10 +14,7 @@ app.use(express.json());
 app.use(logger);
 
 // OpenAPI documentation (openapi.yaml lives at project root, not in dist/)
-const specFile = fs.readFileSync(
-    path.join(__dirname, '..', 'openapi.yaml'),
-    'utf8',
-);
+const specFile = fs.readFileSync(path.join(__dirname, '..', 'openapi.yaml'), 'utf8');
 const spec = YAML.parse(specFile);
 app.get('/openapi.json', (_req: Request, res: Response) => {
     res.json(spec);
