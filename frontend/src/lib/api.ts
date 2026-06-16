@@ -12,10 +12,16 @@ export type PokemonCard = {
     marketPrice: number | null;
 };
 
+export type PokemonCardTypeModifier = {
+    type: string;
+    value: string;
+};
+
 export type PokemonCardAttack = {
     name: string;
     damage: string | null;
     text: string | null;
+    cost: string[];
 };
 
 export type PokemonCardAbility = {
@@ -35,6 +41,12 @@ export type PokemonCardDetail = PokemonCard & {
     hp: string | null;
     flavorText: string | null;
     tcgplayerUrl: string | null;
+    evolvesFrom: string | null;
+    evolvesTo: string[];
+    weaknesses: PokemonCardTypeModifier[];
+    resistances: PokemonCardTypeModifier[];
+    retreatCost: string[];
+    setReleaseDate: string | null;
     attacks: PokemonCardAttack[];
     abilities: PokemonCardAbility[];
 };
@@ -159,7 +171,14 @@ function normalizeCardDetail(raw: PokemonCardDetail): PokemonCardDetail {
         ...raw,
         subtypes: raw.subtypes ?? [],
         types: raw.types ?? [],
-        attacks: raw.attacks ?? [],
+        evolvesTo: raw.evolvesTo ?? [],
+        weaknesses: raw.weaknesses ?? [],
+        resistances: raw.resistances ?? [],
+        retreatCost: raw.retreatCost ?? [],
+        attacks: (raw.attacks ?? []).map((attack) => ({
+            ...attack,
+            cost: attack.cost ?? [],
+        })),
         abilities: raw.abilities ?? [],
     };
 }

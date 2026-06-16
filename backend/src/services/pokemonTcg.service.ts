@@ -3,7 +3,12 @@ import { getCacheTtlMs, getOrFetch, setCached } from './pokemonTcgCache';
 
 const POKEMON_TCG_BASE_URL = 'https://api.pokemontcg.io/v2';
 const CARD_DETAIL_SELECT =
-    'id,name,number,images,tcgplayer,set,rarity,artist,supertype,subtypes,types,hp,flavorText,attacks,abilities';
+    'id,name,number,images,tcgplayer,set,rarity,artist,supertype,subtypes,types,hp,flavorText,attacks,abilities,evolvesFrom,evolvesTo,weaknesses,resistances,retreatCost';
+
+export type PokemonCardTypeModifier = {
+    type: string;
+    value: string;
+};
 
 export type PokemonCard = {
     id: string;
@@ -21,6 +26,7 @@ export type PokemonCardAttack = {
     name: string;
     damage: string | null;
     text: string | null;
+    cost: string[];
 };
 
 export type PokemonCardAbility = {
@@ -40,6 +46,12 @@ export type PokemonCardDetail = PokemonCard & {
     hp: string | null;
     flavorText: string | null;
     tcgplayerUrl: string | null;
+    evolvesFrom: string | null;
+    evolvesTo: string[];
+    weaknesses: PokemonCardTypeModifier[];
+    resistances: PokemonCardTypeModifier[];
+    retreatCost: string[];
+    setReleaseDate: string | null;
     attacks: PokemonCardAttack[];
     abilities: PokemonCardAbility[];
 };
@@ -77,6 +89,7 @@ type UpstreamPokemonCard = {
     set?: {
         name?: string;
         series?: string;
+        releaseDate?: string;
         images?: {
             symbol?: string;
             logo?: string;
@@ -89,8 +102,20 @@ type UpstreamPokemonCard = {
     types?: string[];
     hp?: string;
     flavorText?: string;
+    evolvesFrom?: string;
+    evolvesTo?: string[];
+    weaknesses?: Array<{
+        type: string;
+        value?: string;
+    }>;
+    resistances?: Array<{
+        type: string;
+        value?: string;
+    }>;
+    retreatCost?: string[];
     attacks?: Array<{
         name: string;
+        cost?: string[];
         damage?: string;
         text?: string;
     }>;
@@ -136,6 +161,19 @@ function extractTcgPlayerMarketPrice(tcgplayer: UpstreamPokemonCard['tcgplayer']
     return null;
 }
 
+function mapTypeModifiers(
+    modifiers: UpstreamPokemonCard['weaknesses'],
+): PokemonCardTypeModifier[] {
+    return (
+        modifiers
+            ?.map((modifier) => ({
+                type: modifier.type?.trim() ?? '',
+                value: modifier.value?.trim() ?? '',
+            }))
+            .filter((modifier) => modifier.type.length > 0) ?? []
+    );
+}
+
 function mapPokemonCard(card: UpstreamPokemonCard): PokemonCard {
     const mapped: PokemonCard = {
         id: card.id,
@@ -168,9 +206,16 @@ function mapPokemonCardDetail(card: UpstreamPokemonCard): PokemonCardDetail {
         hp: card.hp?.trim() ? card.hp.trim() : null,
         flavorText: card.flavorText?.trim() ? card.flavorText.trim() : null,
         tcgplayerUrl: card.tcgplayer?.url?.trim() ? card.tcgplayer.url.trim() : null,
+        evolvesFrom: card.evolvesFrom?.trim() ? card.evolvesFrom.trim() : null,
+        evolvesTo: card.evolvesTo?.filter(Boolean) ?? [],
+        weaknesses: mapTypeModifiers(card.weaknesses),
+        resistances: mapTypeModifiers(card.resistances),
+        retreatCost: card.retreatCost?.filter(Boolean) ?? [],
+        setReleaseDate: card.set?.releaseDate?.trim() ? card.set.releaseDate.trim() : null,
         attacks:
             card.attacks?.map((attack) => ({
                 name: attack.name,
+                cost: attack.cost?.filter(Boolean) ?? [],
                 damage: attack.damage?.trim() ? attack.damage.trim() : null,
                 text: attack.text?.trim() ? attack.text.trim() : null,
             })) ?? [],

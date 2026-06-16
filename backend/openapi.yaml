@@ -530,6 +530,39 @@ components:
                           type: string
                           format: uri
                           nullable: true
+                      evolvesFrom:
+                          type: string
+                          nullable: true
+                      evolvesTo:
+                          type: array
+                          items:
+                              type: string
+                      weaknesses:
+                          type: array
+                          items:
+                              type: object
+                              properties:
+                                  type:
+                                      type: string
+                                  value:
+                                      type: string
+                      resistances:
+                          type: array
+                          items:
+                              type: object
+                              properties:
+                                  type:
+                                      type: string
+                                  value:
+                                      type: string
+                      retreatCost:
+                          type: array
+                          items:
+                              type: string
+                      setReleaseDate:
+                          type: string
+                          nullable: true
+                          description: Set release date (YYYY/MM/DD)
                       attacks:
                           type: array
                           items:
@@ -537,6 +570,10 @@ components:
                               properties:
                                   name:
                                       type: string
+                                  cost:
+                                      type: array
+                                      items:
+                                          type: string
                                   damage:
                                       type: string
                                       nullable: true

@@ -6,7 +6,9 @@ import {
     peekCachedCardDetail,
     type PokemonCard,
     type PokemonCardDetail,
+    type PokemonCardTypeModifier,
 } from '@/lib/api';
+import { getPokemonTypeIconUrl } from '@/lib/pokemonTypeIcons';
 
 function formatPrice(price: number): string {
     return new Intl.NumberFormat('en-US', {
@@ -15,27 +17,115 @@ function formatPrice(price: number): string {
     }).format(price);
 }
 
-function DetailRow({ label, value }: { label: string; value: string | null | undefined }) {
-    if (!value) {
+function formatReleaseDate(date: string): string {
+    const [year, month, day] = date.split('/').map((part) => Number(part));
+
+    if (!year || !month || !day) {
+        return date;
+    }
+
+    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+}
+
+function TypeModifierList({ modifiers }: { modifiers: PokemonCardTypeModifier[] }) {
+    return (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {modifiers.map((modifier, index) => (
+                <span
+                    key={`${modifier.type}-${index}`}
+                    className="inline-flex items-center gap-2"
+                >
+                    <TypeIcon type={modifier.type} />
+                    <span>{modifier.value}</span>
+                </span>
+            ))}
+        </div>
+    );
+}
+
+function TypeIcon({ type, className = 'h-4 w-4' }: { type: string; className?: string }) {
+    const iconUrl = getPokemonTypeIconUrl(type);
+
+    if (!iconUrl) {
         return null;
     }
 
     return (
-        <div className="grid gap-0.5 sm:grid-cols-[7rem_1fr]">
-            <dt className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+            src={iconUrl}
+            alt=""
+            className={`shrink-0 object-contain ${className}`}
+            aria-hidden="true"
+        />
+    );
+}
+
+function AttackCostIcons({ cost }: { cost: string[] }) {
+    if (cost.length === 0) {
+        return null;
+    }
+
+    return (
+        <span className="inline-flex items-center gap-1">
+            {cost.map((energy, index) => (
+                <TypeIcon key={`${energy}-${index}`} type={energy} />
+            ))}
+        </span>
+    );
+}
+
+function TypeValue({ types, supertype }: { types: string[]; supertype?: string | null }) {
+    if (types.length > 0) {
+        return (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                {types.map((type) => (
+                    <span key={type} className="inline-flex items-center gap-2">
+                        <TypeIcon type={type} />
+                        <span>{type}</span>
+                    </span>
+                ))}
+            </div>
+        );
+    }
+
+    if (supertype) {
+        return <span>{supertype}</span>;
+    }
+
+    return null;
+}
+
+function DetailField({
+    label,
+    children,
+}: {
+    label: string;
+    children: React.ReactNode;
+}) {
+    return (
+        <div className="grid gap-1 sm:grid-cols-[5.5rem_1fr] sm:items-center sm:gap-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
                 {label}
-            </dt>
-            <dd className="text-sm">{value}</dd>
+            </p>
+            <div className="text-sm text-[var(--foreground)]">{children}</div>
         </div>
     );
 }
 
 function DetailSkeleton() {
     return (
-        <div className="space-y-3" aria-hidden="true">
+        <div
+            className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3"
+            aria-hidden="true"
+        >
             {Array.from({ length: 6 }, (_, index) => (
-                <div key={index} className="grid gap-2 sm:grid-cols-[7rem_1fr]">
-                    <div className="card-detail-skeleton h-3 w-16 rounded" />
+                <div key={index} className="grid gap-2 sm:grid-cols-[5.5rem_1fr]">
+                    <div className="card-detail-skeleton h-3 w-14 rounded" />
                     <div className="card-detail-skeleton h-3 rounded" />
                 </div>
             ))}
@@ -126,10 +216,35 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
     const card = detail ?? preview;
     const imageUrl = card?.images?.large ?? card?.images?.small;
     const title = card?.name ?? 'Card details';
+    const setSymbol = detail?.setSymbol ?? card?.setSymbol;
     const types = detail?.types ?? [];
     const subtypes = detail?.subtypes ?? [];
     const abilities = detail?.abilities ?? [];
     const attacks = detail?.attacks ?? [];
+    const weaknesses = detail?.weaknesses ?? [];
+    const resistances = detail?.resistances ?? [];
+    const retreatCost = detail?.retreatCost ?? [];
+    const evolvesTo = detail?.evolvesTo ?? [];
+
+    const setLabel = detail?.setName
+        ? detail.setSeries
+            ? `${detail.setName} (${detail.setSeries})`
+            : detail.setName
+        : null;
+
+    const numberLabel =
+        detail?.number ? `#${detail.number}` : card?.number ? `#${card.number}` : null;
+
+    const hasTypeInfo = types.length > 0 || Boolean(detail?.supertype);
+    const subtypeLabel = subtypes.length > 0 ? subtypes.join(', ') : null;
+    const evolvesToLabel = evolvesTo.length > 0 ? evolvesTo.join(', ') : null;
+    const releaseDateLabel = detail?.setReleaseDate
+        ? formatReleaseDate(detail.setReleaseDate)
+        : null;
+
+    const marketPrice = detail?.marketPrice ?? card?.marketPrice;
+    const marketLabel =
+        marketPrice != null ? `${formatPrice(marketPrice)} · TCGPlayer` : null;
 
     return (
         <div
@@ -139,7 +254,7 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
             <button
                 type="button"
                 aria-label="Close card details"
-                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/10 backdrop-blur-sm"
                 onClick={onClose}
             />
 
@@ -147,16 +262,14 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="card-detail-title"
-                className="relative z-10 flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-xl"
+                className="relative z-10 flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-xl"
             >
                 <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
                     <div className="min-w-0">
                         <h2 id="card-detail-title" className="truncate text-lg font-semibold">
                             {title}
                         </h2>
-                        {loading && !detail && (
-                            <LoadingSpinner label="Loading details…" />
-                        )}
+                        {loading && !detail && <LoadingSpinner label="Loading details…" />}
                     </div>
                     <button
                         type="button"
@@ -175,8 +288,8 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                         </p>
                     )}
 
-                    <div className="grid gap-6 sm:grid-cols-[minmax(0,14rem)_1fr]">
-                        <div className="mx-auto w-full max-w-[14rem] sm:mx-0">
+                    <div className="grid gap-6 sm:grid-cols-[minmax(0,17.5rem)_1fr]">
+                        <div className="mx-auto w-full max-w-[17.5rem] space-y-4 sm:mx-0">
                             {imageUrl ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
@@ -189,6 +302,12 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                     No image
                                 </div>
                             )}
+
+                            {detail?.flavorText && (
+                                <blockquote className="border-l-2 border-[var(--accent)] pl-3 text-sm italic text-[var(--muted)]">
+                                    {detail.flavorText}
+                                </blockquote>
+                            )}
                         </div>
 
                         <div className="space-y-4">
@@ -196,111 +315,175 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                 <DetailSkeleton />
                             ) : (
                                 <>
-                            <dl className="space-y-3">
-                                <DetailRow
-                                    label="Set"
-                                    value={
-                                        detail?.setName
-                                            ? detail.setSeries
-                                                ? `${detail.setName} (${detail.setSeries})`
-                                                : detail.setName
-                                            : null
-                                    }
-                                />
-                                <DetailRow
-                                    label="Number"
-                                    value={detail?.number ? `#${detail.number}` : card?.number ? `#${card.number}` : null}
-                                />
-                                <DetailRow label="Rarity" value={detail?.rarity} />
-                                <DetailRow label="Artist" value={detail?.artist} />
-                                <DetailRow
-                                    label="Type"
-                                    value={
-                                        types.length > 0
-                                            ? types.join(', ')
-                                            : detail?.supertype ?? null
-                                    }
-                                />
-                                <DetailRow
-                                    label="Subtype"
-                                    value={subtypes.length > 0 ? subtypes.join(', ') : null}
-                                />
-                                <DetailRow label="HP" value={detail?.hp} />
-                                <DetailRow
-                                    label="Market"
-                                    value={
-                                        (detail?.marketPrice ?? card?.marketPrice) != null
-                                            ? `${formatPrice(detail?.marketPrice ?? card?.marketPrice ?? 0)} · TCGPlayer`
-                                            : null
-                                    }
-                                />
-                            </dl>
+                                    {(setLabel ||
+                                        numberLabel ||
+                                        detail?.rarity ||
+                                        releaseDateLabel ||
+                                        hasTypeInfo ||
+                                        subtypeLabel ||
+                                        detail?.hp ||
+                                        weaknesses.length > 0 ||
+                                        resistances.length > 0 ||
+                                        retreatCost.length > 0 ||
+                                        detail?.evolvesFrom ||
+                                        evolvesToLabel ||
+                                        detail?.artist ||
+                                        marketLabel) && (
+                                        <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3">
+                                            {setLabel && (
+                                                <DetailField label="Set">
+                                                    <div className="flex items-center gap-2">
+                                                        {setSymbol && (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img
+                                                                src={setSymbol}
+                                                                alt=""
+                                                                className="h-4 w-auto max-w-[1.25rem] shrink-0 object-contain"
+                                                                aria-hidden="true"
+                                                            />
+                                                        )}
+                                                        <span>{setLabel}</span>
+                                                    </div>
+                                                </DetailField>
+                                            )}
+                                            {numberLabel && (
+                                                <DetailField label="Number">
+                                                    {numberLabel}
+                                                </DetailField>
+                                            )}
+                                            {detail?.rarity && (
+                                                <DetailField label="Rarity">
+                                                    {detail.rarity}
+                                                </DetailField>
+                                            )}
+                                            {releaseDateLabel && (
+                                                <DetailField label="Released">
+                                                    {releaseDateLabel}
+                                                </DetailField>
+                                            )}
+                                            {hasTypeInfo && (
+                                                <DetailField label="Type">
+                                                    <TypeValue
+                                                        types={types}
+                                                        supertype={detail?.supertype}
+                                                    />
+                                                </DetailField>
+                                            )}
+                                            {subtypeLabel && (
+                                                <DetailField label="Subtype">
+                                                    {subtypeLabel}
+                                                </DetailField>
+                                            )}
+                                            {detail?.hp && (
+                                                <DetailField label="HP">{detail.hp}</DetailField>
+                                            )}
+                                            {weaknesses.length > 0 && (
+                                                <DetailField label="Weakness">
+                                                    <TypeModifierList modifiers={weaknesses} />
+                                                </DetailField>
+                                            )}
+                                            {resistances.length > 0 && (
+                                                <DetailField label="Resistance">
+                                                    <TypeModifierList modifiers={resistances} />
+                                                </DetailField>
+                                            )}
+                                            {retreatCost.length > 0 && (
+                                                <DetailField label="Retreat">
+                                                    <AttackCostIcons cost={retreatCost} />
+                                                </DetailField>
+                                            )}
+                                            {detail?.evolvesFrom && (
+                                                <DetailField label="Evolves from">
+                                                    {detail.evolvesFrom}
+                                                </DetailField>
+                                            )}
+                                            {evolvesToLabel && (
+                                                <DetailField label="Evolves to">
+                                                    {evolvesToLabel}
+                                                </DetailField>
+                                            )}
+                                            {detail?.artist && (
+                                                <DetailField label="Illustrator">
+                                                    {detail.artist}
+                                                </DetailField>
+                                            )}
+                                            {marketLabel && (
+                                                <DetailField label="Market">
+                                                    {marketLabel}
+                                                </DetailField>
+                                            )}
+                                        </div>
+                                    )}
 
-                            {detail?.flavorText && (
-                                <blockquote className="border-l-2 border-[var(--accent)] pl-3 text-sm italic text-[var(--muted)]">
-                                    {detail.flavorText}
-                                </blockquote>
-                            )}
+                                    {abilities.length > 0 && (
+                                        <div>
+                                            <h3 className="mb-2 text-sm font-medium">Ability</h3>
+                                            <ul className="space-y-2">
+                                                {abilities.map((ability) => (
+                                                    <li
+                                                        key={ability.name}
+                                                        className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-3 text-sm"
+                                                    >
+                                                        <p className="font-medium">{ability.name}</p>
+                                                        {ability.text && (
+                                                            <p className="mt-1 text-[var(--muted)]">
+                                                                {ability.text}
+                                                            </p>
+                                                        )}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
 
-                            {abilities.length > 0 && (
-                                <div>
-                                    <h3 className="mb-2 text-sm font-medium">Abilities</h3>
-                                    <ul className="space-y-2">
-                                        {abilities.map((ability) => (
-                                            <li
-                                                key={ability.name}
-                                                className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-3 text-sm"
-                                            >
-                                                <p className="font-medium">{ability.name}</p>
-                                                {ability.text && (
-                                                    <p className="mt-1 text-[var(--muted)]">
-                                                        {ability.text}
-                                                    </p>
-                                                )}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
+                                    {attacks.length > 0 && (
+                                        <div>
+                                            <h3 className="mb-2 text-sm font-medium">Moves</h3>
+                                            <ul className="space-y-2">
+                                                {attacks.map((attack, index) => (
+                                                    <li
+                                                        key={`${attack.name}-${index}`}
+                                                        className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-3 text-sm"
+                                                    >
+                                                        <div className="flex items-baseline justify-between gap-2">
+                                                            <div className="flex flex-wrap items-center gap-2">
+                                                                <p className="font-medium">
+                                                                    {attack.name}
+                                                                </p>
+                                                                <AttackCostIcons cost={attack.cost} />
+                                                            </div>
+                                                            {attack.damage && (
+                                                                <div className="flex shrink-0 items-baseline gap-2">
+                                                                    <span className="font-medium text-[var(--foreground)]">
+                                                                        Damage
+                                                                    </span>
+                                                                    <span className="font-bold text-[var(--accent)]">
+                                                                        {attack.damage}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        {attack.text && (
+                                                            <p className="mt-1 text-[var(--muted)]">
+                                                                {attack.text}
+                                                            </p>
+                                                        )}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
 
-                            {attacks.length > 0 && (
-                                <div>
-                                    <h3 className="mb-2 text-sm font-medium">Attacks</h3>
-                                    <ul className="space-y-2">
-                                        {attacks.map((attack) => (
-                                            <li
-                                                key={attack.name}
-                                                className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-3 text-sm"
-                                            >
-                                                <div className="flex items-baseline justify-between gap-2">
-                                                    <p className="font-medium">{attack.name}</p>
-                                                    {attack.damage && (
-                                                        <p className="shrink-0 text-[var(--accent)]">
-                                                            {attack.damage}
-                                                        </p>
-                                                    )}
-                                                </div>
-                                                {attack.text && (
-                                                    <p className="mt-1 text-[var(--muted)]">
-                                                        {attack.text}
-                                                    </p>
-                                                )}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            )}
-
-                            {detail?.tcgplayerUrl && (
-                                <a
-                                    href={detail.tcgplayerUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex text-sm text-[var(--accent)] hover:underline"
-                                >
-                                    View on TCGPlayer
-                                </a>
-                            )}
+                                    {detail?.tcgplayerUrl && (
+                                        <a
+                                            href={detail.tcgplayerUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex text-sm text-[var(--accent)] hover:underline"
+                                        >
+                                            View on TCGPlayer
+                                        </a>
+                                    )}
                                 </>
                             )}
                         </div>
