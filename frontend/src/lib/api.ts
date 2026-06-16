@@ -40,7 +40,7 @@ export type PokemonCardDetail = PokemonCard & {
 };
 
 export type PaginatedPokemonCardSearch = {
-    data: PokemonCard[];
+    data: PokemonCardDetail[];
     page: number;
     pageSize: number;
     totalCount: number;
@@ -100,6 +100,22 @@ async function apiFetch<T>(
 const cardDetailCache = new Map<string, PokemonCardDetail>();
 const cardDetailInflight = new Map<string, Promise<PokemonCardDetail>>();
 
+function cacheCardDetail(detail: PokemonCardDetail): PokemonCardDetail {
+    const normalized = normalizeCardDetail(detail);
+    cardDetailCache.set(normalized.id.toLowerCase(), normalized);
+    return normalized;
+}
+
+export function seedCardDetailCache(cards: PokemonCardDetail[]): void {
+    for (const card of cards) {
+        cacheCardDetail(card);
+    }
+}
+
+export function peekCachedCardDetail(id: string): PokemonCardDetail | undefined {
+    return cardDetailCache.get(id.toLowerCase());
+}
+
 export async function searchCards(query: string, page = 1, pageSize = 20) {
     const params = new URLSearchParams({
         query,
@@ -107,7 +123,11 @@ export async function searchCards(query: string, page = 1, pageSize = 20) {
         pageSize: String(pageSize),
     });
 
-    return apiFetch<PaginatedPokemonCardSearch>(`/v1/cards/search?${params.toString()}`);
+    const result = await apiFetch<PaginatedPokemonCardSearch>(
+        `/v1/cards/search?${params.toString()}`,
+    );
+    seedCardDetailCache(result.data);
+    return result;
 }
 
 export async function getCardById(id: string) {
@@ -125,11 +145,7 @@ export async function getCardById(id: string) {
     }
 
     const promise = apiFetch<PokemonCardDetail>(`/v1/cards/${encodeURIComponent(id)}`)
-        .then(normalizeCardDetail)
-        .then((detail) => {
-            cardDetailCache.set(key, detail);
-            return detail;
-        })
+        .then(cacheCardDetail)
         .finally(() => {
             cardDetailInflight.delete(key);
         });

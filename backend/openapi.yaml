@@ -42,8 +42,9 @@ paths:
             description: |
                 Search for cards by name using the Pokémon TCG API.
                 Results are proxied through the backend and are not stored in Supabase.
-                Responses include `id`, `name`, `number`, `setSymbol`, `images`, and `marketPrice`. Repeat searches are
-                cached by the backend for up to 30 minutes (configurable via `POKEMON_TCG_CACHE_TTL_MS`).
+                Each card includes full detail fields (attacks, rarity, set info, etc.) so the
+                detail view can open without a second request. Repeat searches are cached by the
+                backend for up to 30 minutes (configurable via `POKEMON_TCG_CACHE_TTL_MS`).
             operationId: searchCards
             parameters:
                 - name: query
@@ -127,7 +128,7 @@ paths:
             description: |
                 Retrieve a single card from the Pokémon TCG API by its external ID
                 (e.g. `swsh11-131`). Does not store anything in Supabase.
-                Responses include `id`, `name`, `number`, `setSymbol`, `images`, and `marketPrice`.
+                Usually unnecessary after search — detail is included in search results and cached.
             operationId: getCardById
             parameters:
                 - name: id
@@ -143,7 +144,7 @@ paths:
                     content:
                         application/json:
                             schema:
-                                $ref: '#/components/schemas/PokemonCard'
+                                $ref: '#/components/schemas/PokemonCardDetail'
                 '400':
                     description: Missing or invalid card ID
                     content:
@@ -487,6 +488,71 @@ components:
                         large:
                             type: string
                             format: uri
+        PokemonCardDetail:
+            allOf:
+                - $ref: '#/components/schemas/PokemonCard'
+                - type: object
+                  properties:
+                      setName:
+                          type: string
+                          nullable: true
+                      setSeries:
+                          type: string
+                          nullable: true
+                      setLogo:
+                          type: string
+                          format: uri
+                          nullable: true
+                      rarity:
+                          type: string
+                          nullable: true
+                      artist:
+                          type: string
+                          nullable: true
+                      supertype:
+                          type: string
+                          nullable: true
+                      subtypes:
+                          type: array
+                          items:
+                              type: string
+                      types:
+                          type: array
+                          items:
+                              type: string
+                      hp:
+                          type: string
+                          nullable: true
+                      flavorText:
+                          type: string
+                          nullable: true
+                      tcgplayerUrl:
+                          type: string
+                          format: uri
+                          nullable: true
+                      attacks:
+                          type: array
+                          items:
+                              type: object
+                              properties:
+                                  name:
+                                      type: string
+                                  damage:
+                                      type: string
+                                      nullable: true
+                                  text:
+                                      type: string
+                                      nullable: true
+                      abilities:
+                          type: array
+                          items:
+                              type: object
+                              properties:
+                                  name:
+                                      type: string
+                                  text:
+                                      type: string
+                                      nullable: true
         PaginatedPokemonCardSearch:
             type: object
             required:
@@ -499,7 +565,7 @@ components:
                 data:
                     type: array
                     items:
-                        $ref: '#/components/schemas/PokemonCard'
+                        $ref: '#/components/schemas/PokemonCardDetail'
                 page:
                     type: integer
                     example: 1

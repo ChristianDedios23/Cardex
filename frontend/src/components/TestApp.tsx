@@ -12,8 +12,10 @@ import {
     deleteUserCard,
     getMyUserCards,
     searchCards,
+    seedCardDetailCache,
     type PaginatedPokemonCardSearch,
     type PokemonCard,
+    type PokemonCardDetail,
     type UserCard,
 } from '@/lib/api';
 
@@ -696,7 +698,7 @@ export function TestApp() {
     const [query, setQuery] = useState('pikachu');
     const [activeQuery, setActiveQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [searchResults, setSearchResults] = useState<PokemonCard[]>([]);
+    const [searchResults, setSearchResults] = useState<PokemonCardDetail[]>([]);
     const [searchMeta, setSearchMeta] = useState<Omit<PaginatedPokemonCardSearch, 'data'> | null>(
         null,
     );
@@ -893,6 +895,7 @@ export function TestApp() {
     }
 
     function applySearchResult(result: PaginatedPokemonCardSearch) {
+        seedCardDetailCache(result.data);
         setSearchResults(result.data);
         setSearchMeta({
             page: result.page,
@@ -982,13 +985,27 @@ export function TestApp() {
         }
 
         const normalized = normalizeQuery(trimmed);
+        const isSameQuery = Boolean(activeQuery && normalizeQuery(activeQuery) === normalized);
+
+        if (isSameQuery) {
+            const cached = pageCacheRef.current.get(normalized)?.get(1);
+
+            if (cached) {
+                applySearchResult(cached);
+                setMessage(null);
+                return;
+            }
+        }
+
         const previousNormalized = activeQuery ? normalizeQuery(activeQuery) : null;
 
         if (previousNormalized && previousNormalized !== normalized) {
             pageCacheRef.current.delete(previousNormalized);
         }
 
-        pageCacheRef.current.delete(normalized);
+        if (!isSameQuery) {
+            pageCacheRef.current.delete(normalized);
+        }
 
         setActiveQuery(trimmed);
         setCurrentPage(1);

@@ -1,8 +1,7 @@
 import { escapeLucene } from '../utils/lucene';
-import { getCacheTtlMs, getOrFetch } from './pokemonTcgCache';
+import { getCacheTtlMs, getOrFetch, setCached } from './pokemonTcgCache';
 
 const POKEMON_TCG_BASE_URL = 'https://api.pokemontcg.io/v2';
-const CARD_SELECT = 'id,name,number,images,tcgplayer,set';
 const CARD_DETAIL_SELECT =
     'id,name,number,images,tcgplayer,set,rarity,artist,supertype,subtypes,types,hp,flavorText,attacks,abilities';
 
@@ -46,7 +45,7 @@ export type PokemonCardDetail = PokemonCard & {
 };
 
 export type PokemonCardSearchResult = {
-    data: PokemonCard[];
+    data: PokemonCardDetail[];
     page: number;
     pageSize: number;
     totalCount: number;
@@ -183,6 +182,12 @@ function mapPokemonCardDetail(card: UpstreamPokemonCard): PokemonCardDetail {
     };
 }
 
+function seedCardDetailCache(cards: PokemonCardDetail[], ttlMs = getCacheTtlMs()): void {
+    for (const card of cards) {
+        setCached(`card-detail:${card.id.toLowerCase()}`, card, ttlMs);
+    }
+}
+
 export class PokemonTcgTimeoutError extends Error {
     constructor() {
         super('Pokémon TCG API timed out');
@@ -269,7 +274,7 @@ export async function searchPokemonCards(
             url.searchParams.set('q', `name:${escaped}*`);
             url.searchParams.set('page', String(page));
             url.searchParams.set('pageSize', String(pageSize));
-            url.searchParams.set('select', CARD_SELECT);
+            url.searchParams.set('select', CARD_DETAIL_SELECT);
 
             const response = await fetchUpstreamWithRetry(url.toString());
 
@@ -281,9 +286,12 @@ export async function searchPokemonCards(
             const totalCount = body.totalCount ?? 0;
             const currentPage = body.page ?? page;
             const currentPageSize = body.pageSize ?? pageSize;
+            const data = (body.data ?? []).map(mapPokemonCardDetail);
+
+            seedCardDetailCache(data);
 
             return {
-                data: (body.data ?? []).map(mapPokemonCard),
+                data,
                 page: currentPage,
                 pageSize: currentPageSize,
                 totalCount,

@@ -1,7 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getCardById, type PokemonCard, type PokemonCardDetail } from '@/lib/api';
+import {
+    getCardById,
+    peekCachedCardDetail,
+    type PokemonCard,
+    type PokemonCardDetail,
+} from '@/lib/api';
 
 function formatPrice(price: number): string {
     return new Intl.NumberFormat('en-US', {
@@ -63,6 +68,15 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
 
     useEffect(() => {
         let cancelled = false;
+
+        const cached = peekCachedCardDetail(cardId);
+
+        if (cached) {
+            setDetail(cached);
+            setLoading(false);
+            setError(null);
+            return;
+        }
 
         async function load() {
             setLoading(true);
