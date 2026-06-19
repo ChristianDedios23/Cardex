@@ -78,11 +78,7 @@ type ApiError = {
     error: string;
 };
 
-async function apiFetch<T>(
-    path: string,
-    options: RequestInit = {},
-    token?: string,
-): Promise<T> {
+async function apiFetch<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
     const headers = new Headers(options.headers);
     headers.set('Content-Type', 'application/json');
 

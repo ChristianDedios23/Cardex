@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { FaEye, FaEyeSlash } from 'react-icons/fa6';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import type { User } from '@supabase/supabase-js';
 import { useApp, type AppTab } from '@/components/app-shell/AppProvider';
@@ -51,10 +52,20 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 function AuthPanel({ onAuthChange }: { onAuthChange: (user: User | null) => void }) {
+    const [mode, setMode] = useState<'signin' | 'signup'>('signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    function switchMode(next: 'signin' | 'signup') {
+        setMode(next);
+        setMessage(null);
+        setShowPassword(false);
+        setConfirmPassword('');
+    }
 
     async function handleSignIn() {
         setLoading(true);
@@ -80,6 +91,11 @@ function AuthPanel({ onAuthChange }: { onAuthChange: (user: User | null) => void
     }
 
     async function handleSignUp() {
+        if (password !== confirmPassword) {
+            setMessage('Passwords do not match.');
+            return;
+        }
+
         setLoading(true);
         setMessage(null);
 
@@ -101,44 +117,124 @@ function AuthPanel({ onAuthChange }: { onAuthChange: (user: User | null) => void
         }
     }
 
+    function handleSubmit(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        if (mode !== 'signin' || loading || !email || !password) return;
+
+        void handleSignIn();
+    }
+
+    function blockEnterOnSignUp(event: KeyboardEvent<HTMLInputElement>) {
+        if (mode === 'signup' && event.key === 'Enter') {
+            event.preventDefault();
+        }
+    }
+
+    const passwordsMatch = password === confirmPassword;
+    const canSignUp = !loading && Boolean(email && password && confirmPassword) && passwordsMatch;
+
     return (
-        <Panel title="Sign in">
-            <div className="grid gap-3">
+        <section className="w-full rounded-xl border border-[var(--border)] bg-[var(--card)] p-6 text-center">
+            <h2 className="mb-4 text-lg font-medium">
+                {mode === 'signin' ? 'Welcome Back!' : 'Create an Account!'}
+            </h2>
+            <form onSubmit={handleSubmit} className="grid gap-3 text-left">
                 <input
                     type="email"
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2"
+                    onKeyDown={blockEnterOnSignUp}
+                    autoComplete="email"
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2"
                 />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2"
-                />
-                <div className="flex flex-wrap gap-2">
+                <div className="relative">
+                    <input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onKeyDown={blockEnterOnSignUp}
+                        autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                        className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] py-2 pl-3 pr-10"
+                    />
                     <button
                         type="button"
-                        onClick={handleSignIn}
-                        disabled={loading || !email || !password}
-                        className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                        onClick={() => setShowPassword((visible) => !visible)}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-[var(--muted)] hover:text-[var(--foreground)]"
                     >
-                        Sign in
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleSignUp}
-                        disabled={loading || !email || !password}
-                        className="rounded-lg border border-[var(--border)] px-4 py-2 text-sm hover:bg-white/5 disabled:opacity-50"
-                    >
-                        Sign up
+                        {showPassword ? (
+                            <FaEyeSlash className="h-4 w-4" aria-hidden="true" />
+                        ) : (
+                            <FaEye className="h-4 w-4" aria-hidden="true" />
+                        )}
                     </button>
                 </div>
-                {message && <p className="text-sm text-[var(--muted)]">{message}</p>}
-            </div>
-        </Panel>
+                {mode === 'signup' && (
+                    <input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Confirm password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        onKeyDown={blockEnterOnSignUp}
+                        autoComplete="new-password"
+                        className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2"
+                    />
+                )}
+                <div className="flex justify-center pt-1">
+                    {mode === 'signin' ? (
+                        <button
+                            type="submit"
+                            disabled={loading || !email || !password}
+                            className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                        >
+                            Sign in
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => void handleSignUp()}
+                            disabled={!canSignUp}
+                            className="rounded-lg bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:opacity-50"
+                        >
+                            Sign up
+                        </button>
+                    )}
+                </div>
+                {mode === 'signup' && confirmPassword && !passwordsMatch && (
+                    <p className="text-center text-sm text-[var(--danger)]">
+                        Passwords do not match.
+                    </p>
+                )}
+                {message && <p className="text-center text-sm text-[var(--muted)]">{message}</p>}
+                <p className="text-center text-sm text-[var(--muted)]">
+                    {mode === 'signin' ? (
+                        <>
+                            Don&apos;t have an account?{' '}
+                            <button
+                                type="button"
+                                onClick={() => switchMode('signup')}
+                                className="text-[var(--accent)] hover:text-[var(--accent-hover)]"
+                            >
+                                Sign Up
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            Already have an account?{' '}
+                            <button
+                                type="button"
+                                onClick={() => switchMode('signin')}
+                                className="text-[var(--accent)] hover:text-[var(--accent-hover)]"
+                            >
+                                Sign In
+                            </button>
+                        </>
+                    )}
+                </p>
+            </form>
+        </section>
     );
 }
 
@@ -263,7 +359,9 @@ function CardResult({
                 onOwnedChange({ action: 'add', card: saved });
             }
         } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Failed to update collection.');
+            setErrorMessage(
+                error instanceof Error ? error.message : 'Failed to update collection.',
+            );
         } finally {
             setSavingAction(null);
         }
@@ -353,7 +451,9 @@ function CardResult({
                     Market Price · {formatTcgPlayerMarketPrice(card.marketPrice)}
                 </p>
             ) : (
-                <p className="px-2 pb-2 text-center text-xs text-[var(--muted)]">Price unavailable</p>
+                <p className="px-2 pb-2 text-center text-xs text-[var(--muted)]">
+                    Price unavailable
+                </p>
             )}
 
             <div className="mt-auto shrink-0 border-t border-[var(--border)]">
@@ -443,9 +543,7 @@ function getCollectionTotal(cards: UserCard[]): number {
         }
 
         const price =
-            typeof card.market_price === 'number'
-                ? card.market_price
-                : Number(card.market_price);
+            typeof card.market_price === 'number' ? card.market_price : Number(card.market_price);
 
         if (!Number.isFinite(price)) {
             return total;
@@ -523,7 +621,9 @@ function UserCardRow({
                 )}
                 <p className="text-sm text-[var(--muted)]">
                     {formatCardStatus(card.status)}
-                    {card.quantity != null ? ` · ${card.quantity} copy${card.quantity === 1 ? '' : 'ies'}` : ''}
+                    {card.quantity != null
+                        ? ` · ${card.quantity} copy${card.quantity === 1 ? '' : 'ies'}`
+                        : ''}
                     {card.condition ? ` · ${formatCondition(card.condition)}` : ''}
                 </p>
                 {card.notes && <p className="mt-1 text-sm text-[var(--muted)]">{card.notes}</p>}
@@ -908,7 +1008,11 @@ export function TestApp() {
         setCurrentPage(result.page);
     }
 
-    function storePageInCache(normalized: string, page: number, result: PaginatedPokemonCardSearch) {
+    function storePageInCache(
+        normalized: string,
+        page: number,
+        result: PaginatedPokemonCardSearch,
+    ) {
         let queryCache = pageCacheRef.current.get(normalized);
 
         if (!queryCache) {
@@ -1029,13 +1133,14 @@ export function TestApp() {
 
     const totalPages = searchMeta ? getEffectiveTotalPages(searchMeta, currentPage) : null;
     const hasSearchResults = searchResults.length > 0;
-    const hasNoSearchResults =
-        Boolean(activeQuery && searchMeta && !searchLoading && searchResults.length === 0);
+    const hasNoSearchResults = Boolean(
+        activeQuery && searchMeta && !searchLoading && searchResults.length === 0,
+    );
     const showSearchPagination = Boolean(
         searchMeta &&
-            activeQuery &&
-            hasSearchResults &&
-            (currentPage > 1 || searchMeta.hasMore || (totalPages ?? 0) > 1),
+        activeQuery &&
+        hasSearchResults &&
+        (currentPage > 1 || searchMeta.hasMore || (totalPages ?? 0) > 1),
     );
     const paginationTop = showSearchPagination ? (
         <SearchPagination
@@ -1074,7 +1179,13 @@ export function TestApp() {
     }
 
     return (
-        <div className="mx-auto grid max-w-6xl gap-6">
+        <div
+            className={
+                user
+                    ? 'mx-auto grid max-w-6xl gap-6'
+                    : 'mx-auto flex w-full max-w-sm flex-col justify-center px-4 py-16'
+            }
+        >
             {detailSelection && (
                 <CardDetailModal
                     cardId={detailSelection.cardId}
@@ -1118,26 +1229,36 @@ export function TestApp() {
                                 </div>
                             )}
                             {hasSearchResults && (
-                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                                {searchResults.map((card) => (
-                                    <CardResult
-                                        key={card.id}
-                                        card={card}
-                                        ownedUserCardId={ownedByExternalId[card.id] ?? null}
-                                        wishlistUserCardId={wishlistByExternalId[card.id] ?? null}
-                                        onOwnedChange={handleOwnedChange}
-                                        onWishlistChange={handleWishlistChange}
-                                        onViewDetails={(selected) =>
-                                            setDetailSelection({
-                                                cardId: selected.id,
-                                                preview: selected,
-                                            })
-                                        }
-                                    />
-                                ))}
-                            </div>
+                                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                                    {searchResults.map((card) => (
+                                        <CardResult
+                                            key={card.id}
+                                            card={card}
+                                            ownedUserCardId={ownedByExternalId[card.id] ?? null}
+                                            wishlistUserCardId={
+                                                wishlistByExternalId[card.id] ?? null
+                                            }
+                                            onOwnedChange={handleOwnedChange}
+                                            onWishlistChange={handleWishlistChange}
+                                            onViewDetails={(selected) =>
+                                                setDetailSelection({
+                                                    cardId: selected.id,
+                                                    preview: selected,
+                                                })
+                                            }
+                                        />
+                                    ))}
+                                </div>
                             )}
                             {paginationBottom && <div className="mt-4">{paginationBottom}</div>}
+                        </Panel>
+                    )}
+
+                    {tab === 'series' && (
+                        <Panel title="Series">
+                            <p className="text-sm text-[var(--muted)]">
+                                Browse Pokémon TCG sets by series — coming soon.
+                            </p>
                         </Panel>
                     )}
 

@@ -1,5 +1,4 @@
-const TYPE_ICON_BASE =
-    'https://raw.githubusercontent.com/partywhale/pokemon-type-icons/main/icons';
+const TYPE_ICON_BASE = 'https://raw.githubusercontent.com/partywhale/pokemon-type-icons/main/icons';
 
 /** Maps Pokemon TCG API type names to icon filenames. */
 const TCG_TYPE_ICON_SLUG: Record<string, string> = {

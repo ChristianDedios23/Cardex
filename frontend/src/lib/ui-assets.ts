@@ -2,5 +2,6 @@
 export const UI_ASSETS = {
     brand: {
         title: '/assets/ui/brand/cardex-title-2.png',
+        card: '/assets/ui/brand/Card.png',
     },
 } as const;

@@ -36,10 +36,7 @@ function TypeModifierList({ modifiers }: { modifiers: PokemonCardTypeModifier[] 
     return (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             {modifiers.map((modifier, index) => (
-                <span
-                    key={`${modifier.type}-${index}`}
-                    className="inline-flex items-center gap-2"
-                >
+                <span key={`${modifier.type}-${index}`} className="inline-flex items-center gap-2">
                     <TypeIcon type={modifier.type} />
                     <span>{modifier.value}</span>
                 </span>
@@ -101,13 +98,7 @@ function TypeValue({ types, supertype }: { types: string[]; supertype?: string |
     return null;
 }
 
-function DetailField({
-    label,
-    children,
-}: {
-    label: string;
-    children: React.ReactNode;
-}) {
+function DetailField({ label, children }: { label: string; children: React.ReactNode }) {
     return (
         <div className="grid gap-1 sm:grid-cols-[5.5rem_1fr] sm:items-center sm:gap-3">
             <p className="text-xs font-medium uppercase tracking-wide text-[var(--muted)]">
@@ -233,8 +224,11 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
             : detail.setName
         : null;
 
-    const numberLabel =
-        detail?.number ? `#${detail.number}` : card?.number ? `#${card.number}` : null;
+    const numberLabel = detail?.number
+        ? `#${detail.number}`
+        : card?.number
+          ? `#${card.number}`
+          : null;
 
     const hasTypeInfo = types.length > 0 || Boolean(detail?.supertype);
     const subtypeLabel = subtypes.length > 0 ? subtypes.join(', ') : null;
@@ -427,7 +421,9 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                                         key={ability.name}
                                                         className="rounded-lg border border-[var(--border)] bg-[var(--background)] p-3 text-sm"
                                                     >
-                                                        <p className="font-medium">{ability.name}</p>
+                                                        <p className="font-medium">
+                                                            {ability.name}
+                                                        </p>
                                                         {ability.text && (
                                                             <p className="mt-1 text-[var(--muted)]">
                                                                 {ability.text}
@@ -453,7 +449,9 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                                                 <p className="font-medium">
                                                                     {attack.name}
                                                                 </p>
-                                                                <AttackCostIcons cost={attack.cost} />
+                                                                <AttackCostIcons
+                                                                    cost={attack.cost}
+                                                                />
                                                             </div>
                                                             {attack.damage && (
                                                                 <div className="flex shrink-0 items-baseline gap-2">

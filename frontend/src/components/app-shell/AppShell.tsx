@@ -1,6 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { FaBookBookmark } from 'react-icons/fa6';
 import { BsBackpack2 } from 'react-icons/bs';
 import { HiMiniSparkles } from 'react-icons/hi2';
 import { PiMagnifyingGlassBold } from 'react-icons/pi';
@@ -9,9 +10,11 @@ import { createClient } from '@/lib/supabase/client';
 import { getEmailUsername } from '@/lib/email';
 import { UI_ASSETS } from '@/lib/ui-assets';
 import { useApp, type AppTab } from './AppProvider';
+import { AppFooter } from './AppFooter';
 
 const NAV_ITEMS: { id: AppTab; label: string }[] = [
     { id: 'search', label: 'Search' },
+    { id: 'series', label: 'Series' },
     { id: 'collection', label: 'Collection' },
     { id: 'wishlist', label: 'Wishlist' },
 ];
@@ -20,6 +23,10 @@ const NAV_ICON_CLASS = 'h-4 w-4';
 
 function SearchIcon() {
     return <PiMagnifyingGlassBold className={NAV_ICON_CLASS} aria-hidden="true" />;
+}
+
+function SeriesIcon() {
+    return <FaBookBookmark className={NAV_ICON_CLASS} aria-hidden="true" />;
 }
 
 function BackpackIcon() {
@@ -32,6 +39,7 @@ function WishlistIcon() {
 
 const NAV_ICONS: Record<AppTab, () => ReactNode> = {
     search: SearchIcon,
+    series: SeriesIcon,
     collection: BackpackIcon,
     wishlist: WishlistIcon,
 };
@@ -55,15 +63,8 @@ function ChevronIcon({ collapsed }: { collapsed: boolean }) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-    const {
-        user,
-        setUser,
-        tab,
-        setTab,
-        sidebarCollapsed,
-        setSidebarCollapsed,
-        pageLoading,
-    } = useApp();
+    const { user, setUser, tab, setTab, sidebarCollapsed, setSidebarCollapsed, pageLoading } =
+        useApp();
 
     const username = getEmailUsername(user?.email);
 
@@ -197,6 +198,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <main className="min-h-0 flex-1 overflow-auto p-4 md:p-6">{children}</main>
+
+                <div className="mt-15 shrink-0">
+                    <AppFooter />
+                </div>
             </div>
         </div>
     );

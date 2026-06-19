@@ -12,7 +12,7 @@ import {
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 
-export type AppTab = 'search' | 'collection' | 'wishlist';
+export type AppTab = 'search' | 'series' | 'collection' | 'wishlist';
 
 type AppContextValue = {
     user: User | null;
@@ -51,9 +51,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 data: { subscription },
             } = supabase.auth.onAuthStateChange((_event, session) => {
                 const nextUser = session?.user ?? null;
-                setUser((current) =>
-                    current?.id === nextUser?.id ? current : nextUser,
-                );
+                setUser((current) => (current?.id === nextUser?.id ? current : nextUser));
             });
 
             return () => subscription.unsubscribe();
