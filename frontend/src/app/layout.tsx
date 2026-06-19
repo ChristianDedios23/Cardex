@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import { AppProvider } from '@/components/app-shell/AppProvider';
 import { AppShell } from '@/components/app-shell/AppShell';
 import './globals.css';
 
-const geistSans = Geist({
-    variable: '--font-geist-sans',
+const inter = Inter({
+    variable: '--font-inter',
     subsets: ['latin'],
 });
 
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
-            <body className={`${geistSans.variable} antialiased`}>                <AppProvider>
+            <body className={`${inter.variable} antialiased`}><AppProvider>
                     <AppShell>{children}</AppShell>
                 </AppProvider>
             </body>

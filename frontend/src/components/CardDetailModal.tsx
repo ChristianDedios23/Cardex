@@ -9,6 +9,7 @@ import {
     type PokemonCardTypeModifier,
 } from '@/lib/api';
 import { getPokemonTypeIconUrl } from '@/lib/pokemonTypeIcons';
+import { CardTilt } from '@/components/CardTilt';
 
 function formatPrice(price: number): string {
     return new Intl.NumberFormat('en-US', {
@@ -243,8 +244,6 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
         : null;
 
     const marketPrice = detail?.marketPrice ?? card?.marketPrice;
-    const marketLabel =
-        marketPrice != null ? `${formatPrice(marketPrice)} · TCGPlayer` : null;
 
     return (
         <div
@@ -254,7 +253,7 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
             <button
                 type="button"
                 aria-label="Close card details"
-                className="absolute inset-0 bg-black/10 backdrop-blur-sm"
+                className="card-detail-backdrop absolute inset-0 bg-black/10 backdrop-blur-[2px]"
                 onClick={onClose}
             />
 
@@ -262,7 +261,7 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="card-detail-title"
-                className="relative z-10 flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-xl"
+                className="card-detail-dialog relative z-10 flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)] shadow-xl"
             >
                 <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
                     <div className="min-w-0">
@@ -291,12 +290,16 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                     <div className="grid gap-6 sm:grid-cols-[minmax(0,17.5rem)_1fr]">
                         <div className="mx-auto w-full max-w-[17.5rem] space-y-4 sm:mx-0">
                             {imageUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                    src={imageUrl}
-                                    alt={title}
-                                    className="w-full rounded-lg object-contain"
-                                />
+                                <CardTilt className="w-full max-w-full">
+                                    <div className="card-tile-shine card-tile-shine-tilt block w-full max-w-full">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={imageUrl}
+                                            alt={title}
+                                            className="block w-full object-contain"
+                                        />
+                                    </div>
+                                </CardTilt>
                             ) : (
                                 <div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-[var(--background)] text-sm text-[var(--muted)]">
                                     No image
@@ -328,7 +331,7 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                         detail?.evolvesFrom ||
                                         evolvesToLabel ||
                                         detail?.artist ||
-                                        marketLabel) && (
+                                        marketPrice != null) && (
                                         <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3">
                                             {setLabel && (
                                                 <DetailField label="Set">
@@ -407,9 +410,9 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                                     {detail.artist}
                                                 </DetailField>
                                             )}
-                                            {marketLabel && (
-                                                <DetailField label="Market">
-                                                    {marketLabel}
+                                            {marketPrice != null && (
+                                                <DetailField label="Market Price">
+                                                    {formatPrice(marketPrice)}
                                                 </DetailField>
                                             )}
                                         </div>

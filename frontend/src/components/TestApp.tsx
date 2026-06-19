@@ -350,7 +350,7 @@ function CardResult({
 
             {card.marketPrice != null ? (
                 <p className="truncate px-2 pb-2 pt-0.5 text-center text-xs text-[var(--muted)]">
-                    {formatTcgPlayerMarketPrice(card.marketPrice)} · TCGPlayer
+                    Market Price · {formatTcgPlayerMarketPrice(card.marketPrice)}
                 </p>
             ) : (
                 <p className="px-2 pb-2 text-center text-xs text-[var(--muted)]">Price unavailable</p>
@@ -518,7 +518,7 @@ function UserCardRow({
                 <p className="font-medium">{card.card_name ?? 'Unknown card'}</p>
                 {card.market_price != null && (
                     <p className="text-sm text-[var(--muted)]">
-                        {formatTcgPlayerMarketPrice(card.market_price)} · TCGPlayer
+                        Market Price · {formatTcgPlayerMarketPrice(card.market_price)}
                     </p>
                 )}
                 <p className="text-sm text-[var(--muted)]">
@@ -599,7 +599,11 @@ function SearchPagination({
     disabled?: boolean;
     jumpInputId?: string;
 }) {
-    const [jumpValue, setJumpValue] = useState('');
+    const [jumpValue, setJumpValue] = useState(String(currentPage));
+
+    useEffect(() => {
+        setJumpValue(String(currentPage));
+    }, [currentPage]);
 
     const pageItems = getFixedPageWindow(currentPage, totalPages);
     const pageButtonClass =
@@ -615,7 +619,6 @@ function SearchPagination({
             return;
         }
 
-        setJumpValue('');
         onPageChange(parsed);
     }
 
@@ -677,7 +680,6 @@ function SearchPagination({
                     value={jumpValue}
                     onChange={(event) => setJumpValue(event.target.value)}
                     disabled={disabled}
-                    placeholder={String(currentPage)}
                     className="w-16 rounded-lg border border-[var(--border)] bg-[var(--background)] px-2 py-1.5 text-center text-[var(--foreground)] disabled:opacity-50"
                 />
                 <button

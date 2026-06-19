@@ -9,6 +9,7 @@
     --accent: #ff1e45;
     --accent-hover: #e0193d;
     --focus-ring: rgb(255 30 69 / 0.45);
+    --background-glow: rgb(139 152 168 / 0.1);
     --muted: #8b98a8;
     --success: #00a86b;
     --star: #ffd700;
@@ -18,7 +19,25 @@
 body {
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-geist-sans), system-ui, sans-serif;
+    font-family: var(--font-inter), system-ui, sans-serif;
+    font-weight: 500;
+    min-height: 100vh;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    z-index: -2;
+    height: 100vh;
+    width: 100vw;
+    background-color: var(--background);
+    background-image: radial-gradient(
+        ellipse 80% 80% at 50% -20%,
+        var(--background-glow),
+        rgb(255 255 255 / 0)
+    );
+    pointer-events: none;
 }
 
 button:not(:disabled),
@@ -120,5 +139,60 @@ select:focus-visible {
 
 .card-tile-shine:hover::after {
     background-position: 200% 0%;
-    transition-duration: 1s;
+    transition-duration: 2s;
+}
+
+@keyframes card-shine-sweep {
+    from {
+        background-position: -100% 100%;
+    }
+
+    to {
+        background-position: 200% 0%;
+    }
+}
+
+.card-tile-shine.card-tile-shine-tilt:hover::after {
+    animation: card-shine-sweep 2s ease infinite;
+    background-position: -100% 100%;
+    transition: none;
+}
+
+.card-tile-shine.card-tile-shine-tilt:hover {
+    transform: none;
+}
+
+@keyframes card-detail-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes card-detail-dialog-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.card-detail-backdrop {
+    animation: card-detail-fade-in 200ms ease-out;
+}
+
+.card-detail-dialog {
+    animation: card-detail-dialog-in 250ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .card-detail-backdrop,
+    .card-detail-dialog {
+        animation: none;
+    }
 }
