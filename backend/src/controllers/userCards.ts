@@ -6,13 +6,18 @@ import {
     PokemonTcgUpstreamError,
 } from '../services/pokemonTcg.service';
 import {
+    deleteOwnedUserCardsByExternalIds,
     deleteUserCardById,
+    findOwnedExternalCardIds,
     findUserCards,
     insertUserCard,
+    insertUserCardsBulk,
     updateUserCardById,
     type CardCondition,
     type CardStatus,
 } from '../services/userCards.service';
+
+const BULK_OWNED_MAX_CARDS = 300;
 
 const allowedStatuses: CardStatus[] = ['owned', 'wishlist'];
 const allowedConditions: CardCondition[] = [
@@ -302,6 +307,197 @@ export const deleteUserCard = async (req: Request, res: Response) => {
         }
 
         return res.status(204).send();
+    } catch (error) {
+        return res.status(500).json({
+            error: error instanceof Error ? error.message : 'Something went wrong',
+        });
+    }
+};
+
+type BulkOwnedCardInput = {
+    externalCardId: string;
+    cardName: string;
+    cardImageUrl: string | null;
+    marketPrice: number | null;
+};
+
+function parseBulkOwnedCardInput(raw: unknown): BulkOwnedCardInput | null {
+    if (!raw || typeof raw !== 'object') {
+        return null;
+    }
+
+    const card = raw as {
+        external_card_id?: unknown;
+        card_name?: unknown;
+        card_image_url?: unknown;
+        market_price?: unknown;
+    };
+
+    if (typeof card.external_card_id !== 'string' || card.external_card_id.trim().length === 0) {
+        return null;
+    }
+
+    const snapshot = parseClientCardSnapshot(card);
+
+    if (!snapshot) {
+        return null;
+    }
+
+    return {
+        externalCardId: card.external_card_id.trim(),
+        cardName: snapshot.cardName,
+        cardImageUrl: snapshot.cardImageUrl,
+        marketPrice: snapshot.marketPrice,
+    };
+}
+
+function parseBulkOwnedCards(body: { cards?: unknown }): BulkOwnedCardInput[] | null {
+    if (!Array.isArray(body.cards) || body.cards.length === 0) {
+        return null;
+    }
+
+    if (body.cards.length > BULK_OWNED_MAX_CARDS) {
+        return null;
+    }
+
+    const parsed: BulkOwnedCardInput[] = [];
+
+    for (const rawCard of body.cards) {
+        const card = parseBulkOwnedCardInput(rawCard);
+
+        if (!card) {
+            return null;
+        }
+
+        parsed.push(card);
+    }
+
+    return parsed;
+}
+
+export const bulkAddOwnedUserCards = async (req: Request, res: Response) => {
+    try {
+        const userId = getAuthenticatedUserId(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Sign in to save cards.' });
+        }
+
+        const parsedCards = parseBulkOwnedCards(req.body);
+
+        if (!parsedCards) {
+            return res.status(400).json({
+                error: `Provide up to ${BULK_OWNED_MAX_CARDS} cards with names and IDs to add.`,
+            });
+        }
+
+        const uniqueCards = [
+            ...new Map(parsedCards.map((card) => [card.externalCardId, card])).values(),
+        ];
+        const externalCardIds = uniqueCards.map((card) => card.externalCardId);
+        const { data: existingRows, error: existingError } = await findOwnedExternalCardIds(
+            userId,
+            externalCardIds,
+        );
+
+        if (existingError) {
+            return res.status(500).json({
+                error: 'Unable to check your collection. Please try again.',
+            });
+        }
+
+        const ownedIds = new Set((existingRows ?? []).map((row) => row.external_card_id));
+        const cardsToInsert = uniqueCards.filter((card) => !ownedIds.has(card.externalCardId));
+
+        if (cardsToInsert.length === 0) {
+            return res.status(200).json({
+                added: [],
+                skipped: uniqueCards.length,
+                addedCount: 0,
+            });
+        }
+
+        const { data, error } = await insertUserCardsBulk(
+            cardsToInsert.map((card) => ({
+                userId,
+                externalCardId: card.externalCardId,
+                status: 'owned',
+                quantity: 1,
+                condition: null,
+                notes: null,
+                cardName: card.cardName,
+                cardImageUrl: card.cardImageUrl,
+                marketPrice: card.marketPrice,
+            })),
+        );
+
+        if (error) {
+            return res.status(500).json({
+                error: 'Unable to add cards to your collection. Please try again.',
+            });
+        }
+
+        return res.status(201).json({
+            added: data ?? [],
+            skipped: uniqueCards.length - cardsToInsert.length,
+            addedCount: data?.length ?? 0,
+        });
+    } catch (error) {
+        return res.status(500).json({
+            error: error instanceof Error ? error.message : 'Something went wrong',
+        });
+    }
+};
+
+export const bulkRemoveOwnedUserCards = async (req: Request, res: Response) => {
+    try {
+        const userId = getAuthenticatedUserId(req);
+
+        if (!userId) {
+            return res.status(401).json({ error: 'Sign in to remove cards.' });
+        }
+
+        const { external_card_ids: externalCardIdsRaw } = req.body;
+
+        if (!Array.isArray(externalCardIdsRaw) || externalCardIdsRaw.length === 0) {
+            return res.status(400).json({
+                error: 'Provide the card IDs to remove from your collection.',
+            });
+        }
+
+        if (externalCardIdsRaw.length > BULK_OWNED_MAX_CARDS) {
+            return res.status(400).json({
+                error: `You can remove up to ${BULK_OWNED_MAX_CARDS} cards at once.`,
+            });
+        }
+
+        const externalCardIds = [
+            ...new Set(
+                externalCardIdsRaw.filter(
+                    (value): value is string =>
+                        typeof value === 'string' && value.trim().length > 0,
+                ),
+            ),
+        ];
+
+        if (externalCardIds.length === 0) {
+            return res.status(400).json({
+                error: 'Provide the card IDs to remove from your collection.',
+            });
+        }
+
+        const { data, error } = await deleteOwnedUserCardsByExternalIds(userId, externalCardIds);
+
+        if (error) {
+            return res.status(500).json({
+                error: 'Unable to remove cards from your collection. Please try again.',
+            });
+        }
+
+        return res.status(200).json({
+            removed: data ?? [],
+            removedCount: data?.length ?? 0,
+        });
     } catch (error) {
         return res.status(500).json({
             error: error instanceof Error ? error.message : 'Something went wrong',

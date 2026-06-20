@@ -87,3 +87,53 @@ export async function deleteUserCardById(userId: string, cardId: string) {
         .select()
         .single();
 }
+
+export async function findOwnedExternalCardIds(userId: string, externalCardIds: string[]) {
+    if (externalCardIds.length === 0) {
+        return { data: [] as { external_card_id: string }[], error: null };
+    }
+
+    return supabase
+        .from('user_cards')
+        .select('external_card_id')
+        .eq('user_id', userId)
+        .eq('status', 'owned')
+        .in('external_card_id', externalCardIds);
+}
+
+export async function insertUserCardsBulk(inputs: CreateUserCardInput[]) {
+    if (inputs.length === 0) {
+        return { data: [] as Record<string, unknown>[], error: null };
+    }
+
+    return supabase
+        .from('user_cards')
+        .insert(
+            inputs.map((input) => ({
+                user_id: input.userId,
+                external_card_id: input.externalCardId,
+                status: input.status,
+                quantity: input.quantity,
+                condition: input.condition,
+                notes: input.notes,
+                card_name: input.cardName,
+                card_image_url: input.cardImageUrl,
+                market_price: input.marketPrice,
+            })),
+        )
+        .select();
+}
+
+export async function deleteOwnedUserCardsByExternalIds(userId: string, externalCardIds: string[]) {
+    if (externalCardIds.length === 0) {
+        return { data: [] as Record<string, unknown>[], error: null };
+    }
+
+    return supabase
+        .from('user_cards')
+        .delete()
+        .eq('user_id', userId)
+        .eq('status', 'owned')
+        .in('external_card_id', externalCardIds)
+        .select();
+}

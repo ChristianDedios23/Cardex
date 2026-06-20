@@ -14,6 +14,9 @@
     --success: #00a86b;
     --star: #ffd700;
     --danger: #ef4444;
+    /* Progress bar complete-state gradient — change highlight to swap the yellow/gold stop */
+    --collection-progress-highlight: #db3a3a;
+    --collection-progress-gradient-speed: 4s;
 }
 
 body {
@@ -63,6 +66,132 @@ select:focus-visible {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+@keyframes collection-progress-flow-ltr {
+    from {
+        transform: translate3d(0, 0, 0);
+    }
+
+    to {
+        transform: translate3d(-50%, 0, 0);
+    }
+}
+
+.collection-progress-fill-complete {
+    position: relative;
+    overflow: hidden;
+    background: var(--accent);
+}
+
+.collection-progress-fill-complete::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 200%;
+    background: linear-gradient(
+        90deg,
+        var(--accent) 0%,
+        #e0193d 12.5%,
+        var(--collection-progress-highlight) 25%,
+        #e0193d 37.5%,
+        var(--accent) 50%,
+        #e0193d 62.5%,
+        var(--collection-progress-highlight) 75%,
+        #e0193d 87.5%,
+        var(--accent) 100%
+    );
+    will-change: transform;
+    animation: collection-progress-flow-ltr var(--collection-progress-gradient-speed) linear
+        infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .collection-progress-fill-complete::before {
+        display: none;
+    }
+
+    .collection-progress-fill-complete {
+        background: linear-gradient(
+            90deg,
+            var(--accent),
+            #e0193d,
+            var(--collection-progress-highlight)
+        );
+    }
+
+    .collection-progress-spark {
+        display: none;
+    }
+}
+
+/* Shooting star border at 100% — adapted from https://ibelick.com/blog/create-shooting-star-border-tailwind-css */
+.collection-progress-shooting-star {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 9999px;
+}
+
+.collection-progress-spark {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    border-radius: inherit;
+    pointer-events: none;
+    mask-image: linear-gradient(white, transparent 50%);
+    animation: collection-progress-spark-flip 6s infinite steps(2, end);
+}
+
+.collection-progress-spark::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    z-index: -1;
+    width: 200%;
+    aspect-ratio: 1;
+    translate: -50% -15%;
+    transform: rotate(-90deg);
+    background: conic-gradient(
+        from 0deg,
+        transparent 0deg 330deg,
+        var(--star) 340deg,
+        var(--foreground) 360deg
+    );
+    animation: collection-progress-spark-rotate 3s linear infinite both;
+}
+
+.collection-progress-spark-backdrop {
+    position: absolute;
+    inset: 1px;
+    z-index: 1;
+    border-radius: inherit;
+    background: var(--background);
+    pointer-events: none;
+}
+
+.collection-progress-shooting-star-inner {
+    position: relative;
+    z-index: 2;
+    margin: 1px;
+    height: 0.5rem;
+    overflow: hidden;
+    border-radius: inherit;
+    background: var(--border);
+}
+
+@keyframes collection-progress-spark-flip {
+    to {
+        rotate: 360deg;
+    }
+}
+
+@keyframes collection-progress-spark-rotate {
+    to {
+        transform: rotate(90deg);
+    }
 }
 
 @keyframes page-loading-bar {
@@ -194,5 +323,52 @@ select:focus-visible {
     .card-detail-backdrop,
     .card-detail-dialog {
         animation: none;
+    }
+
+    .series-tile-glow:hover::before,
+    .series-tile-glow:focus-visible::before {
+        animation: none;
+    }
+}
+
+.series-tile-glow {
+    position: relative;
+    z-index: 0;
+    isolation: isolate;
+    overflow: hidden;
+    border: 1px solid transparent;
+}
+
+.series-tile-glow::before {
+    content: '';
+    position: absolute;
+    z-index: -2;
+    left: -50%;
+    top: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: linear-gradient(var(--background), var(--accent));
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.series-tile-glow:hover::before,
+.series-tile-glow:focus-visible::before {
+    opacity: 1;
+    animation: series-tile-border-rotate 4s linear infinite;
+}
+
+.series-tile-glow::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 1px;
+    border-radius: calc(0.75rem - 1px);
+    background: var(--card);
+}
+
+@keyframes series-tile-border-rotate {
+    100% {
+        transform: rotate(1turn);
     }
 }

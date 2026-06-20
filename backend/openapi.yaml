@@ -17,6 +17,8 @@ tags:
       description: Server health endpoints
     - name: Cards
       description: Search and retrieve Pokémon cards from the external TCG API
+    - name: Series
+      description: Browse Pokémon TCG series grouped from set metadata
     - name: User Cards
       description: Manage a user's owned cards and wishlist
 paths:
@@ -112,6 +114,40 @@ paths:
                                 $ref: '#/components/schemas/ErrorResponse'
                             example:
                                 error: Failed to search Pokémon cards
+                '504':
+                    description: Upstream Pokémon TCG API timed out
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Pokémon TCG API timed out
+    /v1/series:
+        get:
+            tags:
+                - Series
+            summary: List Pokémon TCG series
+            description: |
+                Returns all Pokémon TCG series derived from the upstream sets API.
+                Each series includes a logo URL taken from the flagship set in that series
+                (the set whose name matches the series name), when available.
+                Results are cached by the backend for up to 30 minutes.
+            operationId: listSeries
+            responses:
+                '200':
+                    description: List of Pokémon TCG series
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/PokemonSeriesListResponse'
+                '502':
+                    description: Upstream Pokémon TCG API error
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/ErrorResponse'
+                            example:
+                                error: Failed to fetch Pokémon sets
                 '504':
                     description: Upstream Pokémon TCG API timed out
                     content:
@@ -453,6 +489,38 @@ components:
             enum:
                 - owned
                 - wishlist
+        PokemonSeries:
+            type: object
+            required:
+                - name
+                - logo
+                - releaseDate
+                - setCount
+            properties:
+                name:
+                    type: string
+                    example: Scarlet & Violet
+                logo:
+                    type: string
+                    nullable: true
+                    example: https://images.pokemontcg.io/sv1/logo.png
+                releaseDate:
+                    type: string
+                    nullable: true
+                    description: Series launch date from the flagship set (`YYYY/MM/DD`)
+                    example: 2023/03/31
+                setCount:
+                    type: integer
+                    example: 18
+        PokemonSeriesListResponse:
+            type: object
+            required:
+                - data
+            properties:
+                data:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/PokemonSeries'
         PokemonCard:
             type: object
             description: Card object returned by the Pokémon TCG API (subset of fields)

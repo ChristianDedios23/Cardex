@@ -10,6 +10,7 @@ import {
 } from '@/lib/api';
 import { getPokemonTypeIconUrl } from '@/lib/pokemonTypeIcons';
 import { CardTilt } from '@/components/CardTilt';
+import { RaritySymbol } from '@/components/RaritySymbol';
 
 function formatPrice(price: number): string {
     return new Intl.NumberFormat('en-US', {
@@ -324,8 +325,7 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                         retreatCost.length > 0 ||
                                         detail?.evolvesFrom ||
                                         evolvesToLabel ||
-                                        detail?.artist ||
-                                        marketPrice != null) && (
+                                        detail) && (
                                         <div className="space-y-3 rounded-lg border border-[var(--border)] bg-[var(--background)] p-3">
                                             {setLabel && (
                                                 <DetailField label="Set">
@@ -348,9 +348,14 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                                     {numberLabel}
                                                 </DetailField>
                                             )}
-                                            {detail?.rarity && (
+                                            {detail && (
                                                 <DetailField label="Rarity">
-                                                    {detail.rarity}
+                                                    <span className="inline-flex items-center gap-2">
+                                                        {detail.rarity && (
+                                                            <RaritySymbol rarity={detail.rarity} />
+                                                        )}
+                                                        <span>{detail.rarity ?? ''}</span>
+                                                    </span>
                                                 </DetailField>
                                             )}
                                             {releaseDateLabel && (
@@ -399,14 +404,16 @@ export function CardDetailModal({ cardId, preview, onClose }: CardDetailModalPro
                                                     {evolvesToLabel}
                                                 </DetailField>
                                             )}
-                                            {detail?.artist && (
+                                            {detail && (
                                                 <DetailField label="Illustrator">
-                                                    {detail.artist}
+                                                    {detail.artist ?? ''}
                                                 </DetailField>
                                             )}
-                                            {marketPrice != null && (
+                                            {detail && (
                                                 <DetailField label="Market Price">
-                                                    {formatPrice(marketPrice)}
+                                                    {marketPrice != null
+                                                        ? formatPrice(marketPrice)
+                                                        : ''}
                                                 </DetailField>
                                             )}
                                         </div>

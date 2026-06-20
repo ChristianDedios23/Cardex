@@ -64,6 +64,24 @@ export type PokemonCardSearchResult = {
     hasMore: boolean;
 };
 
+export type PokemonSeries = {
+    name: string;
+    logo: string | null;
+    releaseDate: string | null;
+    setCount: number;
+};
+
+export type PokemonSetSummary = {
+    id: string;
+    name: string;
+    series: string;
+    releaseDate: string | null;
+    logo: string | null;
+    symbol: string | null;
+    printedTotal: number | null;
+    total: number | null;
+};
+
 export const UPSTREAM_TIMEOUT_MS = 15_000;
 export const MIN_QUERY_LENGTH = 3;
 export const DEFAULT_PAGE = 1;
@@ -123,6 +141,19 @@ type UpstreamPokemonCard = {
         name: string;
         text?: string;
     }>;
+};
+
+type UpstreamPokemonSet = {
+    id: string;
+    name?: string;
+    series?: string;
+    releaseDate?: string;
+    printedTotal?: number;
+    total?: number;
+    images?: {
+        symbol?: string;
+        logo?: string;
+    };
 };
 
 const TCGPLAYER_VARIANT_PRIORITY = [
@@ -366,6 +397,290 @@ export async function getPokemonCardById(cardId: string): Promise<PokemonCardDet
 
             const data = await response.json();
             return mapPokemonCardDetail(data.data as UpstreamPokemonCard);
+        },
+        getCacheTtlMs(),
+    );
+}
+
+const SET_LIST_SELECT = 'id,name,series,releaseDate,printedTotal,total,images';
+const SET_LIST_PAGE_SIZE = 250;
+const SERIES_PINNED_TO_END = new Set(['Other', 'Collections']);
+
+function parseReleaseDate(value: string | null | undefined): number {
+    if (!value?.trim()) {
+        return 0;
+    }
+
+    const [year, month, day] = value.split('/').map((part) => Number.parseInt(part, 10));
+
+    if (!year || !month || !day) {
+        return 0;
+    }
+
+    return Date.UTC(year, month - 1, day);
+}
+
+async function fetchAllUpstreamSets(): Promise<UpstreamPokemonSet[]> {
+    const sets: UpstreamPokemonSet[] = [];
+    let page = 1;
+    let totalCount = Number.POSITIVE_INFINITY;
+
+    while ((page - 1) * SET_LIST_PAGE_SIZE < totalCount) {
+        const url = new URL(`${POKEMON_TCG_BASE_URL}/sets`);
+        url.searchParams.set('page', String(page));
+        url.searchParams.set('pageSize', String(SET_LIST_PAGE_SIZE));
+        url.searchParams.set('select', SET_LIST_SELECT);
+        url.searchParams.set('orderBy', '-releaseDate');
+
+        const response = await fetchUpstreamWithRetry(url.toString());
+
+        if (!response.ok) {
+            throw new PokemonTcgUpstreamError('Failed to fetch Pokémon sets');
+        }
+
+        const body = await response.json();
+        const pageSets = (body.data ?? []) as UpstreamPokemonSet[];
+
+        sets.push(...pageSets);
+        totalCount = body.totalCount ?? sets.length;
+
+        if (pageSets.length === 0) {
+            break;
+        }
+
+        page += 1;
+    }
+
+    return sets;
+}
+
+async function getAllPokemonSets(): Promise<UpstreamPokemonSet[]> {
+    return getOrFetch('sets:all:v2', () => fetchAllUpstreamSets(), getCacheTtlMs());
+}
+
+function mapSetSummary(set: UpstreamPokemonSet): PokemonSetSummary {
+    return {
+        id: set.id,
+        name: set.name?.trim() ? set.name.trim() : set.id,
+        series: set.series?.trim() ? set.series.trim() : '',
+        releaseDate: set.releaseDate?.trim() ? set.releaseDate.trim() : null,
+        logo: set.images?.logo?.trim() ? set.images.logo.trim() : null,
+        symbol: set.images?.symbol?.trim() ? set.images.symbol.trim() : null,
+        printedTotal: typeof set.printedTotal === 'number' ? set.printedTotal : null,
+        total: typeof set.total === 'number' ? set.total : null,
+    };
+}
+
+function sortSetsForSeriesDisplay(sets: PokemonSetSummary[]): PokemonSetSummary[] {
+    const byNewest = [...sets].sort(
+        (left, right) => parseReleaseDate(right.releaseDate) - parseReleaseDate(left.releaseDate),
+    );
+    const result: PokemonSetSummary[] = [];
+    const used = new Set<string>();
+
+    function appendWithGalleryVariants(set: PokemonSetSummary) {
+        result.push(set);
+        used.add(set.id);
+
+        const variants = sets
+            .filter(
+                (candidate) =>
+                    candidate.id !== set.id &&
+                    candidate.name.startsWith(`${set.name} `) &&
+                    !used.has(candidate.id),
+            )
+            .sort(
+                (left, right) =>
+                    parseReleaseDate(left.releaseDate) - parseReleaseDate(right.releaseDate) ||
+                    left.name.localeCompare(right.name),
+            );
+
+        for (const variant of variants) {
+            result.push(variant);
+            used.add(variant.id);
+        }
+    }
+
+    for (const set of byNewest) {
+        if (used.has(set.id)) {
+            continue;
+        }
+
+        const isGalleryVariant = sets.some(
+            (candidate) =>
+                candidate.id !== set.id &&
+                set.name.startsWith(`${candidate.name} `) &&
+                candidate.name.length < set.name.length,
+        );
+
+        if (isGalleryVariant) {
+            continue;
+        }
+
+        appendWithGalleryVariants(set);
+    }
+
+    for (const set of byNewest) {
+        if (!used.has(set.id)) {
+            result.push(set);
+        }
+    }
+
+    return result;
+}
+
+function compareCardNumbers(left: string | null, right: string | null): number {
+    const leftValue = left?.trim() ?? '';
+    const rightValue = right?.trim() ?? '';
+
+    if (/^\d+$/.test(leftValue) && /^\d+$/.test(rightValue)) {
+        return Number.parseInt(leftValue, 10) - Number.parseInt(rightValue, 10);
+    }
+
+    return leftValue.localeCompare(rightValue, undefined, { numeric: true, sensitivity: 'base' });
+}
+
+function pickSeriesLogo(sets: UpstreamPokemonSet[], seriesName: string): string | null {
+    const flagship = sets.find(
+        (set) => set.name?.trim() === seriesName && set.images?.logo?.trim(),
+    );
+
+    if (flagship?.images?.logo?.trim()) {
+        return flagship.images.logo.trim();
+    }
+
+    const sorted = [...sets].sort(
+        (left, right) => parseReleaseDate(left.releaseDate) - parseReleaseDate(right.releaseDate),
+    );
+
+    for (const set of sorted) {
+        if (set.images?.logo?.trim()) {
+            return set.images.logo.trim();
+        }
+    }
+
+    return null;
+}
+
+function pickSeriesReleaseDate(sets: UpstreamPokemonSet[], seriesName: string): string | null {
+    const flagship = sets.find((set) => set.name?.trim() === seriesName);
+
+    if (flagship?.releaseDate?.trim()) {
+        return flagship.releaseDate.trim();
+    }
+
+    const sorted = [...sets].sort(
+        (left, right) => parseReleaseDate(left.releaseDate) - parseReleaseDate(right.releaseDate),
+    );
+
+    return sorted.find((set) => set.releaseDate?.trim())?.releaseDate?.trim() ?? null;
+}
+
+export async function listPokemonSeries(): Promise<PokemonSeries[]> {
+    return getOrFetch(
+        'series:list:v2',
+        async () => {
+            const sets = await getAllPokemonSets();
+            const grouped = new Map<string, UpstreamPokemonSet[]>();
+
+            for (const set of sets) {
+                const seriesName = set.series?.trim();
+
+                if (!seriesName) {
+                    continue;
+                }
+
+                const bucket = grouped.get(seriesName) ?? [];
+                bucket.push(set);
+                grouped.set(seriesName, bucket);
+            }
+
+            const seriesList = [...grouped.entries()].map(([name, seriesSets]) => {
+                const isPinned = SERIES_PINNED_TO_END.has(name);
+                const releaseDate = isPinned ? null : pickSeriesReleaseDate(seriesSets, name);
+
+                return {
+                    name,
+                    logo: pickSeriesLogo(seriesSets, name),
+                    releaseDate,
+                    setCount: seriesSets.length,
+                    sortKey: isPinned
+                        ? Number.NEGATIVE_INFINITY
+                        : parseReleaseDate(releaseDate ?? undefined),
+                };
+            });
+
+            seriesList.sort((left, right) => {
+                if (right.sortKey !== left.sortKey) {
+                    return right.sortKey - left.sortKey;
+                }
+
+                return left.name.localeCompare(right.name);
+            });
+
+            return seriesList.map(({ sortKey: _sortKey, ...series }) => series);
+        },
+        getCacheTtlMs(),
+    );
+}
+
+export async function listPokemonSetsBySeries(seriesName: string): Promise<PokemonSetSummary[]> {
+    const normalized = seriesName.trim();
+
+    if (!normalized) {
+        return [];
+    }
+
+    const sets = await getAllPokemonSets();
+
+    return sortSetsForSeriesDisplay(
+        sets.filter((set) => set.series?.trim() === normalized).map(mapSetSummary),
+    );
+}
+
+export async function listPokemonCardsBySet(setId: string): Promise<PokemonCardDetail[]> {
+    const normalized = setId.trim().toLowerCase();
+
+    if (!normalized) {
+        return [];
+    }
+
+    return getOrFetch(
+        `set-cards:${normalized}`,
+        async () => {
+            const cards: PokemonCardDetail[] = [];
+            let page = 1;
+            let totalCount = Number.POSITIVE_INFINITY;
+
+            while ((page - 1) * SET_LIST_PAGE_SIZE < totalCount) {
+                const url = new URL(`${POKEMON_TCG_BASE_URL}/cards`);
+                url.searchParams.set('q', `set.id:${normalized}`);
+                url.searchParams.set('page', String(page));
+                url.searchParams.set('pageSize', String(SET_LIST_PAGE_SIZE));
+                url.searchParams.set('select', CARD_DETAIL_SELECT);
+
+                const response = await fetchUpstreamWithRetry(url.toString());
+
+                if (!response.ok) {
+                    throw new PokemonTcgUpstreamError('Failed to fetch set cards');
+                }
+
+                const body = await response.json();
+                const pageCards = (body.data ?? []).map(mapPokemonCardDetail);
+
+                cards.push(...pageCards);
+                totalCount = body.totalCount ?? cards.length;
+
+                if (pageCards.length === 0) {
+                    break;
+                }
+
+                page += 1;
+            }
+
+            seedCardDetailCache(cards);
+
+            return [...cards].sort((left, right) => compareCardNumbers(left.number, right.number));
         },
         getCacheTtlMs(),
     );

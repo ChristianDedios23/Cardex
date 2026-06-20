@@ -1,22 +1,39 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import {
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+    type FormEvent,
+    type KeyboardEvent,
+} from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa6';
+import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
+import { PiMagnifyingGlassBold } from 'react-icons/pi';
 import type { User } from '@supabase/supabase-js';
 import { useApp, type AppTab } from '@/components/app-shell/AppProvider';
 import { CardDetailModal } from '@/components/CardDetailModal';
 import { createClient, getAccessToken } from '@/lib/supabase/client';
 import {
+    bulkAddOwnedUserCards,
+    bulkRemoveOwnedUserCards,
     createUserCard,
     createUserCardSnapshot,
     deleteUserCard,
     getMyUserCards,
+    listSeries,
+    listSetCards,
+    listSetsBySeries,
     searchCards,
     seedCardDetailCache,
     type PaginatedPokemonCardSearch,
     type PokemonCard,
     type PokemonCardDetail,
+    type PokemonSeries,
+    type PokemonSetSummary,
     type UserCard,
 } from '@/lib/api';
 
@@ -42,12 +59,45 @@ function userCardToPreview(card: UserCard): PokemonCard {
     };
 }
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
+function Panel({
+    title,
+    header,
+    children,
+}: {
+    title?: string;
+    header?: React.ReactNode;
+    children: React.ReactNode;
+}) {
     return (
         <section className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
-            <h2 className="mb-4 text-lg font-medium">{title}</h2>
+            {header ?? (title ? <h2 className="mb-4 text-lg font-medium">{title}</h2> : null)}
             {children}
         </section>
+    );
+}
+
+function BrandLogoHeader({
+    logo,
+    alt,
+    fallback,
+}: {
+    logo: string | null;
+    alt: string;
+    fallback: string;
+}) {
+    return (
+        <div className="mx-auto mb-4 flex h-20 w-full max-w-[15rem] items-center justify-center">
+            {logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={logo}
+                    alt={alt}
+                    className="max-h-17.5 max-w-full object-contain drop-shadow-md"
+                />
+            ) : (
+                <h2 className="text-center text-lg font-medium">{fallback}</h2>
+            )}
+        </div>
     );
 }
 
@@ -536,6 +586,383 @@ function formatTcgPlayerMarketPrice(price: number): string {
     }).format(price);
 }
 
+function formatSetCardCount(set: PokemonSetSummary, loadedCount: number): string {
+    const { printedTotal, total } = set;
+
+    if (printedTotal != null && total != null && total > printedTotal) {
+        const secretCount = total - printedTotal;
+        return `${printedTotal.toLocaleString()} + ${secretCount.toLocaleString()} Secret`;
+    }
+
+    if (total != null) {
+        return total.toLocaleString();
+    }
+
+    return loadedCount.toLocaleString();
+}
+
+type SetMarketStats = {
+    fullSetValue: number;
+    mostExpensiveName: string | null;
+    yourSetValue: number;
+    collectedCount: number;
+};
+
+function computeSetMarketStats(cards: PokemonCardDetail[], owned: UserCard[]): SetMarketStats {
+    let fullSetValue = 0;
+    let mostExpensiveName: string | null = null;
+    let highestPrice = -1;
+
+    for (const card of cards) {
+        if (card.marketPrice == null) {
+            continue;
+        }
+
+        fullSetValue += card.marketPrice;
+
+        if (card.marketPrice > highestPrice) {
+            highestPrice = card.marketPrice;
+            mostExpensiveName = card.name;
+        }
+    }
+
+    const cardIds = new Set(cards.map((card) => card.id));
+    let yourSetValue = 0;
+    let collectedCount = 0;
+
+    for (const entry of owned) {
+        if (!cardIds.has(entry.external_card_id)) {
+            continue;
+        }
+
+        collectedCount += 1;
+
+        if (entry.market_price == null) {
+            continue;
+        }
+
+        const price =
+            typeof entry.market_price === 'number'
+                ? entry.market_price
+                : Number(entry.market_price);
+
+        if (!Number.isFinite(price)) {
+            continue;
+        }
+
+        yourSetValue += price * (entry.quantity ?? 1);
+    }
+
+    return { fullSetValue, mostExpensiveName, yourSetValue, collectedCount };
+}
+
+type SetCardSortField = 'number' | 'name' | 'rarity' | 'price' | 'artist';
+type SetCardSortDirection = 'asc' | 'desc';
+type SetCardOwnershipFilter = 'all' | 'owned' | 'need';
+
+const SET_CARD_SORT_OPTIONS: { field: SetCardSortField; label: string }[] = [
+    { field: 'number', label: 'Number' },
+    { field: 'name', label: 'Name' },
+    { field: 'rarity', label: 'Rarity' },
+    { field: 'price', label: 'Price' },
+    { field: 'artist', label: 'Artist' },
+];
+
+function parseCardNumberSortKey(number: string | null): [number, string] {
+    if (!number) {
+        return [Number.MAX_SAFE_INTEGER, ''];
+    }
+
+    const match = number.match(/^(\d+)/);
+
+    if (match) {
+        return [Number.parseInt(match[1], 10), number.slice(match[1].length).toLowerCase()];
+    }
+
+    return [Number.MAX_SAFE_INTEGER, number.toLowerCase()];
+}
+
+function compareNullableStrings(
+    left: string | null,
+    right: string | null,
+    direction: SetCardSortDirection,
+): number {
+    if (!left && !right) {
+        return 0;
+    }
+
+    if (!left) {
+        return 1;
+    }
+
+    if (!right) {
+        return -1;
+    }
+
+    const comparison = left.localeCompare(right, undefined, { sensitivity: 'base' });
+    return direction === 'asc' ? comparison : -comparison;
+}
+
+function compareNullablePrices(
+    left: number | null,
+    right: number | null,
+    direction: SetCardSortDirection,
+): number {
+    if (left == null && right == null) {
+        return 0;
+    }
+
+    if (left == null) {
+        return 1;
+    }
+
+    if (right == null) {
+        return -1;
+    }
+
+    const comparison = left - right;
+    return direction === 'asc' ? comparison : -comparison;
+}
+
+function compareCardNumbers(
+    left: string | null,
+    right: string | null,
+    direction: SetCardSortDirection,
+): number {
+    const [leftNumber, leftSuffix] = parseCardNumberSortKey(left);
+    const [rightNumber, rightSuffix] = parseCardNumberSortKey(right);
+
+    if (leftNumber !== rightNumber) {
+        const comparison = leftNumber - rightNumber;
+        return direction === 'asc' ? comparison : -comparison;
+    }
+
+    const comparison = leftSuffix.localeCompare(rightSuffix);
+    return direction === 'asc' ? comparison : -comparison;
+}
+
+function filterSetCards(cards: PokemonCardDetail[], query: string): PokemonCardDetail[] {
+    const normalized = query.trim().toLowerCase();
+
+    if (!normalized) {
+        return cards;
+    }
+
+    return cards.filter((card) => {
+        if (card.name.toLowerCase().includes(normalized)) {
+            return true;
+        }
+
+        return card.number?.toLowerCase().includes(normalized) ?? false;
+    });
+}
+
+function filterSetCardsByOwnership(
+    cards: PokemonCardDetail[],
+    filter: SetCardOwnershipFilter,
+    ownedByExternalId: Record<string, string>,
+): PokemonCardDetail[] {
+    if (filter === 'all') {
+        return cards;
+    }
+
+    if (filter === 'owned') {
+        return cards.filter((card) => ownedByExternalId[card.id] != null);
+    }
+
+    return cards.filter((card) => ownedByExternalId[card.id] == null);
+}
+
+function sortSetCards(
+    cards: PokemonCardDetail[],
+    field: SetCardSortField,
+    direction: SetCardSortDirection,
+): PokemonCardDetail[] {
+    return [...cards].sort((left, right) => {
+        switch (field) {
+            case 'number':
+                return compareCardNumbers(left.number, right.number, direction);
+            case 'name':
+                return compareNullableStrings(left.name, right.name, direction);
+            case 'rarity':
+                return compareNullableStrings(left.rarity, right.rarity, direction);
+            case 'price':
+                return compareNullablePrices(left.marketPrice, right.marketPrice, direction);
+            case 'artist':
+                return compareNullableStrings(left.artist, right.artist, direction);
+            default:
+                return 0;
+        }
+    });
+}
+
+function SetCardSortButton({
+    label,
+    active,
+    direction,
+    onClick,
+}: {
+    label: string;
+    active: boolean;
+    direction: SetCardSortDirection | null;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                active
+                    ? 'border-[var(--accent)] bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
+                    : 'border-[var(--border)] bg-[var(--card)] text-[var(--muted)] hover:text-[var(--foreground)]'
+            }`}
+        >
+            {label}
+            <span className="flex flex-col leading-none" aria-hidden="true">
+                <IoChevronUp
+                    className={`h-2.5 w-2.5 ${active && direction === 'asc' ? 'opacity-100' : 'opacity-30'}`}
+                />
+                <IoChevronDown
+                    className={`-mt-0.5 h-2.5 w-2.5 ${active && direction === 'desc' ? 'opacity-100' : 'opacity-30'}`}
+                />
+            </span>
+        </button>
+    );
+}
+
+function SetCardOwnershipTabs({
+    value,
+    onChange,
+}: {
+    value: SetCardOwnershipFilter;
+    onChange: (value: SetCardOwnershipFilter) => void;
+}) {
+    const ownershipOptions: { value: SetCardOwnershipFilter; label: string }[] = [
+        { value: 'all', label: 'Show All' },
+        { value: 'owned', label: 'Owned' },
+        { value: 'need', label: 'Need' },
+    ];
+    const containerRef = useRef<HTMLDivElement>(null);
+    const tabRefs = useRef<Partial<Record<SetCardOwnershipFilter, HTMLButtonElement>>>({});
+    const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+
+    useLayoutEffect(() => {
+        const container = containerRef.current;
+
+        if (!container) {
+            return;
+        }
+
+        function updateIndicator() {
+            const activeTab = tabRefs.current[value];
+
+            if (!activeTab) {
+                return;
+            }
+
+            setIndicator({
+                left: activeTab.offsetLeft,
+                width: activeTab.offsetWidth,
+            });
+        }
+
+        updateIndicator();
+
+        const resizeObserver = new ResizeObserver(updateIndicator);
+        resizeObserver.observe(container);
+
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, [value]);
+
+    return (
+        <div ref={containerRef} className="relative mt-3 border-b border-[var(--border)]">
+            <div className="flex gap-6">
+                {ownershipOptions.map(({ value: optionValue, label }) => {
+                    const active = value === optionValue;
+
+                    return (
+                        <button
+                            key={optionValue}
+                            ref={(element) => {
+                                if (element) {
+                                    tabRefs.current[optionValue] = element;
+                                }
+                            }}
+                            type="button"
+                            onClick={() => onChange(optionValue)}
+                            className={`pb-2 text-sm font-medium transition-colors ${
+                                active
+                                    ? 'text-white'
+                                    : 'text-[var(--muted)] hover:text-[var(--foreground)]'
+                            }`}
+                        >
+                            {label}
+                        </button>
+                    );
+                })}
+            </div>
+            <div
+                aria-hidden="true"
+                className="absolute bottom-0 h-0.5 bg-[var(--accent)] transition-[transform,width] duration-300 ease-out"
+                style={{
+                    width: indicator.width,
+                    transform: `translateX(${indicator.left}px)`,
+                }}
+            />
+        </div>
+    );
+}
+
+function SetCardsToolbar({
+    searchQuery,
+    onSearchQueryChange,
+    ownershipFilter,
+    onOwnershipFilterChange,
+    sortField,
+    sortDirection,
+    onSortChange,
+}: {
+    searchQuery: string;
+    onSearchQueryChange: (value: string) => void;
+    ownershipFilter: SetCardOwnershipFilter;
+    onOwnershipFilterChange: (value: SetCardOwnershipFilter) => void;
+    sortField: SetCardSortField;
+    sortDirection: SetCardSortDirection;
+    onSortChange: (field: SetCardSortField) => void;
+}) {
+    return (
+        <div className="mb-4">
+            <div className="flex flex-wrap items-stretch gap-2">
+                <div className="relative min-w-[12rem] flex-1">
+                    <PiMagnifyingGlassBold
+                        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]"
+                        aria-hidden="true"
+                    />
+                    <input
+                        type="search"
+                        value={searchQuery}
+                        onChange={(event) => onSearchQueryChange(event.target.value)}
+                        placeholder="Name or Number..."
+                        className="w-full rounded-lg border border-[var(--border)] bg-[var(--card)] py-2 pl-9 pr-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)]"
+                    />
+                </div>
+                {SET_CARD_SORT_OPTIONS.map(({ field, label }) => (
+                    <SetCardSortButton
+                        key={field}
+                        label={label}
+                        active={sortField === field}
+                        direction={sortField === field ? sortDirection : null}
+                        onClick={() => onSortChange(field)}
+                    />
+                ))}
+            </div>
+            <SetCardOwnershipTabs value={ownershipFilter} onChange={onOwnershipFilterChange} />
+        </div>
+    );
+}
+
 function getCollectionTotal(cards: UserCard[]): number {
     return cards.reduce((total, card) => {
         if (card.market_price == null) {
@@ -794,6 +1221,371 @@ function SearchPagination({
     );
 }
 
+function parseSeriesReleaseSortKey(releaseDate: string | null): number {
+    if (!releaseDate) {
+        return 0;
+    }
+
+    const [year, month, day] = releaseDate.split('/').map((part) => Number.parseInt(part, 10));
+
+    if (!year || !month || !day) {
+        return 0;
+    }
+
+    return Date.UTC(year, month - 1, day);
+}
+
+const SERIES_PINNED_TO_END = new Set(['Other', 'Collections']);
+
+function sortSeriesNewestFirst(series: PokemonSeries[]): PokemonSeries[] {
+    return [...series].sort((left, right) => {
+        const leftPinned = SERIES_PINNED_TO_END.has(left.name);
+        const rightPinned = SERIES_PINNED_TO_END.has(right.name);
+
+        if (leftPinned && !rightPinned) {
+            return 1;
+        }
+
+        if (!leftPinned && rightPinned) {
+            return -1;
+        }
+
+        const dateDiff =
+            parseSeriesReleaseSortKey(right.releaseDate) -
+            parseSeriesReleaseSortKey(left.releaseDate);
+
+        if (dateDiff !== 0) {
+            return dateDiff;
+        }
+
+        return left.name.localeCompare(right.name);
+    });
+}
+
+function formatSeriesReleaseDate(releaseDate: string | null): string {
+    if (!releaseDate) {
+        return 'Various';
+    }
+
+    const [year, month, day] = releaseDate.split('/').map((part) => Number.parseInt(part, 10));
+
+    if (!year || !month || !day) {
+        return releaseDate;
+    }
+
+    return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+    });
+}
+
+function SeriesTile({ series, onSelect }: { series: PokemonSeries; onSelect: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onSelect}
+            className="series-tile-glow w-full rounded-xl text-center shadow-[0_10px_28px_rgb(0_0_0_/_0.35)] transition-shadow hover:shadow-[0_14px_32px_rgb(0_0_0_/_0.42)]"
+        >
+            <div className="relative z-[1] flex flex-col items-center px-3 py-4">
+                <div className="mb-3 flex h-20 w-full items-center justify-center">
+                    {series.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={series.logo}
+                            alt=""
+                            className="max-h-17.5 max-w-full object-contain drop-shadow-md"
+                        />
+                    ) : (
+                        <span className="text-xs text-[var(--muted)]">No logo</span>
+                    )}
+                </div>
+                <p className="text-sm font-medium leading-snug">{series.name}</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">
+                    {formatSeriesReleaseDate(series.releaseDate)}
+                </p>
+            </div>
+        </button>
+    );
+}
+
+function SetInfoField({
+    label,
+    value,
+    valueClassName,
+    className,
+    allowWrap = false,
+}: {
+    label: string;
+    value: React.ReactNode;
+    valueClassName?: string;
+    className?: string;
+    allowWrap?: boolean;
+}) {
+    return (
+        <div className={`min-w-0 ${className ?? ''}`}>
+            <p className="text-[10px] font-medium uppercase tracking-wide text-[var(--muted)]">
+                {label}
+            </p>
+            <p
+                className={`mt-1 text-sm font-medium ${valueClassName ?? 'text-[var(--foreground)]'} ${
+                    allowWrap ? 'line-clamp-2' : 'truncate'
+                }`}
+            >
+                {value}
+            </p>
+        </div>
+    );
+}
+
+function CollectionProgressBar({
+    collected,
+    total,
+    fullWidth = false,
+}: {
+    collected: number;
+    total: number;
+    fullWidth?: boolean;
+}) {
+    const progressPercent = total > 0 ? Math.min((collected / total) * 100, 100) : 0;
+    const isComplete = total > 0 && collected >= total;
+    const checkpoints = [25, 50, 75, 100] as const;
+
+    function checkpointPosition(checkpoint: number) {
+        if (checkpoint >= 100) {
+            return { right: '0px' };
+        }
+
+        return { left: `${checkpoint}%`, transform: 'translateX(-50%)' };
+    }
+
+    return (
+        <div className="flex w-full flex-col items-center">
+            <p className="text-sm font-medium text-[var(--foreground)]">
+                {collected.toLocaleString()} / {total.toLocaleString()} collected
+            </p>
+            <div className={`relative mt-2 w-full min-w-16 ${fullWidth ? '' : 'max-w-lg'}`}>
+                <div
+                    className={
+                        isComplete
+                            ? 'collection-progress-shooting-star'
+                            : 'relative h-2 overflow-hidden rounded-full bg-[var(--border)]'
+                    }
+                >
+                    {isComplete && (
+                        <>
+                            <span className="collection-progress-spark" aria-hidden="true" />
+                            <span
+                                className="collection-progress-spark-backdrop"
+                                aria-hidden="true"
+                            />
+                        </>
+                    )}
+                    <div
+                        className={
+                            isComplete
+                                ? 'collection-progress-shooting-star-inner'
+                                : 'relative h-full'
+                        }
+                        role="progressbar"
+                        aria-valuenow={collected}
+                        aria-valuemin={0}
+                        aria-valuemax={total}
+                        aria-label={`${collected} of ${total} cards collected`}
+                    >
+                        <div
+                            className={`h-full rounded-full transition-[width] duration-500 ease-out ${
+                                isComplete
+                                    ? 'collection-progress-fill-complete'
+                                    : 'bg-[var(--accent)]'
+                            }`}
+                            style={{ width: `${progressPercent}%` }}
+                        />
+                        {checkpoints.map((checkpoint) => (
+                            <div
+                                key={checkpoint}
+                                aria-hidden="true"
+                                className={`pointer-events-none absolute top-0 z-10 h-full w-px ${
+                                    progressPercent >= checkpoint
+                                        ? 'bg-[var(--foreground)]/50'
+                                        : 'bg-[var(--muted)]/35'
+                                }`}
+                                style={checkpointPosition(checkpoint)}
+                            />
+                        ))}
+                    </div>
+                </div>
+                <div className="relative mt-1 h-3 w-full" aria-hidden="true">
+                    {checkpoints.map((checkpoint) => (
+                        <span
+                            key={checkpoint}
+                            className={`absolute text-[9px] font-medium tabular-nums ${
+                                progressPercent >= checkpoint
+                                    ? 'text-[var(--foreground)]'
+                                    : 'text-[var(--muted)]'
+                            }`}
+                            style={checkpointPosition(checkpoint)}
+                        >
+                            {checkpoint}%
+                        </span>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function SetInfoBar({
+    set,
+    cards,
+    stats,
+    onAddAll,
+    onRemoveAll,
+    bulkOperating = null,
+    addAllRemainingCount = 0,
+    ownedInSetCount = 0,
+}: {
+    set: PokemonSetSummary;
+    cards: PokemonCardDetail[];
+    stats: SetMarketStats;
+    onAddAll?: () => void;
+    onRemoveAll?: () => void;
+    bulkOperating?: 'add' | 'remove' | null;
+    addAllRemainingCount?: number;
+    ownedInSetCount?: number;
+}) {
+    const totalCards = set.total ?? cards.length;
+    const isBulkBusy = bulkOperating !== null;
+
+    return (
+        <div className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--background)]/80 p-3 backdrop-blur-sm sm:p-4">
+            <div className="flex flex-col gap-4">
+                <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] md:gap-0">
+                    <div className="min-w-0 md:pr-5">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+                            <SetInfoField label="Set Name" value={set.name} />
+                            <SetInfoField
+                                label="Series"
+                                value={set.series}
+                                valueClassName="text-[var(--accent)]"
+                            />
+                            <SetInfoField
+                                label="Release Date"
+                                value={formatSeriesReleaseDate(set.releaseDate)}
+                                className="col-span-2 sm:col-span-1"
+                            />
+                            <div className="col-span-2 grid grid-cols-2 gap-4 sm:col-span-3">
+                                <SetInfoField
+                                    label="Cards"
+                                    value={formatSetCardCount(set, cards.length)}
+                                />
+                                <SetInfoField
+                                    label="Most Expensive Card"
+                                    value={stats.mostExpensiveName ?? ''}
+                                    allowWrap
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex min-w-0 flex-col justify-center gap-4 border-[var(--border)] md:border-l md:pl-5">
+                        <SetInfoField
+                            label="Full Set Market Value"
+                            value={formatTcgPlayerMarketPrice(stats.fullSetValue)}
+                            valueClassName="text-[var(--success)]"
+                        />
+                        <SetInfoField
+                            label="Your Set Value"
+                            value={formatTcgPlayerMarketPrice(stats.yourSetValue)}
+                            valueClassName="text-[var(--success)]"
+                        />
+                    </div>
+                </div>
+
+                {(onAddAll || onRemoveAll) && (
+                    <div className="grid grid-cols-2 gap-3">
+                        {onAddAll && (
+                            <button
+                                type="button"
+                                onClick={onAddAll}
+                                disabled={isBulkBusy || addAllRemainingCount === 0}
+                                className="rounded-md border border-[var(--border)] px-3 py-2 text-[10px] font-medium uppercase tracking-wide text-[var(--muted)] transition-colors hover:border-[var(--accent)] hover:text-[var(--foreground)] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {bulkOperating === 'add'
+                                    ? 'Adding…'
+                                    : addAllRemainingCount === 0
+                                      ? 'All owned'
+                                      : `Add all (${addAllRemainingCount})`}
+                            </button>
+                        )}
+                        {onRemoveAll && (
+                            <button
+                                type="button"
+                                onClick={onRemoveAll}
+                                disabled={isBulkBusy || ownedInSetCount === 0}
+                                className="rounded-md border border-[var(--border)] px-3 py-2 text-[10px] font-medium uppercase tracking-wide text-[var(--muted)] transition-colors hover:border-[var(--danger)] hover:text-[var(--foreground)] disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {bulkOperating === 'remove'
+                                    ? 'Removing…'
+                                    : ownedInSetCount === 0
+                                      ? 'None owned'
+                                      : `Remove all (${ownedInSetCount})`}
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {totalCards > 0 && (
+                    <CollectionProgressBar
+                        collected={stats.collectedCount}
+                        total={totalCards}
+                        fullWidth
+                    />
+                )}
+            </div>
+        </div>
+    );
+}
+
+function SetTile({ set, onSelect }: { set: PokemonSetSummary; onSelect: () => void }) {
+    return (
+        <button
+            type="button"
+            onClick={onSelect}
+            className="series-tile-glow w-full rounded-xl text-center shadow-[0_10px_28px_rgb(0_0_0_/_0.35)] transition-shadow hover:shadow-[0_14px_32px_rgb(0_0_0_/_0.42)]"
+        >
+            <div className="relative z-[1] flex flex-col items-center px-3 py-4">
+                <div className="mb-3 flex h-20 w-full items-center justify-center">
+                    {set.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={set.logo}
+                            alt=""
+                            className="max-h-17.5 max-w-full object-contain drop-shadow-md"
+                        />
+                    ) : set.symbol ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                            src={set.symbol}
+                            alt=""
+                            className="h-10 w-10 object-contain drop-shadow-md"
+                        />
+                    ) : (
+                        <span className="text-xs text-[var(--muted)]">No logo</span>
+                    )}
+                </div>
+                <p className="text-sm font-medium leading-snug">{set.name}</p>
+                <p className="mt-1 text-xs text-[var(--muted)]">
+                    {formatSeriesReleaseDate(set.releaseDate)}
+                </p>
+                {set.total != null && (
+                    <p className="mt-0.5 text-xs text-[var(--muted)]">{set.total} cards</p>
+                )}
+            </div>
+        </button>
+    );
+}
+
 export function TestApp() {
     const { user, setUser, tab, configError, setPageLoading } = useApp();
     const [detailSelection, setDetailSelection] = useState<CardDetailSelection | null>(null);
@@ -817,9 +1609,166 @@ export function TestApp() {
     const [userCards, setUserCards] = useState<UserCard[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
     const [collectionLoading, setCollectionLoading] = useState(false);
+    const [seriesLoading, setSeriesLoading] = useState(false);
+    const [seriesList, setSeriesList] = useState<PokemonSeries[]>([]);
+    const seriesCacheRef = useRef<PokemonSeries[] | null>(null);
+    const [selectedSeries, setSelectedSeries] = useState<PokemonSeries | null>(null);
+    const [seriesSetsLoading, setSeriesSetsLoading] = useState(false);
+    const [seriesSets, setSeriesSets] = useState<PokemonSetSummary[]>([]);
+    const seriesSetsCacheRef = useRef(new Map<string, PokemonSetSummary[]>());
+    const [selectedSet, setSelectedSet] = useState<PokemonSetSummary | null>(null);
+    const [setCardsLoading, setSetCardsLoading] = useState(false);
+    const [setCards, setSetCards] = useState<PokemonCardDetail[]>([]);
+    const setCardsCacheRef = useRef(new Map<string, PokemonCardDetail[]>());
+    const [setCardSearchQuery, setSetCardSearchQuery] = useState('');
+    const [setCardOwnershipFilter, setSetCardOwnershipFilter] =
+        useState<SetCardOwnershipFilter>('all');
+    const [setCardSortField, setSetCardSortField] = useState<SetCardSortField>('number');
+    const [setCardSortDirection, setSetCardSortDirection] = useState<SetCardSortDirection>('asc');
+    const [setBulkOperating, setSetBulkOperating] = useState<'add' | 'remove' | null>(null);
     const [message, setMessage] = useState<string | null>(null);
     const [wishlistByExternalId, setWishlistByExternalId] = useState<Record<string, string>>({});
     const [ownedByExternalId, setOwnedByExternalId] = useState<Record<string, string>>({});
+
+    const setMarketStats = useMemo(() => {
+        if (!selectedSet) {
+            return null;
+        }
+
+        const owned = userCardsCacheRef.current?.owned ?? [];
+        return computeSetMarketStats(setCards, owned);
+    }, [selectedSet, setCards, ownedByExternalId]);
+
+    const displayedSetCards = useMemo(() => {
+        const byOwnership = filterSetCardsByOwnership(
+            setCards,
+            setCardOwnershipFilter,
+            ownedByExternalId,
+        );
+        const filtered = filterSetCards(byOwnership, setCardSearchQuery);
+        return sortSetCards(filtered, setCardSortField, setCardSortDirection);
+    }, [
+        setCards,
+        setCardSearchQuery,
+        setCardOwnershipFilter,
+        setCardSortField,
+        setCardSortDirection,
+        ownedByExternalId,
+    ]);
+
+    const setCardsToAddCount = useMemo(() => {
+        return setCards.filter((card) => ownedByExternalId[card.id] == null).length;
+    }, [setCards, ownedByExternalId]);
+
+    const setCardsOwnedCount = useMemo(() => {
+        return setCards.filter((card) => ownedByExternalId[card.id] != null).length;
+    }, [setCards, ownedByExternalId]);
+
+    function handleSetCardSortChange(field: SetCardSortField) {
+        if (field === setCardSortField) {
+            setSetCardSortDirection((direction) => (direction === 'asc' ? 'desc' : 'asc'));
+            return;
+        }
+
+        setSetCardSortField(field);
+        setSetCardSortDirection('asc');
+    }
+
+    function applyBulkOwnedCacheUpdate(
+        added: UserCard[] = [],
+        removedExternalIds: Set<string> = new Set(),
+    ) {
+        if (!user) {
+            return;
+        }
+
+        if (!userCardsCacheRef.current) {
+            userCardsCacheRef.current = {
+                userId: user.id,
+                owned: [],
+                wishlist: [],
+            };
+        }
+
+        const cache = userCardsCacheRef.current;
+        const existingIds = new Set(cache.owned.map((entry) => entry.external_card_id));
+        const newCards = added.filter((entry) => !existingIds.has(entry.external_card_id));
+
+        cache.owned = [
+            ...newCards,
+            ...cache.owned.filter((entry) => !removedExternalIds.has(entry.external_card_id)),
+        ];
+        applyUserCardsCache(tabRef.current);
+    }
+
+    async function handleBulkAddSet() {
+        const cardsToAdd = setCards.filter((card) => ownedByExternalId[card.id] == null);
+
+        if (cardsToAdd.length === 0 || !selectedSet) {
+            return;
+        }
+
+        setSetBulkOperating('add');
+        setMessage(null);
+
+        try {
+            const token = await getAccessToken();
+
+            if (!token) {
+                setMessage('Sign in to save cards.');
+                return;
+            }
+
+            const result = await bulkAddOwnedUserCards(token, {
+                set_id: selectedSet.id,
+                cards: cardsToAdd.map((card) => ({
+                    external_card_id: card.id,
+                    ...createUserCardSnapshot(card),
+                })),
+            });
+
+            applyBulkOwnedCacheUpdate(result.added);
+        } catch (error) {
+            setMessage(error instanceof Error ? error.message : 'Failed to add all cards.');
+        } finally {
+            setSetBulkOperating(null);
+        }
+    }
+
+    async function handleBulkRemoveSet() {
+        const externalCardIds = setCards
+            .filter((card) => ownedByExternalId[card.id] != null)
+            .map((card) => card.id);
+
+        if (externalCardIds.length === 0) {
+            return;
+        }
+
+        setSetBulkOperating('remove');
+        setMessage(null);
+
+        try {
+            const token = await getAccessToken();
+
+            if (!token) {
+                setMessage('Sign in to remove cards.');
+                return;
+            }
+
+            const result = await bulkRemoveOwnedUserCards(token, {
+                external_card_ids: externalCardIds,
+            });
+            const removedExternalIds = new Set(
+                result.removed.map((entry) => entry.external_card_id),
+            );
+
+            applyBulkOwnedCacheUpdate([], removedExternalIds);
+        } catch (error) {
+            setMessage(error instanceof Error ? error.message : 'Failed to remove all cards.');
+        } finally {
+            setSetBulkOperating(null);
+        }
+    }
 
     function applyUserCardsCache(activeTab: AppTab) {
         const cache = userCardsCacheRef.current;
@@ -987,10 +1936,176 @@ export function TestApp() {
     }, [tab, user]);
 
     useEffect(() => {
-        setPageLoading(searchLoading || collectionLoading);
+        if (!user || tab !== 'series') {
+            return;
+        }
+
+        if (seriesCacheRef.current) {
+            setSeriesList(sortSeriesNewestFirst(seriesCacheRef.current));
+            return;
+        }
+
+        let cancelled = false;
+
+        async function loadSeries() {
+            setSeriesLoading(true);
+
+            try {
+                const result = await listSeries();
+
+                if (cancelled) {
+                    return;
+                }
+
+                const sorted = sortSeriesNewestFirst(result.data);
+                seriesCacheRef.current = sorted;
+                setSeriesList(sorted);
+            } catch (error) {
+                if (!cancelled) {
+                    setMessage(error instanceof Error ? error.message : 'Failed to load series.');
+                }
+            } finally {
+                if (!cancelled) {
+                    setSeriesLoading(false);
+                }
+            }
+        }
+
+        void loadSeries();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [tab, user]);
+
+    useEffect(() => {
+        if (tab !== 'series') {
+            setSelectedSeries(null);
+            setSeriesSets([]);
+            setSelectedSet(null);
+            setSetCards([]);
+        }
+    }, [tab]);
+
+    useEffect(() => {
+        if (!user || tab !== 'series' || !selectedSeries) {
+            return;
+        }
+
+        const cached = seriesSetsCacheRef.current.get(selectedSeries.name);
+
+        if (cached) {
+            setSeriesSets(cached);
+            return;
+        }
+
+        let cancelled = false;
+        const seriesName = selectedSeries.name;
+
+        async function loadSeriesSets() {
+            setSeriesSetsLoading(true);
+
+            try {
+                const result = await listSetsBySeries(seriesName);
+
+                if (cancelled) {
+                    return;
+                }
+
+                seriesSetsCacheRef.current.set(seriesName, result.data);
+                setSeriesSets(result.data);
+            } catch (error) {
+                if (!cancelled) {
+                    setMessage(error instanceof Error ? error.message : 'Failed to load sets.');
+                }
+            } finally {
+                if (!cancelled) {
+                    setSeriesSetsLoading(false);
+                }
+            }
+        }
+
+        void loadSeriesSets();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedSeries, tab, user]);
+
+    useEffect(() => {
+        if (!user || tab !== 'series' || !selectedSet) {
+            return;
+        }
+
+        ensureUserCardsLoaded();
+
+        const cached = setCardsCacheRef.current.get(selectedSet.id);
+
+        if (cached) {
+            setSetCards(cached);
+            return;
+        }
+
+        let cancelled = false;
+        const setId = selectedSet.id;
+
+        async function loadSetCards() {
+            setSetCardsLoading(true);
+
+            try {
+                const result = await listSetCards(setId);
+
+                if (cancelled) {
+                    return;
+                }
+
+                setCardsCacheRef.current.set(setId, result.data);
+                setSetCards(result.data);
+            } catch (error) {
+                if (!cancelled) {
+                    setMessage(
+                        error instanceof Error ? error.message : 'Failed to load set cards.',
+                    );
+                }
+            } finally {
+                if (!cancelled) {
+                    setSetCardsLoading(false);
+                }
+            }
+        }
+
+        void loadSetCards();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedSet, tab, user]);
+
+    useEffect(() => {
+        setSetCardSearchQuery('');
+        setSetCardOwnershipFilter('all');
+        setSetCardSortField('number');
+        setSetCardSortDirection('asc');
+    }, [selectedSet?.id]);
+
+    useEffect(() => {
+        setPageLoading(
+            searchLoading ||
+                collectionLoading ||
+                seriesLoading ||
+                seriesSetsLoading ||
+                setCardsLoading,
+        );
 
         return () => setPageLoading(false);
-    }, [searchLoading, collectionLoading, setPageLoading]);
+    }, [
+        searchLoading,
+        collectionLoading,
+        seriesLoading,
+        seriesSetsLoading,
+        setCardsLoading,
+        setPageLoading,
+    ]);
 
     function normalizeQuery(value: string) {
         return value.trim().toLowerCase();
@@ -1131,6 +2246,10 @@ export function TestApp() {
         await fetchSearchPage(activeQuery, page);
     }
 
+    const searchPanelTitle =
+        activeQuery && searchMeta && !searchLoading
+            ? `Search Results (${searchMeta.totalCount.toLocaleString()})`
+            : 'Search cards';
     const totalPages = searchMeta ? getEffectiveTotalPages(searchMeta, currentPage) : null;
     const hasSearchResults = searchResults.length > 0;
     const hasNoSearchResults = Boolean(
@@ -1199,7 +2318,7 @@ export function TestApp() {
             {user && (
                 <>
                     {tab === 'search' && (
-                        <Panel title="Search cards">
+                        <Panel title={searchPanelTitle}>
                             <form onSubmit={handleSearch} className="mb-4 flex gap-2">
                                 <input
                                     value={query}
@@ -1255,10 +2374,161 @@ export function TestApp() {
                     )}
 
                     {tab === 'series' && (
-                        <Panel title="Series">
-                            <p className="text-sm text-[var(--muted)]">
-                                Browse Pokémon TCG sets by series — coming soon.
-                            </p>
+                        <Panel
+                            title={!selectedSeries && !selectedSet ? 'Series' : undefined}
+                            header={
+                                selectedSet ? (
+                                    <BrandLogoHeader
+                                        logo={selectedSet.logo}
+                                        alt={selectedSet.name}
+                                        fallback={selectedSet.name}
+                                    />
+                                ) : selectedSeries ? (
+                                    <BrandLogoHeader
+                                        logo={selectedSeries.logo}
+                                        alt={selectedSeries.name}
+                                        fallback={selectedSeries.name}
+                                    />
+                                ) : undefined
+                            }
+                        >
+                            {selectedSet && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedSet(null);
+                                        setSetCards([]);
+                                    }}
+                                    className="mb-4 flex items-center gap-1 text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
+                                >
+                                    <IoIosArrowBack className="h-4 w-4" aria-hidden="true" />
+                                    Back to sets
+                                </button>
+                            )}
+                            {selectedSeries && !selectedSet && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedSeries(null);
+                                        setSeriesSets([]);
+                                    }}
+                                    className="mb-4 flex items-center gap-1 text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
+                                >
+                                    <IoIosArrowBack className="h-4 w-4" aria-hidden="true" />
+                                    Back to all series
+                                </button>
+                            )}
+
+                            {!selectedSeries && !selectedSet && seriesLoading && (
+                                <p className="text-sm text-[var(--muted)]">Loading series…</p>
+                            )}
+                            {!selectedSeries &&
+                                !selectedSet &&
+                                !seriesLoading &&
+                                seriesList.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                                        {seriesList.map((series) => (
+                                            <SeriesTile
+                                                key={series.name}
+                                                series={series}
+                                                onSelect={() => setSelectedSeries(series)}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            {!selectedSeries &&
+                                !selectedSet &&
+                                !seriesLoading &&
+                                seriesList.length === 0 && (
+                                    <p className="text-sm text-[var(--muted)]">No series found.</p>
+                                )}
+
+                            {selectedSeries && !selectedSet && seriesSetsLoading && (
+                                <p className="text-sm text-[var(--muted)]">Loading sets…</p>
+                            )}
+                            {selectedSeries &&
+                                !selectedSet &&
+                                !seriesSetsLoading &&
+                                seriesSets.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                                        {seriesSets.map((set) => (
+                                            <SetTile
+                                                key={set.id}
+                                                set={set}
+                                                onSelect={() => setSelectedSet(set)}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            {selectedSeries &&
+                                !selectedSet &&
+                                !seriesSetsLoading &&
+                                seriesSets.length === 0 && (
+                                    <p className="text-sm text-[var(--muted)]">No sets found.</p>
+                                )}
+
+                            {selectedSet && setCardsLoading && (
+                                <p className="text-sm text-[var(--muted)]">Loading cards…</p>
+                            )}
+                            {selectedSet && !setCardsLoading && (
+                                <>
+                                    {setMarketStats && (
+                                        <SetInfoBar
+                                            set={selectedSet}
+                                            cards={setCards}
+                                            stats={setMarketStats}
+                                            onAddAll={() => void handleBulkAddSet()}
+                                            onRemoveAll={() => void handleBulkRemoveSet()}
+                                            bulkOperating={setBulkOperating}
+                                            addAllRemainingCount={setCardsToAddCount}
+                                            ownedInSetCount={setCardsOwnedCount}
+                                        />
+                                    )}
+                                    {setCards.length > 0 && (
+                                        <SetCardsToolbar
+                                            searchQuery={setCardSearchQuery}
+                                            onSearchQueryChange={setSetCardSearchQuery}
+                                            ownershipFilter={setCardOwnershipFilter}
+                                            onOwnershipFilterChange={setSetCardOwnershipFilter}
+                                            sortField={setCardSortField}
+                                            sortDirection={setCardSortDirection}
+                                            onSortChange={handleSetCardSortChange}
+                                        />
+                                    )}
+                                    {setCards.length > 0 && displayedSetCards.length > 0 ? (
+                                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                                            {displayedSetCards.map((card) => (
+                                                <CardResult
+                                                    key={card.id}
+                                                    card={card}
+                                                    ownedUserCardId={
+                                                        ownedByExternalId[card.id] ?? null
+                                                    }
+                                                    wishlistUserCardId={
+                                                        wishlistByExternalId[card.id] ?? null
+                                                    }
+                                                    onOwnedChange={handleOwnedChange}
+                                                    onWishlistChange={handleWishlistChange}
+                                                    onViewDetails={(selected) =>
+                                                        setDetailSelection({
+                                                            cardId: selected.id,
+                                                            preview: selected,
+                                                        })
+                                                    }
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : setCards.length > 0 ? (
+                                        <p className="text-sm text-[var(--muted)]">
+                                            No cards match your filters.
+                                        </p>
+                                    ) : (
+                                        <p className="text-sm text-[var(--muted)]">
+                                            No cards found.
+                                        </p>
+                                    )}
+                                </>
+                            )}
                         </Panel>
                     )}
 
@@ -1267,7 +2537,7 @@ export function TestApp() {
                             {tab === 'collection' && !collectionLoading && userCards.length > 0 && (
                                 <div className="mb-4 rounded-lg border border-[var(--border)] bg-[var(--background)] px-4 py-3">
                                     <p className="text-sm text-[var(--muted)]">
-                                        Collection total · TCGPlayer
+                                        Collection Total · TCGPlayer
                                     </p>
                                     <p className="text-lg font-medium">
                                         {formatTcgPlayerMarketPrice(collectionTotal)}

@@ -59,6 +59,24 @@ export type PaginatedPokemonCardSearch = {
     hasMore: boolean;
 };
 
+export type PokemonSeries = {
+    name: string;
+    logo: string | null;
+    releaseDate: string | null;
+    setCount: number;
+};
+
+export type PokemonSetSummary = {
+    id: string;
+    name: string;
+    series: string;
+    releaseDate: string | null;
+    logo: string | null;
+    symbol: string | null;
+    printedTotal: number | null;
+    total: number | null;
+};
+
 export type UserCard = {
     id: string;
     user_id: string;
@@ -162,6 +180,24 @@ export async function getCardById(id: string) {
     return promise;
 }
 
+export async function listSeries() {
+    return apiFetch<{ data: PokemonSeries[] }>('/v1/series');
+}
+
+export async function listSetsBySeries(seriesName: string) {
+    return apiFetch<{ data: PokemonSetSummary[] }>(
+        `/v1/series/${encodeURIComponent(seriesName)}/sets`,
+    );
+}
+
+export async function listSetCards(setId: string) {
+    const result = await apiFetch<{ data: PokemonCardDetail[]; totalCount: number }>(
+        `/v1/sets/${encodeURIComponent(setId)}/cards`,
+    );
+    seedCardDetailCache(result.data);
+    return result;
+}
+
 function normalizeCardDetail(raw: PokemonCardDetail): PokemonCardDetail {
     return {
         ...raw,
@@ -220,6 +256,55 @@ export async function deleteUserCard(token: string, id: string) {
         `/v1/user-cards/${id}`,
         {
             method: 'DELETE',
+        },
+        token,
+    );
+}
+
+export type BulkAddOwnedResult = {
+    added: UserCard[];
+    skipped: number;
+    addedCount: number;
+};
+
+export type BulkRemoveOwnedResult = {
+    removed: UserCard[];
+    removedCount: number;
+};
+
+export async function bulkAddOwnedUserCards(
+    token: string,
+    body: {
+        set_id?: string;
+        cards: Array<{
+            external_card_id: string;
+            card_name: string;
+            card_image_url?: string | null;
+            market_price?: number | null;
+        }>;
+    },
+) {
+    return apiFetch<BulkAddOwnedResult>(
+        '/v1/user-cards/bulk-owned',
+        {
+            method: 'POST',
+            body: JSON.stringify(body),
+        },
+        token,
+    );
+}
+
+export async function bulkRemoveOwnedUserCards(
+    token: string,
+    body: {
+        external_card_ids: string[];
+    },
+) {
+    return apiFetch<BulkRemoveOwnedResult>(
+        '/v1/user-cards/bulk-owned',
+        {
+            method: 'DELETE',
+            body: JSON.stringify(body),
         },
         token,
     );
