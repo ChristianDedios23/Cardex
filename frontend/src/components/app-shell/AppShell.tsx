@@ -9,10 +9,13 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { getEmailUsername } from '@/lib/email';
 import { UI_ASSETS } from '@/lib/ui-assets';
+import { AuthPanel } from '@/components/AuthPanel';
 import { useApp, type AppTab } from './AppProvider';
 import { AppFooter } from './AppFooter';
 
-const NAV_ITEMS: { id: AppTab; label: string }[] = [
+type NavTab = Exclude<AppTab, 'home' | 'about' | 'contact'>;
+
+const NAV_ITEMS: { id: NavTab; label: string }[] = [
     { id: 'search', label: 'Search' },
     { id: 'series', label: 'Series' },
     { id: 'collection', label: 'Collection' },
@@ -37,7 +40,7 @@ function WishlistIcon() {
     return <HiMiniSparkles className={NAV_ICON_CLASS} aria-hidden="true" />;
 }
 
-const NAV_ICONS: Record<AppTab, () => ReactNode> = {
+const NAV_ICONS: Record<NavTab, () => ReactNode> = {
     search: SearchIcon,
     series: SeriesIcon,
     collection: BackpackIcon,
@@ -63,8 +66,17 @@ function ChevronIcon({ collapsed }: { collapsed: boolean }) {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-    const { user, setUser, tab, setTab, sidebarCollapsed, setSidebarCollapsed, pageLoading } =
-        useApp();
+    const {
+        user,
+        setUser,
+        tab,
+        setTab,
+        authDialog,
+        setAuthDialog,
+        sidebarCollapsed,
+        setSidebarCollapsed,
+        pageLoading,
+    } = useApp();
 
     const username = getEmailUsername(user?.email);
 
@@ -72,19 +84,46 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         const supabase = createClient();
         await supabase.auth.signOut();
         setUser(null);
-        setTab('search');
+        setTab('home');
+    }
+
+    function goHome() {
+        setTab('home');
+    }
+
+    function handleNavClick(itemId: NavTab) {
+        setTab(itemId);
+
+        if (
+            !sidebarCollapsed &&
+            typeof window !== 'undefined' &&
+            window.matchMedia('(max-width: 767px)').matches
+        ) {
+            setSidebarCollapsed(true);
+        }
     }
 
     return (
         <div className="flex min-h-screen">
             <aside
-                className={`sticky top-0 flex h-screen shrink-0 flex-col border-r border-[var(--border)] bg-[var(--background)] transition-[width] duration-200 ${
-                    sidebarCollapsed ? 'w-14' : 'w-64'
+                className={`flex h-screen shrink-0 flex-col bg-[var(--background)] transition-[width] duration-200 ${
+                    sidebarCollapsed
+                        ? 'sticky top-0 w-14 border-r border-[var(--border)]'
+                        : 'sticky top-0 w-64 border-r border-[var(--border)] max-md:fixed max-md:inset-0 max-md:z-40 max-md:w-full max-md:border-r-0'
                 }`}
             >
-                <div className="relative h-14 shrink-0">
+                <div
+                    className={`flex h-14 shrink-0 items-center ${
+                        sidebarCollapsed ? 'justify-center px-2' : 'gap-2 px-3'
+                    }`}
+                >
                     {!sidebarCollapsed && (
-                        <div className="absolute inset-0 flex items-center justify-center px-3">
+                        <button
+                            type="button"
+                            onClick={goHome}
+                            aria-label="Go to home"
+                            className="flex min-w-0 flex-1 items-center justify-center transition-opacity hover:opacity-90"
+                        >
                             <Image
                                 src={UI_ASSETS.brand.title}
                                 alt="Cardex"
@@ -95,22 +134,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 className="h-11 w-auto max-w-full object-contain"
                                 priority
                             />
-                        </div>
-                    )}
-                    <div
-                        className={`relative z-10 flex h-full items-center ${
-                            sidebarCollapsed ? 'justify-center px-2' : 'justify-end px-3'
-                        }`}
-                    >
-                        <button
-                            type="button"
-                            onClick={() => setSidebarCollapsed((value) => !value)}
-                            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--muted)] hover:bg-white/5 hover:text-[var(--foreground)]"
-                        >
-                            <ChevronIcon collapsed={sidebarCollapsed} />
                         </button>
-                    </div>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setSidebarCollapsed((value) => !value)}
+                        aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)] text-[var(--muted)] hover:bg-white/5 hover:text-[var(--foreground)]"
+                    >
+                        <ChevronIcon collapsed={sidebarCollapsed} />
+                    </button>
                 </div>
 
                 <nav className="flex flex-1 flex-col gap-1 p-2">
@@ -124,7 +157,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 key={item.id}
                                 type="button"
                                 disabled={isDisabled}
-                                onClick={() => setTab(item.id)}
+                                onClick={() => handleNavClick(item.id)}
                                 title={sidebarCollapsed ? item.label : undefined}
                                 className={
                                     sidebarCollapsed
@@ -163,7 +196,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 </nav>
             </aside>
 
-            <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+            <div
+                className={`flex min-h-screen min-w-0 flex-1 flex-col ${
+                    !sidebarCollapsed ? 'max-md:invisible' : ''
+                }`}
+            >
                 <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-end border-b border-[var(--border)] bg-[var(--card)] px-4">
                     {user ? (
                         <div className="flex items-center gap-3">
@@ -182,7 +219,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                             </button>
                         </div>
                     ) : (
-                        <span className="text-sm text-[var(--muted)]">Not signed in</span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setAuthDialog('signin')}
+                                className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--foreground)] hover:bg-white/5"
+                            >
+                                Sign in
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setAuthDialog('signup')}
+                                className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-xs font-medium text-white hover:bg-[var(--accent-hover)]"
+                            >
+                                Register
+                            </button>
+                        </div>
                     )}
                 </header>
 
@@ -203,6 +255,29 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     <AppFooter />
                 </div>
             </div>
+
+            {authDialog && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+                    onClick={() => setAuthDialog(null)}
+                    role="presentation"
+                >
+                    <div
+                        className="w-full max-w-sm"
+                        onClick={(event) => event.stopPropagation()}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="auth-dialog-title"
+                    >
+                        <AuthPanel
+                            key={authDialog}
+                            initialMode={authDialog}
+                            onAuthChange={setUser}
+                            onClose={() => setAuthDialog(null)}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

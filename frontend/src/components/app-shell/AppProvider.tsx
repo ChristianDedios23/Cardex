@@ -12,13 +12,16 @@ import {
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 
-export type AppTab = 'search' | 'series' | 'collection' | 'wishlist';
+export type AppTab = 'home' | 'about' | 'contact' | 'search' | 'series' | 'collection' | 'wishlist';
+export type AuthDialogMode = 'signin' | 'signup';
 
 type AppContextValue = {
     user: User | null;
     setUser: Dispatch<SetStateAction<User | null>>;
     tab: AppTab;
     setTab: Dispatch<SetStateAction<AppTab>>;
+    authDialog: AuthDialogMode | null;
+    setAuthDialog: Dispatch<SetStateAction<AuthDialogMode | null>>;
     sidebarCollapsed: boolean;
     setSidebarCollapsed: Dispatch<SetStateAction<boolean>>;
     configError: string | null;
@@ -30,7 +33,8 @@ const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [tab, setTab] = useState<AppTab>('search');
+    const [tab, setTab] = useState<AppTab>('home');
+    const [authDialog, setAuthDialog] = useState<AuthDialogMode | null>(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [configError, setConfigError] = useState<string | null>(null);
     const [pageLoading, setPageLoading] = useState(false);
@@ -67,6 +71,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 setUser,
                 tab,
                 setTab,
+                authDialog,
+                setAuthDialog,
                 sidebarCollapsed,
                 setSidebarCollapsed,
                 configError,

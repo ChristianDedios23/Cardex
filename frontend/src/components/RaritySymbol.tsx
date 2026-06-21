@@ -1,4 +1,5 @@
 import { resolveRaritySymbol, type RaritySymbolVariant } from '@/lib/pokemonRaritySymbols';
+import { UI_ASSETS } from '@/lib/ui-assets';
 
 const BLACK = '#000000';
 const WHITE = '#ffffff';
@@ -85,6 +86,18 @@ function MultiStarRow({
     );
 }
 
+function SetSymbolIcon({ src }: { src: string }) {
+    return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+            src={src}
+            alt=""
+            className="block h-[14px] w-auto max-w-[1.25rem] object-contain"
+            aria-hidden="true"
+        />
+    );
+}
+
 function RaritySymbolSvg({ variant }: { variant: RaritySymbolVariant }) {
     switch (variant) {
         case 'common':
@@ -116,41 +129,34 @@ function RaritySymbolSvg({ variant }: { variant: RaritySymbolVariant }) {
                 </svg>
             );
         case 'promo':
-            return (
-                <svg
-                    width="34"
-                    height="14"
-                    viewBox="0 0 34 14"
-                    aria-hidden="true"
-                    className="block"
-                >
-                    <StrokedShape fill={BLACK}>
-                        <polygon points={starPoints(7, 7, STAR_RADIUS)} />
-                    </StrokedShape>
-                    <text
-                        x="16"
-                        y="9.5"
-                        fill={BLACK}
-                        stroke={WHITE}
-                        strokeWidth={0.35}
-                        paintOrder="stroke fill"
-                        fontSize="6"
-                        fontWeight="700"
-                        fontFamily="system-ui, sans-serif"
-                    >
-                        PROMO
-                    </text>
-                </svg>
-            );
+            return null;
         case 'double-rare':
             return <MultiStarRow count={2} fills={[BLACK, BLACK]} />;
         case 'illustration-rare':
         case 'shiny-rare':
             return <SingleStar fill={GOLD} />;
+        case 'rainbow-rare':
+        case 'secret-rare':
+        case 'holo-v-rare':
+        case 'holo-gx-rare':
+        case 'rare-shiny':
+            return <SingleStar fill={WHITE} stroke="none" />;
         case 'ultra-rare':
             return <MultiStarRow count={2} fills={[SILVER, SILVER]} />;
         case 'special-illustration-rare':
             return <MultiStarRow count={2} fills={[GOLD, GOLD]} />;
+        case 'mega-hyper-rare':
+            return (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={UI_ASSETS.icons.megaHyperRare}
+                    alt=""
+                    width={24}
+                    height={23}
+                    className="block h-[14px] w-auto"
+                    aria-hidden="true"
+                />
+            );
         case 'hyper-rare':
             return <MultiStarRow count={3} fills={[GOLD, GOLD, GOLD]} />;
         case 'rare':
@@ -159,11 +165,35 @@ function RaritySymbolSvg({ variant }: { variant: RaritySymbolVariant }) {
     }
 }
 
-export function RaritySymbol({ rarity, className }: { rarity: string; className?: string }) {
+export function RaritySymbol({
+    rarity,
+    setSymbol,
+    className,
+}: {
+    rarity: string;
+    setSymbol?: string | null;
+    className?: string;
+}) {
     const variant = resolveRaritySymbol(rarity);
 
     if (!variant) {
         return null;
+    }
+
+    if (variant === 'promo') {
+        if (!setSymbol) {
+            return null;
+        }
+
+        return (
+            <span
+                className={`inline-flex shrink-0 items-center ${className ?? ''}`}
+                title={rarity}
+                aria-hidden="true"
+            >
+                <SetSymbolIcon src={setSymbol} />
+            </span>
+        );
     }
 
     return (

@@ -68,6 +68,82 @@ select:focus-visible {
     box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
+.about-creator-card {
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.about-creator-card::before {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.about-creator-card:hover {
+    border-color: rgb(255 30 69 / 0.35);
+    box-shadow: 0 12px 40px rgb(0 0 0 / 0.25);
+}
+
+.about-creator-card:hover::before {
+    opacity: 1;
+}
+
+.about-creator-role {
+    background: rgb(255 30 69 / 0.12);
+    color: var(--accent);
+    border: 1px solid rgb(255 30 69 / 0.25);
+}
+
+.about-creator-socials {
+    border: 1px solid var(--border);
+    background: rgb(24 28 32 / 0.65);
+}
+
+.about-creator-social-link {
+    transition:
+        transform 0.2s ease,
+        color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.about-creator-social-link:hover {
+    transform: scale(1.1);
+    color: var(--accent);
+    background: rgb(255 30 69 / 0.08);
+}
+
+.contact-report-status {
+    display: inline-block;
+    border-radius: 9999px;
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.contact-report-status-open {
+    background: rgb(239 68 68 / 0.12);
+    color: var(--danger);
+    border: 1px solid rgb(239 68 68 / 0.25);
+}
+
+.contact-report-status-progress {
+    background: rgb(255 215 0 / 0.12);
+    color: var(--star);
+    border: 1px solid rgb(255 215 0 / 0.25);
+}
+
+.contact-report-status-resolved {
+    background: rgb(0 168 107 / 0.12);
+    color: var(--success);
+    border: 1px solid rgb(0 168 107 / 0.25);
+}
+
 @keyframes collection-progress-flow-ltr {
     from {
         transform: translate3d(0, 0, 0);

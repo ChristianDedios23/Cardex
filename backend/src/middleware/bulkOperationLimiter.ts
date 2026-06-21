@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 
-export const BULK_OPERATION_COOLDOWN_MS = 30_000;
+export const BULK_OPERATION_COOLDOWN_MS = 5_000;
 
 const lastBulkOperationByUser = new Map<string, number>();
 

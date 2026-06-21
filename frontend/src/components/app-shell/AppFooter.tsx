@@ -1,15 +1,24 @@
+'use client';
+
 import Image from 'next/image';
 import { UI_ASSETS } from '@/lib/ui-assets';
+import { useApp, type AppTab } from './AppProvider';
 
 const FOOTER_LINKS = [
-    { label: 'About', href: '#' },
+    { label: 'About', tab: 'about' as const },
     { label: 'Privacy Policy', href: '#' },
     { label: 'Terms of Services', href: '#' },
-    { label: 'Contact', href: '#' },
+    { label: 'Contact', tab: 'contact' as const },
 ] as const;
 
 export function AppFooter() {
+    const { setTab } = useApp();
     const year = new Date().getFullYear();
+
+    function navigateToTab(tab: AppTab) {
+        setTab(tab);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 
     return (
         <footer className="relative shrink-0 overflow-visible border-t border-[var(--border)] bg-[var(--card)] px-4 pb-4 pt-7.5 text-center md:px-6">
@@ -51,9 +60,19 @@ export function AppFooter() {
                     <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-[var(--muted)]">
                         {FOOTER_LINKS.map((link) => (
                             <li key={link.label}>
-                                <a href={link.href} className="hover:text-[var(--foreground)]">
-                                    {link.label}
-                                </a>
+                                {'tab' in link ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigateToTab(link.tab)}
+                                        className="hover:text-[var(--foreground)]"
+                                    >
+                                        {link.label}
+                                    </button>
+                                ) : (
+                                    <a href={link.href} className="hover:text-[var(--foreground)]">
+                                        {link.label}
+                                    </a>
+                                )}
                             </li>
                         ))}
                     </ul>
