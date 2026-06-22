@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import {
     getCardById,
@@ -148,7 +148,7 @@ type CardDetailModalProps = {
 };
 
 const NAV_BUTTON_CLASS =
-    'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-lg hover:bg-white/5 disabled:pointer-events-none disabled:opacity-40';
+    'relative z-20 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--foreground)] shadow-lg transition-[filter,border-color,opacity] hover:brightness-110 hover:border-white/15 disabled:pointer-events-none disabled:opacity-40';
 
 export function CardDetailModal({
     cardId,
@@ -356,9 +356,19 @@ export function CardDetailModal({
 
                     <div className="flex items-start justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
                         <div className="min-w-0">
-                            <h2 id="card-detail-title" className="truncate text-lg font-semibold">
-                                {title}
-                            </h2>
+                            <div className="flex min-w-0 flex-wrap items-center gap-2">
+                                <h2
+                                    id="card-detail-title"
+                                    className="min-w-0 truncate text-lg font-semibold"
+                                >
+                                    {title}
+                                </h2>
+                                {marketPrice != null ? (
+                                    <span className="ui-pill shrink-0">
+                                        {formatPrice(marketPrice)}
+                                    </span>
+                                ) : null}
+                            </div>
                             {loading && !detail && <LoadingSpinner label="Loading details…" />}
                         </div>
                         <button
@@ -381,12 +391,20 @@ export function CardDetailModal({
                         <div className="grid gap-6 sm:grid-cols-[minmax(0,17.5rem)_1fr]">
                             <div className="mx-auto w-full max-w-[17.5rem] space-y-4 sm:mx-0">
                                 {imageUrl ? (
-                                    <CardTilt className="w-full max-w-full">
-                                        <div className="card-tile-shine card-tile-shine-tilt block w-full max-w-full">
+                                    <CardTilt className="card-tilt-clip w-full max-w-full">
+                                        <div
+                                            className="card-tile-shine card-tile-shine-tilt card-tile-shine-masked block w-full max-w-full"
+                                            style={
+                                                {
+                                                    '--shine-mask': `url("${imageUrl}")`,
+                                                } as CSSProperties
+                                            }
+                                        >
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img
                                                 src={imageUrl}
                                                 alt={title}
+                                                crossOrigin="anonymous"
                                                 className="block w-full object-contain"
                                             />
                                         </div>
@@ -508,13 +526,6 @@ export function CardDetailModal({
                                                 {detail && (
                                                     <DetailField label="Illustrator">
                                                         {detail.artist ?? ''}
-                                                    </DetailField>
-                                                )}
-                                                {detail && (
-                                                    <DetailField label="Market Price">
-                                                        {marketPrice != null
-                                                            ? formatPrice(marketPrice)
-                                                            : ''}
                                                     </DetailField>
                                                 )}
                                             </div>

@@ -1,0 +1,27 @@
+---
+description: How to add Cardex changelog release notes
+globs: frontend/src/components/changelog/**,frontend/src/components/ChangelogPage.tsx
+alwaysApply: false
+---
+
+# Changelog entries
+
+When the user asks to add a changelog entry:
+
+1. Edit `frontend/src/components/changelog/changelogEntries.ts`
+2. **Prepend** a new object to `CHANGELOG_ENTRIES` (newest first)
+3. Use this shape:
+
+```ts
+{
+  id: 'semver-or-date-slug',   // unique, e.g. '0-3-0'
+  title: 'Short headline',
+  date: 'Mon D, YYYY',         // e.g. 'Jun 12, 2026'
+  tag: 'beta',                 // optional pill label
+  paragraphs: ['One or more plain-text paragraphs.'],
+}
+```
+
+4. **Do not** add emojis or image slots
+5. UI lives in `ChangelogTimeline.tsx` (scroll-driven timeline) and `ChangelogPage.tsx` — do not change layout unless asked
+6. Keep copy user-facing: what shipped and why it matters, not internal refactors

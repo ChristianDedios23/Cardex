@@ -1,4 +1,4 @@
-import { escapeLucene } from '../utils/lucene';
+import { buildNameSearchQuery, normalizeSearchInput } from '../utils/lucene';
 import { getCacheTtlMs, getOrFetch, setCached } from './pokemonTcgCache';
 
 const POKEMON_TCG_BASE_URL = 'https://api.pokemontcg.io/v2';
@@ -296,7 +296,7 @@ function getPokemonTcgHeaders(): Record<string, string> {
 }
 
 function normalizeSearchQuery(query: string): string {
-    return query.trim().toLowerCase();
+    return normalizeSearchInput(query);
 }
 
 function isTimeoutError(error: unknown): boolean {
@@ -343,9 +343,8 @@ export async function searchPokemonCards(
         cacheKey,
         async () => {
             const url = new URL(`${POKEMON_TCG_BASE_URL}/cards`);
-            const escaped = escapeLucene(normalized);
 
-            url.searchParams.set('q', `name:${escaped}*`);
+            url.searchParams.set('q', buildNameSearchQuery(normalized));
             url.searchParams.set('page', String(page));
             url.searchParams.set('pageSize', String(pageSize));
             url.searchParams.set('select', CARD_DETAIL_SELECT);

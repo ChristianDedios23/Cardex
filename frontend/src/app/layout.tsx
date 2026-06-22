@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AppProvider } from '@/components/app-shell/AppProvider';
 import { AppShell } from '@/components/app-shell/AppShell';
+import { UI_ASSETS } from '@/lib/ui-assets';
 import './globals.css';
 
 const inter = Inter({
@@ -12,6 +13,9 @@ const inter = Inter({
 export const metadata: Metadata = {
     title: 'Cardex',
     description: 'Pokémon card collection app',
+    icons: {
+        icon: UI_ASSETS.brand.favicon,
+    },
 };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (

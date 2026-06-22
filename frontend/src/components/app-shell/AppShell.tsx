@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { FaBookBookmark } from 'react-icons/fa6';
 import { BsBackpack2 } from 'react-icons/bs';
 import { HiMiniSparkles } from 'react-icons/hi2';
-import { PiMagnifyingGlassBold } from 'react-icons/pi';
+import { PiClockClockwiseBold, PiMagnifyingGlassBold } from 'react-icons/pi';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { getEmailUsername } from '@/lib/email';
@@ -15,11 +15,15 @@ import { AppFooter } from './AppFooter';
 
 type NavTab = Exclude<AppTab, 'home' | 'about' | 'contact'>;
 
-const NAV_ITEMS: { id: NavTab; label: string }[] = [
+const MAIN_NAV_ITEMS: { id: Exclude<NavTab, 'changelog'>; label: string }[] = [
     { id: 'search', label: 'Search' },
     { id: 'series', label: 'Series' },
     { id: 'collection', label: 'Collection' },
     { id: 'wishlist', label: 'Wishlist' },
+];
+
+const BOTTOM_NAV_ITEMS: { id: 'changelog'; label: string }[] = [
+    { id: 'changelog', label: 'Changelog' },
 ];
 
 const NAV_ICON_CLASS = 'h-4 w-4';
@@ -40,11 +44,16 @@ function WishlistIcon() {
     return <HiMiniSparkles className={NAV_ICON_CLASS} aria-hidden="true" />;
 }
 
+function ChangelogIcon() {
+    return <PiClockClockwiseBold className={NAV_ICON_CLASS} aria-hidden="true" />;
+}
+
 const NAV_ICONS: Record<NavTab, () => ReactNode> = {
     search: SearchIcon,
     series: SeriesIcon,
     collection: BackpackIcon,
     wishlist: WishlistIcon,
+    changelog: ChangelogIcon,
 };
 
 function ChevronIcon({ collapsed }: { collapsed: boolean }) {
@@ -76,40 +85,98 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         sidebarCollapsed,
         setSidebarCollapsed,
         pageLoading,
+        requestSeriesReset,
     } = useApp();
 
     const username = getEmailUsername(user?.email);
+
+    function collapseSidebarOnMobile() {
+        if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
+            setSidebarCollapsed(true);
+        }
+    }
 
     async function handleSignOut() {
         const supabase = createClient();
         await supabase.auth.signOut();
         setUser(null);
         setTab('home');
+        collapseSidebarOnMobile();
     }
 
     function goHome() {
         setTab('home');
+        collapseSidebarOnMobile();
     }
 
     function handleNavClick(itemId: NavTab) {
-        setTab(itemId);
-
-        if (
-            !sidebarCollapsed &&
-            typeof window !== 'undefined' &&
-            window.matchMedia('(max-width: 767px)').matches
-        ) {
-            setSidebarCollapsed(true);
+        if (tab === itemId) {
+            if (itemId === 'series') {
+                requestSeriesReset();
+            }
+        } else {
+            setTab(itemId);
         }
+
+        if (!sidebarCollapsed) {
+            collapseSidebarOnMobile();
+        }
+    }
+
+    function renderNavButton(item: { id: NavTab; label: string }, requiresAuth: boolean) {
+        const isActive = tab === item.id;
+        const isDisabled = requiresAuth && !user;
+        const Icon = NAV_ICONS[item.id];
+
+        return (
+            <button
+                key={item.id}
+                type="button"
+                disabled={isDisabled}
+                onClick={() => handleNavClick(item.id)}
+                title={sidebarCollapsed ? item.label : undefined}
+                className={
+                    sidebarCollapsed
+                        ? `mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-md transition-colors ${
+                              isActive
+                                  ? 'bg-[var(--accent)]/50 text-white'
+                                  : 'bg-[var(--card)] text-[var(--muted)] hover:bg-white/10 hover:text-[var(--foreground)]'
+                          } disabled:cursor-not-allowed disabled:opacity-40`
+                        : `flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+                              isActive
+                                  ? 'bg-[var(--accent)]/50 font-medium text-white'
+                                  : 'text-[var(--foreground)] hover:bg-white/5'
+                          } disabled:cursor-not-allowed disabled:opacity-40`
+                }
+            >
+                {sidebarCollapsed ? (
+                    <Icon />
+                ) : (
+                    <>
+                        <span
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+                                isActive
+                                    ? 'bg-[var(--accent)]/30 text-white'
+                                    : 'bg-[var(--card)] text-[var(--muted)]'
+                            }`}
+                            aria-hidden="true"
+                        >
+                            <Icon />
+                        </span>
+                        <span>{item.label}</span>
+                    </>
+                )}
+            </button>
+        );
     }
 
     return (
         <div className="flex min-h-screen">
             <aside
-                className={`flex h-screen shrink-0 flex-col bg-[var(--background)] transition-[width] duration-200 ${
+                className={`flex h-screen shrink-0 flex-col border-[var(--border)] bg-[var(--background)] transition-[width] duration-200 ${
                     sidebarCollapsed
-                        ? 'sticky top-0 w-14 border-r border-[var(--border)]'
-                        : 'sticky top-0 w-64 border-r border-[var(--border)] max-md:fixed max-md:inset-0 max-md:z-40 max-md:w-full max-md:border-r-0'
+                        ? 'w-14 border-r max-md:fixed max-md:left-0 max-md:top-0 max-md:z-30 md:sticky md:top-0'
+                        : 'w-64 border-r max-md:fixed max-md:inset-0 max-md:z-40 max-md:w-full max-md:border-r-0 md:sticky md:top-0'
                 }`}
             >
                 <div
@@ -146,59 +213,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     </button>
                 </div>
 
-                <nav className="flex flex-1 flex-col gap-1 p-2">
-                    {NAV_ITEMS.map((item) => {
-                        const isActive = tab === item.id;
-                        const isDisabled = !user;
-                        const Icon = NAV_ICONS[item.id];
+                <nav className="flex min-h-0 flex-1 flex-col gap-1 p-2">
+                    {MAIN_NAV_ITEMS.map((item) => renderNavButton(item, true))}
 
-                        return (
-                            <button
-                                key={item.id}
-                                type="button"
-                                disabled={isDisabled}
-                                onClick={() => handleNavClick(item.id)}
-                                title={sidebarCollapsed ? item.label : undefined}
-                                className={
-                                    sidebarCollapsed
-                                        ? `mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-md transition-colors ${
-                                              isActive
-                                                  ? 'bg-[var(--accent)]/50 text-white'
-                                                  : 'bg-[var(--card)] text-[var(--muted)] hover:bg-white/10 hover:text-[var(--foreground)]'
-                                          } disabled:cursor-not-allowed disabled:opacity-40`
-                                        : `flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                                              isActive
-                                                  ? 'bg-[var(--accent)]/50 font-medium text-white'
-                                                  : 'text-[var(--foreground)] hover:bg-white/5'
-                                          } disabled:cursor-not-allowed disabled:opacity-40`
-                                }
-                            >
-                                {sidebarCollapsed ? (
-                                    <Icon />
-                                ) : (
-                                    <>
-                                        <span
-                                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
-                                                isActive
-                                                    ? 'bg-[var(--accent)]/30 text-white'
-                                                    : 'bg-[var(--card)] text-[var(--muted)]'
-                                            }`}
-                                            aria-hidden="true"
-                                        >
-                                            <Icon />
-                                        </span>
-                                        <span>{item.label}</span>
-                                    </>
-                                )}
-                            </button>
-                        );
-                    })}
+                    <div className="mt-auto border-t border-[var(--border)] pt-2">
+                        {BOTTOM_NAV_ITEMS.map((item) => renderNavButton(item, false))}
+                    </div>
                 </nav>
             </aside>
 
             <div
-                className={`flex min-h-screen min-w-0 flex-1 flex-col ${
-                    !sidebarCollapsed ? 'max-md:invisible' : ''
+                className={`flex min-h-screen min-w-0 flex-col md:flex-1 ${
+                    sidebarCollapsed ? 'max-md:ml-14 max-md:w-[calc(100%-3.5rem)]' : 'max-md:hidden'
                 }`}
             >
                 <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center justify-end border-b border-[var(--border)] bg-[var(--card)] px-4">

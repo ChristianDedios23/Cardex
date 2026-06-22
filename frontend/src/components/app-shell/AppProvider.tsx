@@ -2,8 +2,10 @@
 
 import {
     createContext,
+    useCallback,
     useContext,
     useEffect,
+    useLayoutEffect,
     useState,
     type Dispatch,
     type ReactNode,
@@ -12,7 +14,15 @@ import {
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 
-export type AppTab = 'home' | 'about' | 'contact' | 'search' | 'series' | 'collection' | 'wishlist';
+export type AppTab =
+    | 'home'
+    | 'about'
+    | 'contact'
+    | 'changelog'
+    | 'search'
+    | 'series'
+    | 'collection'
+    | 'wishlist';
 export type AuthDialogMode = 'signin' | 'signup';
 
 type AppContextValue = {
@@ -27,9 +37,17 @@ type AppContextValue = {
     configError: string | null;
     pageLoading: boolean;
     setPageLoading: Dispatch<SetStateAction<boolean>>;
+    seriesResetCount: number;
+    requestSeriesReset: () => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
+
+const MOBILE_MEDIA_QUERY = '(max-width: 767px)';
+
+function isMobileViewport() {
+    return typeof window !== 'undefined' && window.matchMedia(MOBILE_MEDIA_QUERY).matches;
+}
 
 export function AppProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
@@ -38,6 +56,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [configError, setConfigError] = useState<string | null>(null);
     const [pageLoading, setPageLoading] = useState(false);
+    const [seriesResetCount, setSeriesResetCount] = useState(0);
+
+    const requestSeriesReset = useCallback(() => {
+        setSeriesResetCount((count) => count + 1);
+    }, []);
+
+    useLayoutEffect(() => {
+        if (tab === 'home' && isMobileViewport()) {
+            setSidebarCollapsed(true);
+        }
+    }, [tab]);
 
     useEffect(() => {
         try {
@@ -78,6 +107,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
                 configError,
                 pageLoading,
                 setPageLoading,
+                seriesResetCount,
+                requestSeriesReset,
             }}
         >
             {children}

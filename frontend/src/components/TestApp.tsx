@@ -6,6 +6,7 @@ import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { PiMagnifyingGlassBold } from 'react-icons/pi';
 import { useApp, type AppTab } from '@/components/app-shell/AppProvider';
 import { AboutPage } from '@/components/AboutPage';
+import { ChangelogPage } from '@/components/ChangelogPage';
 import { ContactPage } from '@/components/ContactPage';
 import { CardDetailModal } from '@/components/CardDetailModal';
 import { getAccessToken } from '@/lib/supabase/client';
@@ -1470,7 +1471,7 @@ function SetTile({ set, onSelect }: { set: PokemonSetSummary; onSelect: () => vo
 }
 
 export function TestApp() {
-    const { user, setUser, tab, configError, setPageLoading } = useApp();
+    const { user, setUser, tab, configError, setPageLoading, seriesResetCount } = useApp();
     const [detailSelection, setDetailSelection] = useState<CardDetailSelection | null>(null);
     const [query, setQuery] = useState('');
     const [activeQuery, setActiveQuery] = useState('');
@@ -1918,6 +1919,18 @@ export function TestApp() {
     }, [tab]);
 
     useEffect(() => {
+        if (seriesResetCount === 0) {
+            return;
+        }
+
+        setSelectedSeries(null);
+        setSeriesSets([]);
+        setSelectedSet(null);
+        setSetCards([]);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, [seriesResetCount]);
+
+    useEffect(() => {
         if (!user || tab !== 'series' || !selectedSeries) {
             return;
         }
@@ -2039,7 +2052,7 @@ export function TestApp() {
     ]);
 
     function normalizeQuery(value: string) {
-        return value.trim().toLowerCase();
+        return value.trim().toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
     function applySearchResult(result: PaginatedPokemonCardSearch) {
@@ -2120,6 +2133,11 @@ export function TestApp() {
             prefetchNextPage(trimmed, result);
         } catch (error) {
             setMessage(error instanceof Error ? error.message : 'Search failed.');
+
+            if (page === 1) {
+                setSearchResults([]);
+                setSearchMeta(null);
+            }
         } finally {
             searchInFlightRef.current = null;
             setSearchLoading(false);
@@ -2180,7 +2198,7 @@ export function TestApp() {
     const searchPanelTitle =
         activeQuery && searchMeta && !searchLoading
             ? `Search Results (${searchMeta.totalCount.toLocaleString()})`
-            : 'Search cards';
+            : 'Search';
     const totalPages = searchMeta ? getEffectiveTotalPages(searchMeta, currentPage) : null;
     const hasSearchResults = searchResults.length > 0;
     const hasNoSearchResults = Boolean(
@@ -2249,6 +2267,8 @@ export function TestApp() {
             {tab === 'about' && <AboutPage />}
 
             {tab === 'contact' && <ContactPage />}
+
+            {tab === 'changelog' && <ChangelogPage />}
 
             {user && (
                 <>
