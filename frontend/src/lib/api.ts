@@ -142,7 +142,16 @@ export function peekCachedCardDetail(id: string): PokemonCardDetail | undefined 
     return cardDetailCache.get(id.toLowerCase());
 }
 
-export async function searchCards(query: string, page = 1, pageSize = 20) {
+/** Cards fetched per upstream request when loading a full search result set. */
+export const SEARCH_FETCH_PAGE_SIZE = 250;
+
+/** Max cards to load for one search query (sort/pagination use this set). */
+export const SEARCH_MAX_RESULTS = 500;
+
+/** Cards shown per page in the search UI. */
+export const SEARCH_DISPLAY_PAGE_SIZE = 20;
+
+export async function searchCards(query: string, page = 1, pageSize = SEARCH_FETCH_PAGE_SIZE) {
     const params = new URLSearchParams({
         query,
         page: String(page),

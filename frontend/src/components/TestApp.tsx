@@ -20,9 +20,11 @@ import {
     listSeries,
     listSetCards,
     listSetsBySeries,
+    SEARCH_DISPLAY_PAGE_SIZE,
+    SEARCH_FETCH_PAGE_SIZE,
+    SEARCH_MAX_RESULTS,
     searchCards,
     seedCardDetailCache,
-    type PaginatedPokemonCardSearch,
     type PokemonCard,
     type PokemonCardDetail,
     type PokemonSeries,
@@ -662,6 +664,30 @@ function SetCardSortButton({
     );
 }
 
+function CardSortButtons({
+    sortField,
+    sortDirection,
+    onSortChange,
+}: {
+    sortField: SetCardSortField;
+    sortDirection: SetCardSortDirection;
+    onSortChange: (field: SetCardSortField) => void;
+}) {
+    return (
+        <>
+            {SET_CARD_SORT_OPTIONS.map(({ field, label }) => (
+                <SetCardSortButton
+                    key={field}
+                    label={label}
+                    active={sortField === field}
+                    direction={sortField === field ? sortDirection : null}
+                    onClick={() => onSortChange(field)}
+                />
+            ))}
+        </>
+    );
+}
+
 function SetCardOwnershipTabs({
     value,
     onChange,
@@ -780,15 +806,11 @@ function SetCardsToolbar({
                         className="w-full rounded-lg border border-[var(--border)] bg-[var(--card)] py-2 pl-9 pr-3 text-sm text-[var(--foreground)] placeholder:text-[var(--muted)]"
                     />
                 </div>
-                {SET_CARD_SORT_OPTIONS.map(({ field, label }) => (
-                    <SetCardSortButton
-                        key={field}
-                        label={label}
-                        active={sortField === field}
-                        direction={sortField === field ? sortDirection : null}
-                        onClick={() => onSortChange(field)}
-                    />
-                ))}
+                <CardSortButtons
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSortChange={onSortChange}
+                />
             </div>
             <SetCardOwnershipTabs value={ownershipFilter} onChange={onOwnershipFilterChange} />
         </div>
@@ -900,39 +922,23 @@ function UserCardRow({
     );
 }
 
-function getEffectiveTotalPages(
-    meta: Omit<PaginatedPokemonCardSearch, 'data'>,
-    currentPage: number,
-): number {
-    if (meta.totalCount > 0) {
-        return Math.max(1, Math.ceil(meta.totalCount / meta.pageSize));
-    }
+type SearchResultMeta = {
+    totalCount: number;
+    fetchedCount: number;
+    truncated: boolean;
+};
 
-    if (meta.hasMore) {
-        return currentPage + 1;
-    }
+type SearchResultCache = {
+    cards: PokemonCardDetail[];
+    meta: SearchResultMeta;
+};
 
-    return Math.max(1, currentPage);
+function getSearchDisplayTotalPages(resultCount: number): number {
+    return Math.max(1, Math.ceil(resultCount / SEARCH_DISPLAY_PAGE_SIZE));
 }
 
-function canGoToPage(
-    page: number,
-    currentPage: number,
-    meta: Omit<PaginatedPokemonCardSearch, 'data'>,
-): boolean {
-    if (page < 1 || page === currentPage) {
-        return false;
-    }
-
-    if (page === currentPage + 1 && meta.hasMore) {
-        return true;
-    }
-
-    if (page === currentPage - 1) {
-        return true;
-    }
-
-    return page <= getEffectiveTotalPages(meta, currentPage);
+function canGoToSearchDisplayPage(page: number, currentPage: number, totalPages: number): boolean {
+    return page >= 1 && page <= totalPages && page !== currentPage;
 }
 
 function getFixedPageWindow(current: number, total: number): number[] {
@@ -1476,11 +1482,9 @@ export function TestApp() {
     const [query, setQuery] = useState('');
     const [activeQuery, setActiveQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [searchResults, setSearchResults] = useState<PokemonCardDetail[]>([]);
-    const [searchMeta, setSearchMeta] = useState<Omit<PaginatedPokemonCardSearch, 'data'> | null>(
-        null,
-    );
-    const pageCacheRef = useRef(new Map<string, Map<number, PaginatedPokemonCardSearch>>());
+    const [searchAllResults, setSearchAllResults] = useState<PokemonCardDetail[]>([]);
+    const [searchMeta, setSearchMeta] = useState<SearchResultMeta | null>(null);
+    const searchCacheRef = useRef(new Map<string, SearchResultCache>());
     const searchInFlightRef = useRef<string | null>(null);
     const userCardsCacheRef = useRef<{
         userId: string;
@@ -1492,6 +1496,8 @@ export function TestApp() {
     const userCardsInFlightRef = useRef<string | null>(null);
     const [userCards, setUserCards] = useState<UserCard[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [searchSortField, setSearchSortField] = useState<SetCardSortField>('name');
+    const [searchSortDirection, setSearchSortDirection] = useState<SetCardSortDirection>('asc');
     const [collectionLoading, setCollectionLoading] = useState(false);
     const [seriesLoading, setSeriesLoading] = useState(false);
     const [seriesList, setSeriesList] = useState<PokemonSeries[]>([]);
@@ -1545,6 +1551,16 @@ export function TestApp() {
         ownedByExternalId,
     ]);
 
+    const sortedSearchResults = useMemo(
+        () => sortSetCards(searchAllResults, searchSortField, searchSortDirection),
+        [searchAllResults, searchSortField, searchSortDirection],
+    );
+
+    const displayedSearchResults = useMemo(() => {
+        const start = (currentPage - 1) * SEARCH_DISPLAY_PAGE_SIZE;
+        return sortedSearchResults.slice(start, start + SEARCH_DISPLAY_PAGE_SIZE);
+    }, [sortedSearchResults, currentPage]);
+
     const bulkCooldownProgress =
         bulkCooldown && bulkCooldown.endsAt > Date.now()
             ? (bulkCooldown.endsAt - Date.now()) / BULK_OPERATION_COOLDOWN_MS
@@ -1593,14 +1609,28 @@ export function TestApp() {
         return setCards.filter((card) => ownedByExternalId[card.id] != null).length;
     }, [setCards, ownedByExternalId]);
 
-    function handleSetCardSortChange(field: SetCardSortField) {
-        if (field === setCardSortField) {
-            setSetCardSortDirection((direction) => (direction === 'asc' ? 'desc' : 'asc'));
+    function handleCardSortChange(
+        field: SetCardSortField,
+        activeField: SetCardSortField,
+        setField: (field: SetCardSortField) => void,
+        setDirection: React.Dispatch<React.SetStateAction<SetCardSortDirection>>,
+    ) {
+        if (field === activeField) {
+            setDirection((direction) => (direction === 'asc' ? 'desc' : 'asc'));
             return;
         }
 
-        setSetCardSortField(field);
-        setSetCardSortDirection('asc');
+        setField(field);
+        setDirection('asc');
+    }
+
+    function handleSetCardSortChange(field: SetCardSortField) {
+        handleCardSortChange(field, setCardSortField, setSetCardSortField, setSetCardSortDirection);
+    }
+
+    function handleSearchSortChange(field: SetCardSortField) {
+        handleCardSortChange(field, searchSortField, setSearchSortField, setSearchSortDirection);
+        setCurrentPage(1);
     }
 
     function applyBulkOwnedCacheUpdate(
@@ -2055,89 +2085,67 @@ export function TestApp() {
         return value.trim().toLowerCase().replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
     }
 
-    function applySearchResult(result: PaginatedPokemonCardSearch) {
-        seedCardDetailCache(result.data);
-        setSearchResults(result.data);
-        setSearchMeta({
-            page: result.page,
-            pageSize: result.pageSize,
-            totalCount: result.totalCount,
-            hasMore: result.hasMore,
-        });
-        setCurrentPage(result.page);
+    function applySearchCache(cache: SearchResultCache) {
+        seedCardDetailCache(cache.cards);
+        setSearchAllResults(cache.cards);
+        setSearchMeta(cache.meta);
+        setCurrentPage(1);
     }
 
-    function storePageInCache(
-        normalized: string,
-        page: number,
-        result: PaginatedPokemonCardSearch,
-    ) {
-        let queryCache = pageCacheRef.current.get(normalized);
-
-        if (!queryCache) {
-            queryCache = new Map();
-            pageCacheRef.current.set(normalized, queryCache);
-        }
-
-        queryCache.set(page, result);
-    }
-
-    function prefetchNextPage(searchQuery: string, result: PaginatedPokemonCardSearch) {
-        if (!result.hasMore) {
-            return;
-        }
-
+    async function fetchAllSearchResults(searchQuery: string) {
         const trimmed = searchQuery.trim();
         const normalized = normalizeQuery(trimmed);
-        const nextPage = result.page + 1;
-
-        if (pageCacheRef.current.get(normalized)?.has(nextPage)) {
-            return;
-        }
-
-        void searchCards(trimmed, nextPage)
-            .then((nextResult) => {
-                storePageInCache(normalized, nextPage, nextResult);
-            })
-            .catch(() => {
-                // Prefetch failures are silent; the user can still click Next to retry.
-            });
-    }
-
-    async function fetchSearchPage(searchQuery: string, page: number) {
-        const trimmed = searchQuery.trim();
-        const normalized = normalizeQuery(trimmed);
-        const cached = pageCacheRef.current.get(normalized)?.get(page);
+        const cached = searchCacheRef.current.get(normalized);
 
         if (cached) {
-            applySearchResult(cached);
+            applySearchCache(cached);
             setMessage(null);
-            prefetchNextPage(trimmed, cached);
             return;
         }
 
-        const inFlightKey = `${normalized}:${page}`;
-
-        if (searchInFlightRef.current === inFlightKey) {
+        if (searchInFlightRef.current === normalized) {
             return;
         }
 
-        searchInFlightRef.current = inFlightKey;
+        searchInFlightRef.current = normalized;
         setSearchLoading(true);
         setMessage(null);
 
         try {
-            const result = await searchCards(trimmed, page);
-            storePageInCache(normalized, page, result);
-            applySearchResult(result);
-            prefetchNextPage(trimmed, result);
+            const allCards: PokemonCardDetail[] = [];
+            let page = 1;
+            let totalCount = 0;
+
+            while (allCards.length < SEARCH_MAX_RESULTS) {
+                const remaining = SEARCH_MAX_RESULTS - allCards.length;
+                const pageSize = Math.min(SEARCH_FETCH_PAGE_SIZE, remaining);
+                const result = await searchCards(trimmed, page, pageSize);
+
+                allCards.push(...result.data);
+                totalCount = result.totalCount;
+
+                if (!result.hasMore || allCards.length >= totalCount) {
+                    break;
+                }
+
+                page += 1;
+            }
+
+            const cacheEntry: SearchResultCache = {
+                cards: allCards,
+                meta: {
+                    totalCount,
+                    fetchedCount: allCards.length,
+                    truncated: allCards.length < totalCount,
+                },
+            };
+
+            searchCacheRef.current.set(normalized, cacheEntry);
+            applySearchCache(cacheEntry);
         } catch (error) {
             setMessage(error instanceof Error ? error.message : 'Search failed.');
-
-            if (page === 1) {
-                setSearchResults([]);
-                setSearchMeta(null);
-            }
+            setSearchAllResults([]);
+            setSearchMeta(null);
         } finally {
             searchInFlightRef.current = null;
             setSearchLoading(false);
@@ -2158,10 +2166,10 @@ export function TestApp() {
         const isSameQuery = Boolean(activeQuery && normalizeQuery(activeQuery) === normalized);
 
         if (isSameQuery) {
-            const cached = pageCacheRef.current.get(normalized)?.get(1);
+            const cached = searchCacheRef.current.get(normalized);
 
             if (cached) {
-                applySearchResult(cached);
+                applySearchCache(cached);
                 setMessage(null);
                 return;
             }
@@ -2170,51 +2178,52 @@ export function TestApp() {
         const previousNormalized = activeQuery ? normalizeQuery(activeQuery) : null;
 
         if (previousNormalized && previousNormalized !== normalized) {
-            pageCacheRef.current.delete(previousNormalized);
+            searchCacheRef.current.delete(previousNormalized);
         }
 
         if (!isSameQuery) {
-            pageCacheRef.current.delete(normalized);
+            searchCacheRef.current.delete(normalized);
+            setSearchSortField('name');
+            setSearchSortDirection('asc');
         }
 
         setActiveQuery(trimmed);
-        setCurrentPage(1);
         ensureUserCardsLoaded();
-        await fetchSearchPage(trimmed, 1);
+        await fetchAllSearchResults(trimmed);
     }
 
-    async function goToPage(page: number) {
-        if (!activeQuery || searchLoading || !searchMeta) {
+    function goToPage(page: number) {
+        if (!activeQuery || searchLoading || searchAllResults.length === 0) {
             return;
         }
 
-        if (!canGoToPage(page, currentPage, searchMeta)) {
+        const totalPages = getSearchDisplayTotalPages(sortedSearchResults.length);
+
+        if (!canGoToSearchDisplayPage(page, currentPage, totalPages)) {
             return;
         }
 
-        await fetchSearchPage(activeQuery, page);
+        setCurrentPage(page);
     }
 
     const searchPanelTitle =
         activeQuery && searchMeta && !searchLoading
             ? `Search Results (${searchMeta.totalCount.toLocaleString()})`
             : 'Search';
-    const totalPages = searchMeta ? getEffectiveTotalPages(searchMeta, currentPage) : null;
-    const hasSearchResults = searchResults.length > 0;
+    const totalPages =
+        searchAllResults.length > 0 ? getSearchDisplayTotalPages(sortedSearchResults.length) : null;
+    const hasSearchResults = searchAllResults.length > 0;
     const hasNoSearchResults = Boolean(
-        activeQuery && searchMeta && !searchLoading && searchResults.length === 0,
+        activeQuery && searchMeta && !searchLoading && searchAllResults.length === 0,
     );
     const showSearchPagination = Boolean(
-        searchMeta &&
-        activeQuery &&
-        hasSearchResults &&
-        (currentPage > 1 || searchMeta.hasMore || (totalPages ?? 0) > 1),
+        searchMeta && activeQuery && hasSearchResults && (totalPages ?? 0) > 1,
     );
     const paginationTop = showSearchPagination ? (
         <SearchPagination
             currentPage={currentPage}
             totalPages={totalPages!}
-            hasMore={searchMeta!.hasMore}
+            hasMore={false}
             onPageChange={goToPage}
             disabled={searchLoading}
             jumpInputId="search-jump-top"
@@ -2224,7 +2233,7 @@ export function TestApp() {
         <SearchPagination
             currentPage={currentPage}
             totalPages={totalPages!}
-            hasMore={searchMeta!.hasMore}
+            hasMore={false}
             onPageChange={goToPage}
             disabled={searchLoading}
             jumpInputId="search-jump-bottom"
@@ -2289,6 +2298,23 @@ export function TestApp() {
                                     Search
                                 </button>
                             </form>
+                            {hasSearchResults && (
+                                <div className="mb-4 flex flex-wrap items-stretch gap-2">
+                                    <CardSortButtons
+                                        sortField={searchSortField}
+                                        sortDirection={searchSortDirection}
+                                        onSortChange={handleSearchSortChange}
+                                    />
+                                </div>
+                            )}
+                            {hasSearchResults && searchMeta?.truncated && (
+                                <p className="mb-4 text-sm text-[var(--muted)]">
+                                    Sorting and paging use the first{' '}
+                                    {searchMeta.fetchedCount.toLocaleString()} of{' '}
+                                    {searchMeta.totalCount.toLocaleString()} results. Try a more
+                                    specific search to narrow the list.
+                                </p>
+                            )}
                             {paginationTop && <div className="mb-4">{paginationTop}</div>}
                             {searchLoading && (
                                 <p className="mb-4 text-sm text-[var(--muted)]">
@@ -2304,7 +2330,7 @@ export function TestApp() {
                             )}
                             {hasSearchResults && (
                                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                                    {searchResults.map((card) => (
+                                    {displayedSearchResults.map((card) => (
                                         <CardResult
                                             key={card.id}
                                             card={card}
@@ -2318,7 +2344,7 @@ export function TestApp() {
                                                 setDetailSelection({
                                                     cardId: selected.id,
                                                     preview: selected,
-                                                    navigationCards: searchResults,
+                                                    navigationCards: sortedSearchResults,
                                                 })
                                             }
                                         />

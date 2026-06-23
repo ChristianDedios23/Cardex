@@ -69,11 +69,11 @@ paths:
                 - name: pageSize
                   in: query
                   required: false
-                  description: Number of cards per page (max 50)
+                  description: Number of cards per page (max 250)
                   schema:
                       type: integer
                       minimum: 1
-                      maximum: 50
+                      maximum: 250
                       default: 20
                   example: 20
             responses:

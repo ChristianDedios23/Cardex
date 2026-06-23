@@ -12,6 +12,7 @@ import { UI_ASSETS } from '@/lib/ui-assets';
 import { AuthPanel } from '@/components/AuthPanel';
 import { useApp, type AppTab } from './AppProvider';
 import { AppFooter } from './AppFooter';
+import { SessionSplash } from './SessionSplash';
 
 type NavTab = Exclude<AppTab, 'home' | 'about' | 'contact'>;
 
@@ -172,6 +173,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="flex min-h-screen">
+            <SessionSplash />
             <aside
                 className={`flex h-screen shrink-0 flex-col border-[var(--border)] bg-[var(--background)] transition-[width] duration-200 ${
                     sidebarCollapsed

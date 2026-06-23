@@ -86,7 +86,7 @@ export const UPSTREAM_TIMEOUT_MS = 15_000;
 export const MIN_QUERY_LENGTH = 3;
 export const DEFAULT_PAGE = 1;
 export const DEFAULT_PAGE_SIZE = 20;
-export const MAX_PAGE_SIZE = 50;
+export const MAX_PAGE_SIZE = 250;
 
 type TcgPlayerPriceVariant = {
     market?: number;
