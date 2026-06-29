@@ -23,8 +23,7 @@ function formatDisplayId(id: string): string {
 
 function mapReportRow(row: ReportRow) {
     const description = row.description;
-    const summary =
-        description.length > 280 ? `${description.slice(0, 280)}…` : description;
+    const summary = description.length > 280 ? `${description.slice(0, 280)}…` : description;
 
     return {
         id: row.id,

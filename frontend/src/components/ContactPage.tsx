@@ -348,9 +348,7 @@ export function ContactPage() {
                     {reportsLoading && (
                         <p className="text-sm text-[var(--muted)]">Loading reports…</p>
                     )}
-                    {reportsError && (
-                        <p className="text-sm text-[var(--danger)]">{reportsError}</p>
-                    )}
+                    {reportsError && <p className="text-sm text-[var(--danger)]">{reportsError}</p>}
                     {!reportsLoading &&
                         !reportsError &&
                         !showingExampleReports &&
