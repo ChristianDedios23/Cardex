@@ -20,34 +20,17 @@ export function AppFooter() {
     }
 
     return (
-        <footer className="relative shrink-0 overflow-visible border-t border-[var(--border)] bg-[var(--card)] px-4 pb-4 pt-7.5 text-center md:px-6">
-            <div
-                className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2"
-                aria-hidden="true"
-            >
+        <footer className="shrink-0 border-t border-[var(--border)] bg-[var(--card)] px-4 py-4 text-center md:px-6">
+            <div className="mx-auto flex max-w-6xl flex-col items-center gap-2">
                 <Image
-                    src={UI_ASSETS.brand.card}
-                    alt=""
-                    width={488}
-                    height={680}
+                    src={UI_ASSETS.brand.title}
+                    alt="Cardex"
+                    width={800}
+                    height={300}
                     quality={100}
                     unoptimized
-                    className="h-15 w-auto object-contain drop-shadow-md"
+                    className="h-11 w-auto max-w-full object-contain"
                 />
-            </div>
-
-            <div className="mx-auto flex max-w-6xl flex-col items-center gap-2">
-                <div className="flex flex-col items-center gap-1.5">
-                    <Image
-                        src={UI_ASSETS.brand.title}
-                        alt="Cardex"
-                        width={800}
-                        height={300}
-                        quality={100}
-                        unoptimized
-                        className="h-11 w-auto max-w-full object-contain"
-                    />
-                </div>
                 <p className="text-xs text-[var(--muted)]">© {year} Cardex, All rights reserved.</p>
 
                 <p className="text-xs text-[var(--muted)]">

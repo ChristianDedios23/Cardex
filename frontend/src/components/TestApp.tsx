@@ -35,6 +35,10 @@ const CollectionTab = dynamic(() => import('@/components/app/tabs/CollectionTab'
     loading: () => <TabSkeleton />,
 });
 
+const PokedexTab = dynamic(() => import('@/components/app/tabs/PokedexTab'), {
+    loading: () => <TabSkeleton />,
+});
+
 export function TestApp() {
     const { user, tab, configError } = useApp();
     const [detailSelection, setDetailSelection] = useState<CardDetailSelection | null>(null);
@@ -76,6 +80,7 @@ export function TestApp() {
 
                 {user && tab === 'search' && <SearchTab onViewDetails={setDetailSelection} />}
                 {user && tab === 'series' && <SeriesTab onViewDetails={setDetailSelection} />}
+                {user && tab === 'pokedex' && <PokedexTab />}
                 {user && (tab === 'collection' || tab === 'wishlist') && (
                     <CollectionTab onViewDetails={setDetailSelection} />
                 )}

@@ -122,10 +122,10 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
     return (
         <div ref={containerRef} className="changelog-timeline">
             {entries.map((entry, index) => {
-                const isDotActive = scrollProgress >= index;
+                const isDotActive = scrollProgress <= index;
                 const segmentFill =
                     index < entries.length - 1
-                        ? Math.min(1, Math.max(0, scrollProgress - index))
+                        ? 1 - Math.min(1, Math.max(0, scrollProgress - index))
                         : 0;
 
                 return (
@@ -166,9 +166,11 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                                 {entry.title}
                             </h2>
                             <div className="changelog-timeline-body">
-                                {entry.paragraphs.map((paragraph) => (
-                                    <p key={paragraph}>{paragraph}</p>
-                                ))}
+                                <ul className="changelog-timeline-list">
+                                    {entry.paragraphs.map((paragraph) => (
+                                        <li key={paragraph}>{paragraph}</li>
+                                    ))}
+                                </ul>
                             </div>
                         </div>
                     </article>

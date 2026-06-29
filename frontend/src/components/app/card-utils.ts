@@ -11,6 +11,7 @@ import type {
     SetCardSortField,
     SetCardOwnershipFilter,
     SetMarketStats,
+    UserCardSortField,
 } from '@/components/app/types';
 import { SEARCH_DISPLAY_PAGE_SIZE } from '@/lib/api';
 
@@ -33,6 +34,14 @@ export function formatCardStatus(status: UserCard['status']): string {
 
 export function formatCondition(condition: string): string {
     return condition.replace(/_/g, ' ');
+}
+
+export function formatUserCardQuantity(quantity: number | null): string {
+    if (quantity == null) {
+        return '';
+    }
+
+    return ` · ${quantity} Copy${quantity === 1 ? '' : 'ies'}`;
 }
 
 export function formatTcgPlayerMarketPrice(price: number): string {
@@ -230,6 +239,40 @@ export function sortSetCards(
                 return compareNullablePrices(left.marketPrice, right.marketPrice, direction);
             case 'artist':
                 return compareNullableStrings(left.artist, right.artist, direction);
+            default:
+                return 0;
+        }
+    });
+}
+
+function compareIsoDates(
+    left: string | null,
+    right: string | null,
+    direction: SetCardSortDirection,
+): number {
+    const leftTime = left ? Date.parse(left) : Number.NaN;
+    const rightTime = right ? Date.parse(right) : Number.NaN;
+    const leftValue = Number.isFinite(leftTime) ? leftTime : Number.NEGATIVE_INFINITY;
+    const rightValue = Number.isFinite(rightTime) ? rightTime : Number.NEGATIVE_INFINITY;
+    const comparison = leftValue - rightValue;
+    return direction === 'asc' ? comparison : -comparison;
+}
+
+export function sortUserCards(
+    cards: UserCard[],
+    field: UserCardSortField,
+    direction: SetCardSortDirection,
+): UserCard[] {
+    return [...cards].sort((left, right) => {
+        switch (field) {
+            case 'name':
+                return compareNullableStrings(left.card_name, right.card_name, direction);
+            case 'price':
+                return compareNullablePrices(left.market_price, right.market_price, direction);
+            case 'date':
+                return compareIsoDates(left.created_at, right.created_at, direction);
+            case 'condition':
+                return compareNullableStrings(left.condition, right.condition, direction);
             default:
                 return 0;
         }

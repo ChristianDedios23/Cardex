@@ -8,6 +8,7 @@ import {
     formatCardStatus,
     formatCondition,
     formatTcgPlayerMarketPrice,
+    formatUserCardQuantity,
 } from '@/components/app/card-utils';
 
 export function UserCardRow({
@@ -77,9 +78,7 @@ export function UserCardRow({
                 )}
                 <p className="text-sm text-[var(--muted)]">
                     {formatCardStatus(card.status)}
-                    {card.quantity != null
-                        ? ` · ${card.quantity} copy${card.quantity === 1 ? '' : 'ies'}`
-                        : ''}
+                    {formatUserCardQuantity(card.quantity)}
                     {card.condition ? ` · ${formatCondition(card.condition)}` : ''}
                 </p>
                 {card.notes && <p className="mt-1 text-sm text-[var(--muted)]">{card.notes}</p>}

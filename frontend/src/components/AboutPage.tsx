@@ -31,7 +31,7 @@ const CREATORS: CreatorProfile[] = [
         name: 'Christian Dedios',
         degree: 'B.S. Computer Science & Systems',
         role: 'Backend',
-        bio: 'Placeholder bio — built the API layer, database schema, and collection sync logic that powers Cardex behind the scenes.',
+        bio: 'Built the API layer, database schema, and collection sync logic that powers Cardex behind the scenes.',
         initials: 'CD',
         socials: [
             { platform: 'github', href: 'https://github.com/ChristianDedios23' },
@@ -42,7 +42,7 @@ const CREATORS: CreatorProfile[] = [
         name: 'Kevin Lam',
         degree: 'B.S. Computer Science & Systems',
         role: 'Frontend',
-        bio: 'Placeholder bio — designed and built the interface, collection views, and the overall experience you see when browsing your cards.',
+        bio: 'Designed and built the interface, collection views, and the overall user experience you see.',
         initials: 'KL',
         socials: [
             { platform: 'github', href: 'https://github.com/kevlam1' },

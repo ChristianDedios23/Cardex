@@ -19,6 +19,8 @@ export type SetMarketStats = {
 
 export type SetCardSortField = 'number' | 'name' | 'rarity' | 'price' | 'artist';
 export type SetCardSortDirection = 'asc' | 'desc';
+export type UserCardSortField = 'name' | 'price' | 'date' | 'condition';
+export type UserCardViewMode = 'grid' | 'list';
 export type SetCardOwnershipFilter = 'all' | 'owned' | 'need';
 
 export type SearchResultMeta = {

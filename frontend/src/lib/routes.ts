@@ -5,6 +5,7 @@ export type AppTab =
     | 'changelog'
     | 'search'
     | 'series'
+    | 'pokedex'
     | 'collection'
     | 'wishlist';
 
@@ -12,6 +13,7 @@ export const TAB_PATHS: Record<AppTab, string> = {
     home: '/',
     search: '/search',
     series: '/series',
+    pokedex: '/pokedex',
     collection: '/collection',
     wishlist: '/wishlist',
     about: '/about',

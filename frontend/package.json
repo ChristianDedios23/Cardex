@@ -8,7 +8,8 @@
         "start": "next start -p 3001",
         "lint": "next lint",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "generate:pokedex": "node scripts/generate-pokedex-species.mjs"
     },
     "dependencies": {
         "@supabase/ssr": "^0.12.0",

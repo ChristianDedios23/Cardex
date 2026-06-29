@@ -4,6 +4,7 @@ export const UI_ASSETS = {
         title: '/assets/ui/brand/cardex-title-2.png',
         card: '/assets/ui/brand/Card.png',
         favicon: '/assets/ui/brand/favicon.png',
+        pokeball: '/assets/ui/brand/pokeball.svg',
     },
     icons: {
         megaHyperRare: '/assets/ui/icons/Mega Hyper Rare.svg',
