@@ -406,7 +406,7 @@ export const bulkAddOwnedUserCards = async (req: Request, res: Response) => {
             });
         }
 
-        const ownedIds = new Set((existingRows ?? []).map((row) => row.external_card_id));
+        const ownedIds = new Set((existingRows ?? []).map((row: { external_card_id: string }) => row.external_card_id));
         const cardsToInsert = uniqueCards.filter((card) => !ownedIds.has(card.externalCardId));
 
         if (cardsToInsert.length === 0) {

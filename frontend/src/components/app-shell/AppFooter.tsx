@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import Image from 'next/image';
 import { UI_ASSETS } from '@/lib/ui-assets';
-import { useApp, type AppTab } from './AppProvider';
+import { getPathForTab } from '@/lib/routes';
 
 const FOOTER_LINKS = [
     { label: 'About', tab: 'about' as const },
@@ -12,12 +13,10 @@ const FOOTER_LINKS = [
 ] as const;
 
 export function AppFooter() {
-    const { setTab } = useApp();
     const year = new Date().getFullYear();
 
-    function navigateToTab(tab: AppTab) {
-        setTab(tab);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+    function footerLinkClassName() {
+        return 'hover:text-[var(--foreground)]';
     }
 
     return (
@@ -61,15 +60,17 @@ export function AppFooter() {
                         {FOOTER_LINKS.map((link) => (
                             <li key={link.label}>
                                 {'tab' in link ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => navigateToTab(link.tab)}
-                                        className="hover:text-[var(--foreground)]"
+                                    <Link
+                                        href={getPathForTab(link.tab)}
+                                        onClick={() =>
+                                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                                        }
+                                        className={footerLinkClassName()}
                                     >
                                         {link.label}
-                                    </button>
+                                    </Link>
                                 ) : (
-                                    <a href={link.href} className="hover:text-[var(--foreground)]">
+                                    <a href={link.href} className={footerLinkClassName()}>
                                         {link.label}
                                     </a>
                                 )}

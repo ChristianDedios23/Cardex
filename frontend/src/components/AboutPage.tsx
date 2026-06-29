@@ -34,8 +34,8 @@ const CREATORS: CreatorProfile[] = [
         bio: 'Placeholder bio — built the API layer, database schema, and collection sync logic that powers Cardex behind the scenes.',
         initials: 'CD',
         socials: [
-            { platform: 'github', href: '#' },
-            { platform: 'leetcode', href: '#' },
+            { platform: 'github', href: 'https://github.com/ChristianDedios23' },
+            { platform: 'leetcode', href: 'https://leetcode.com/u/Chris_dedios/' },
         ],
     },
     {

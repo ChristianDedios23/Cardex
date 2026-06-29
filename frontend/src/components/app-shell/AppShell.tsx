@@ -6,8 +6,10 @@ import { BsBackpack2 } from 'react-icons/bs';
 import { HiMiniSparkles } from 'react-icons/hi2';
 import { PiClockClockwiseBold, PiMagnifyingGlassBold } from 'react-icons/pi';
 import Image from 'next/image';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { getEmailUsername } from '@/lib/email';
+import { getPathForTab } from '@/lib/routes';
 import { UI_ASSETS } from '@/lib/ui-assets';
 import { AuthPanel } from '@/components/AuthPanel';
 import { useApp, type AppTab } from './AppProvider';
@@ -111,12 +113,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     }
 
     function handleNavClick(itemId: NavTab) {
-        if (tab === itemId) {
-            if (itemId === 'series') {
-                requestSeriesReset();
-            }
-        } else {
-            setTab(itemId);
+        if (tab === itemId && itemId === 'series') {
+            requestSeriesReset();
         }
 
         if (!sidebarCollapsed) {
@@ -128,27 +126,57 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         const isActive = tab === item.id;
         const isDisabled = requiresAuth && !user;
         const Icon = NAV_ICONS[item.id];
+        const href = getPathForTab(item.id);
+
+        const collapsedClassName = `mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-md transition-colors ${
+            isActive
+                ? 'bg-[var(--accent)]/50 text-white'
+                : 'bg-[var(--card)] text-[var(--muted)] hover:bg-white/10 hover:text-[var(--foreground)]'
+        } disabled:cursor-not-allowed disabled:opacity-40`;
+
+        const expandedClassName = `flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
+            isActive
+                ? 'bg-[var(--accent)]/50 font-medium text-white'
+                : 'text-[var(--foreground)] hover:bg-white/5'
+        } disabled:cursor-not-allowed disabled:opacity-40`;
+
+        if (isDisabled) {
+            return (
+                <button
+                    key={item.id}
+                    type="button"
+                    disabled
+                    title={sidebarCollapsed ? item.label : undefined}
+                    className={sidebarCollapsed ? collapsedClassName : expandedClassName}
+                >
+                    {sidebarCollapsed ? (
+                        <Icon />
+                    ) : (
+                        <>
+                            <span
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+                                    isActive
+                                        ? 'bg-[var(--accent)]/30 text-white'
+                                        : 'bg-[var(--card)] text-[var(--muted)]'
+                                }`}
+                                aria-hidden="true"
+                            >
+                                <Icon />
+                            </span>
+                            <span>{item.label}</span>
+                        </>
+                    )}
+                </button>
+            );
+        }
 
         return (
-            <button
+            <Link
                 key={item.id}
-                type="button"
-                disabled={isDisabled}
+                href={href}
                 onClick={() => handleNavClick(item.id)}
                 title={sidebarCollapsed ? item.label : undefined}
-                className={
-                    sidebarCollapsed
-                        ? `mx-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-md transition-colors ${
-                              isActive
-                                  ? 'bg-[var(--accent)]/50 text-white'
-                                  : 'bg-[var(--card)] text-[var(--muted)] hover:bg-white/10 hover:text-[var(--foreground)]'
-                          } disabled:cursor-not-allowed disabled:opacity-40`
-                        : `flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${
-                              isActive
-                                  ? 'bg-[var(--accent)]/50 font-medium text-white'
-                                  : 'text-[var(--foreground)] hover:bg-white/5'
-                          } disabled:cursor-not-allowed disabled:opacity-40`
-                }
+                className={sidebarCollapsed ? collapsedClassName : expandedClassName}
             >
                 {sidebarCollapsed ? (
                     <Icon />
@@ -167,7 +195,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         <span>{item.label}</span>
                     </>
                 )}
-            </button>
+            </Link>
         );
     }
 
@@ -187,8 +215,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     }`}
                 >
                     {!sidebarCollapsed && (
-                        <button
-                            type="button"
+                        <Link
+                            href={getPathForTab('home')}
                             onClick={goHome}
                             aria-label="Go to home"
                             className="flex min-w-0 flex-1 items-center justify-center transition-opacity hover:opacity-90"
@@ -203,7 +231,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                 className="h-11 w-auto max-w-full object-contain"
                                 priority
                             />
-                        </button>
+                        </Link>
                     )}
                     <button
                         type="button"

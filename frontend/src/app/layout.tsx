@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { AppProvider } from '@/components/app-shell/AppProvider';
 import { AppShell } from '@/components/app-shell/AppShell';
+import { TestApp } from '@/components/TestApp';
 import { UI_ASSETS } from '@/lib/ui-assets';
 import './globals.css';
 
@@ -17,12 +18,14 @@ export const metadata: Metadata = {
         icon: UI_ASSETS.brand.favicon,
     },
 };
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children: _children }: { children: React.ReactNode }) {
     return (
         <html lang="en">
             <body className={`${inter.variable} antialiased`}>
                 <AppProvider>
-                    <AppShell>{children}</AppShell>
+                    <AppShell>
+                        <TestApp />
+                    </AppShell>
                 </AppProvider>
             </body>
         </html>

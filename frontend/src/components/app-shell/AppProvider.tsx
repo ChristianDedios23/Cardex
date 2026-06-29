@@ -6,30 +6,25 @@ import {
     useContext,
     useEffect,
     useLayoutEffect,
+    useMemo,
     useState,
     type Dispatch,
     type ReactNode,
     type SetStateAction,
 } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { getPathForTab, getTabFromPath, type AppTab } from '@/lib/routes';
 
-export type AppTab =
-    | 'home'
-    | 'about'
-    | 'contact'
-    | 'changelog'
-    | 'search'
-    | 'series'
-    | 'collection'
-    | 'wishlist';
+export type { AppTab };
 export type AuthDialogMode = 'signin' | 'signup';
 
 type AppContextValue = {
     user: User | null;
     setUser: Dispatch<SetStateAction<User | null>>;
     tab: AppTab;
-    setTab: Dispatch<SetStateAction<AppTab>>;
+    setTab: (tab: AppTab) => void;
     authDialog: AuthDialogMode | null;
     setAuthDialog: Dispatch<SetStateAction<AuthDialogMode | null>>;
     sidebarCollapsed: boolean;
@@ -50,8 +45,21 @@ function isMobileViewport() {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+    const pathname = usePathname();
+    const router = useRouter();
+    const tab = useMemo(() => getTabFromPath(pathname), [pathname]);
+
+    const setTab = useCallback(
+        (nextTab: AppTab) => {
+            const nextPath = getPathForTab(nextTab);
+            if (pathname !== nextPath) {
+                router.push(nextPath);
+            }
+        },
+        [pathname, router],
+    );
+
     const [user, setUser] = useState<User | null>(null);
-    const [tab, setTab] = useState<AppTab>('home');
     const [authDialog, setAuthDialog] = useState<AuthDialogMode | null>(null);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [configError, setConfigError] = useState<string | null>(null);
@@ -60,7 +68,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const requestSeriesReset = useCallback(() => {
         setSeriesResetCount((count) => count + 1);
-    }, []);
+
+        if (pathname.startsWith('/series') && pathname !== '/series') {
+            router.push('/series');
+        }
+    }, [pathname, router]);
 
     useLayoutEffect(() => {
         if (tab === 'home' && isMobileViewport()) {
