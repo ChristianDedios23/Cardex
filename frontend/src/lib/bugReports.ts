@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase/client';
+import { getAccessToken } from '@/lib/supabase/client';
 
 export type BugReportCategory = 'bug' | 'feedback' | 'other';
 export type BugReportBugType = 'ui_ux' | 'data_sync' | 'other';
-export type BugReportStatus = 'open' | 'in_progress' | 'resolved';
+export type BugReportStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 
 export type BugReportInput = {
     title: string;
@@ -25,62 +25,115 @@ export type BugReportTrackerItem = {
     createdAt: string;
 };
 
-type BugReportTrackerRow = {
-    id: string;
-    display_id: string;
-    title: string;
-    category: BugReportCategory;
-    bug_type: BugReportBugType | null;
-    status: BugReportStatus;
-    summary: string;
-    created_at: string;
+const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000').replace(/\/$/, '');
+
+type ApiError = {
+    error: string;
 };
 
-function mapTrackerRow(row: BugReportTrackerRow): BugReportTrackerItem {
-    return {
-        id: row.id,
-        displayId: row.display_id,
-        title: row.title,
-        category: row.category,
-        bugType: row.bug_type,
-        status: row.status,
-        summary: row.summary,
-        createdAt: row.created_at,
-    };
+async function reportsFetch<T>(
+    path: string,
+    options: RequestInit = {},
+    token?: string | null,
+): Promise<T> {
+    const headers = new Headers(options.headers);
+    headers.set('Content-Type', 'application/json');
+
+    if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+    }
+
+    const response = await fetch(`${API_URL}${path}`, {
+        ...options,
+        headers,
+    });
+
+    if (response.status === 204) {
+        return undefined as T;
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        const message = (data as ApiError).error ?? 'Request failed';
+        throw new Error(message);
+    }
+
+    return data as T;
 }
 
 export async function submitBugReport(input: BugReportInput): Promise<void> {
-    const supabase = createClient();
+    const token = await getAccessToken();
 
-    const payload = {
-        user_id: input.userId ?? null,
-        title: input.title.trim(),
-        category: input.category,
-        bug_type: input.category === 'other' ? null : (input.bugType ?? null),
-        description: input.description.trim(),
-        steps_to_reproduce: input.stepsToReproduce?.trim() || null,
-        contact_email: input.contactEmail?.trim() || null,
-    };
-
-    const { error } = await supabase.from('bug_reports').insert(payload);
-
-    if (error) {
-        throw new Error(error.message);
-    }
+    await reportsFetch<{ ok: true }>(
+        '/v1/reports',
+        {
+            method: 'POST',
+            body: JSON.stringify({
+                title: input.title,
+                category: input.category,
+                bug_type: input.category === 'bug' ? (input.bugType ?? null) : null,
+                description: input.description,
+                steps_to_reproduce: input.stepsToReproduce ?? null,
+                contact_email: input.contactEmail ?? null,
+            }),
+        },
+        token,
+    );
 }
 
 export async function listBugReportTracker(limit = 50): Promise<BugReportTrackerItem[]> {
-    const supabase = createClient();
+    const params = new URLSearchParams({ limit: String(limit) });
+    const result = await reportsFetch<{ data: BugReportTrackerItem[] }>(
+        `/v1/reports?${params.toString()}`,
+    );
 
-    const { data, error } = await supabase.rpc('list_bug_report_tracker', {
-        max_rows: limit,
-    });
+    return result.data;
+}
 
-    if (error) {
-        throw new Error(error.message);
-    }
+export const EXAMPLE_BUG_REPORTS: BugReportTrackerItem[] = [
+    {
+        id: 'example-12',
+        displayId: 'CARDEX-12',
+        title: 'Set progress bar shows 100% before all cards are owned',
+        category: 'bug',
+        bugType: 'data_sync',
+        status: 'open',
+        summary:
+            'Progress checkpoint hits 100% when 49/50 cards are marked owned in Prismatic Evolutions.',
+        createdAt: '2026-03-08T12:00:00.000Z',
+    },
+    {
+        id: 'example-9',
+        displayId: 'CARDEX-9',
+        title: 'Rarity symbol clipped on Double Rare cards',
+        category: 'bug',
+        bugType: 'ui_ux',
+        status: 'in_progress',
+        summary:
+            'Multi-star rarity icon is slightly cropped in the card detail modal on smaller screens.',
+        createdAt: '2026-03-03T12:00:00.000Z',
+    },
+    {
+        id: 'example-7',
+        displayId: 'CARDEX-7',
+        title: 'Wishlist sort options',
+        category: 'feedback',
+        bugType: null,
+        status: 'open',
+        summary: 'Would love to sort wishlist cards by price or rarity, not just date added.',
+        createdAt: '2026-02-28T12:00:00.000Z',
+    },
+];
 
-    return ((data ?? []) as BugReportTrackerRow[]).map(mapTrackerRow);
+export function isBugReportSchemaMissingError(message: string): boolean {
+    const normalized = message.toLowerCase();
+    return (
+        normalized.includes('failed to fetch') ||
+        normalized.includes('network') ||
+        normalized.includes('could not load reports') ||
+        normalized.includes('could not submit report')
+    );
 }
 
 export function formatBugReportDate(isoDate: string): string {

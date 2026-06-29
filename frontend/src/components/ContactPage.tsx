@@ -3,7 +3,9 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useApp } from '@/components/app-shell/AppProvider';
 import {
+    EXAMPLE_BUG_REPORTS,
     formatBugReportDate,
+    isBugReportSchemaMissingError,
     listBugReportTracker,
     submitBugReport,
     type BugReportBugType,
@@ -44,12 +46,14 @@ const STATUS_STYLES: Record<BugReportStatus, string> = {
     open: 'contact-report-status-open',
     in_progress: 'contact-report-status-progress',
     resolved: 'contact-report-status-resolved',
+    closed: 'contact-report-status-resolved',
 };
 
 const STATUS_LABELS: Record<BugReportStatus, string> = {
     open: 'Open',
     in_progress: 'In progress',
     resolved: 'Resolved',
+    closed: 'Closed',
 };
 
 const inputClassName =
@@ -101,8 +105,9 @@ export function ContactPage() {
     const [reports, setReports] = useState<BugReportTrackerItem[]>([]);
     const [reportsLoading, setReportsLoading] = useState(true);
     const [reportsError, setReportsError] = useState<string | null>(null);
+    const [showingExampleReports, setShowingExampleReports] = useState(false);
 
-    const showBugType = category === 'bug' || category === 'feedback';
+    const showBugType = category === 'bug';
     const showSteps = category === 'bug';
     const descriptionField = DESCRIPTION_CONFIG[category];
 
@@ -117,12 +122,23 @@ export function ContactPage() {
                 const nextReports = await listBugReportTracker();
                 if (!cancelled) {
                     setReports(nextReports);
+                    setShowingExampleReports(false);
+                    setReportsError(null);
                 }
             } catch (error) {
                 if (!cancelled) {
-                    setReportsError(
-                        error instanceof Error ? error.message : 'Could not load reports.',
-                    );
+                    const message =
+                        error instanceof Error ? error.message : 'Could not load reports.';
+
+                    if (isBugReportSchemaMissingError(message)) {
+                        setReports(EXAMPLE_BUG_REPORTS);
+                        setShowingExampleReports(true);
+                        setReportsError(null);
+                    } else {
+                        setReports([]);
+                        setShowingExampleReports(false);
+                        setReportsError(message);
+                    }
                 }
             } finally {
                 if (!cancelled) {
@@ -220,6 +236,7 @@ export function ContactPage() {
                             value={title}
                             onChange={(event) => setTitle(event.target.value)}
                             placeholder="Include a title for your report"
+                            maxLength={160}
                             className={inputClassName}
                         />
                     </label>
@@ -243,7 +260,7 @@ export function ContactPage() {
 
                     {showBugType && (
                         <label className="grid gap-1.5 text-sm">
-                            <span>{category === 'bug' ? 'Bug type' : 'Feedback area'}</span>
+                            <span>Bug type</span>
                             <select
                                 value={bugType}
                                 onChange={(event) =>
@@ -315,27 +332,39 @@ export function ContactPage() {
                 </div>
             </form>
 
-            <div>
-                <h2 className="text-lg font-medium">Tracked reports</h2>
-                <p className="mt-1 text-sm text-[var(--muted)]">
-                    Recent submissions appear here once the Supabase schema is installed.
-                </p>
-                {reportsLoading && (
-                    <p className="mt-4 text-sm text-[var(--muted)]">Loading reports…</p>
-                )}
-                {reportsError && (
-                    <p className="mt-4 text-sm text-[var(--danger)]">{reportsError}</p>
-                )}
-                {!reportsLoading && !reportsError && reports.length === 0 && (
-                    <p className="mt-4 text-sm text-[var(--muted)]">No reports yet.</p>
-                )}
-                {!reportsLoading && reports.length > 0 && (
-                    <div className="mt-4 grid gap-3">
-                        {reports.map((report) => (
-                            <ReportCard key={report.id} report={report} />
-                        ))}
-                    </div>
-                )}
+            <div className="overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card)]">
+                <div className="border-b border-[var(--border)] px-4 py-4 md:px-6">
+                    <h2 className="text-lg font-medium">
+                        {showingExampleReports ? 'Example reports' : 'Tracked reports'}
+                    </h2>
+                    <p className="mt-1 text-sm text-[var(--muted)]">
+                        {showingExampleReports
+                            ? 'Could not reach the reports API — these samples show how tracked reports will look once the backend is running.'
+                            : 'Recent submissions from the community.'}
+                    </p>
+                </div>
+
+                <div className="contact-reports-scroll px-4 py-4 md:px-6">
+                    {reportsLoading && (
+                        <p className="text-sm text-[var(--muted)]">Loading reports…</p>
+                    )}
+                    {reportsError && (
+                        <p className="text-sm text-[var(--danger)]">{reportsError}</p>
+                    )}
+                    {!reportsLoading &&
+                        !reportsError &&
+                        !showingExampleReports &&
+                        reports.length === 0 && (
+                            <p className="text-sm text-[var(--muted)]">No reports yet.</p>
+                        )}
+                    {!reportsLoading && reports.length > 0 && (
+                        <div className="grid gap-3">
+                            {reports.map((report) => (
+                                <ReportCard key={report.id} report={report} />
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
         </section>
     );
