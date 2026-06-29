@@ -3,7 +3,11 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { IoChevronDown, IoChevronUp } from 'react-icons/io5';
 import { PiMagnifyingGlassBold } from 'react-icons/pi';
-import type { SetCardOwnershipFilter, SetCardSortDirection, SetCardSortField } from '@/components/app/types';
+import type {
+    SetCardOwnershipFilter,
+    SetCardSortDirection,
+    SetCardSortField,
+} from '@/components/app/types';
 
 const SET_CARD_SORT_OPTIONS: { field: SetCardSortField; label: string }[] = [
     { field: 'number', label: 'Number' },

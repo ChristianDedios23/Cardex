@@ -6,25 +6,25 @@ import {
     formatBugReportDate,
     listBugReportTracker,
     submitBugReport,
+    type BugReportBugType,
+    type BugReportCategory,
     type BugReportStatus,
-    type BugReportSubCategory,
     type BugReportTrackerItem,
-    type BugReportType,
 } from '@/lib/bugReports';
 
-const REPORT_TYPE_LABELS: Record<BugReportType, string> = {
+const CATEGORY_LABELS: Record<BugReportCategory, string> = {
     bug: 'Bug',
     feedback: 'Feedback',
     other: 'Other',
 };
 
-const SUB_CATEGORY_LABELS: Record<BugReportSubCategory, string> = {
-    ui: 'UI / UX',
-    data: 'Data / Sync',
+const BUG_TYPE_LABELS: Record<BugReportBugType, string> = {
+    ui_ux: 'UI / UX',
+    data_sync: 'Data / Sync',
     other: 'Other',
 };
 
-const DESCRIPTION_CONFIG: Record<BugReportType, { label: string; placeholder: string }> = {
+const DESCRIPTION_CONFIG: Record<BugReportCategory, { label: string; placeholder: string }> = {
     bug: {
         label: 'Description',
         placeholder: 'What happened? What did you expect instead?',
@@ -56,11 +56,11 @@ const inputClassName =
     'w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm';
 
 function formatReportCategory(report: BugReportTrackerItem): string {
-    if (report.reportType === 'other' || !report.subCategory) {
-        return REPORT_TYPE_LABELS[report.reportType];
+    if (report.category === 'other' || !report.bugType) {
+        return CATEGORY_LABELS[report.category];
     }
 
-    return `${REPORT_TYPE_LABELS[report.reportType]} · ${SUB_CATEGORY_LABELS[report.subCategory]}`;
+    return `${CATEGORY_LABELS[report.category]} · ${BUG_TYPE_LABELS[report.bugType]}`;
 }
 
 function ReportCard({ report }: { report: BugReportTrackerItem }) {
@@ -91,20 +91,20 @@ function ReportCard({ report }: { report: BugReportTrackerItem }) {
 export function ContactPage() {
     const { user } = useApp();
     const [title, setTitle] = useState('');
-    const [reportType, setReportType] = useState<BugReportType>('bug');
-    const [subCategory, setSubCategory] = useState<BugReportSubCategory>('ui');
+    const [category, setCategory] = useState<BugReportCategory>('bug');
+    const [bugType, setBugType] = useState<BugReportBugType>('ui_ux');
     const [description, setDescription] = useState('');
     const [steps, setSteps] = useState('');
-    const [email, setEmail] = useState('');
+    const [contactEmail, setContactEmail] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [submittedMessage, setSubmittedMessage] = useState<string | null>(null);
     const [reports, setReports] = useState<BugReportTrackerItem[]>([]);
     const [reportsLoading, setReportsLoading] = useState(true);
     const [reportsError, setReportsError] = useState<string | null>(null);
 
-    const showSubCategory = reportType === 'bug' || reportType === 'feedback';
-    const showSteps = reportType === 'bug';
-    const descriptionField = DESCRIPTION_CONFIG[reportType];
+    const showBugType = category === 'bug' || category === 'feedback';
+    const showSteps = category === 'bug';
+    const descriptionField = DESCRIPTION_CONFIG[category];
 
     useEffect(() => {
         let cancelled = false;
@@ -138,10 +138,10 @@ export function ContactPage() {
         };
     }, []);
 
-    function handleReportTypeChange(nextType: BugReportType) {
-        setReportType(nextType);
+    function handleCategoryChange(nextCategory: BugReportCategory) {
+        setCategory(nextCategory);
 
-        if (nextType !== 'bug') {
+        if (nextCategory !== 'bug') {
             setSteps('');
         }
     }
@@ -160,21 +160,21 @@ export function ContactPage() {
         try {
             await submitBugReport({
                 title,
-                reportType,
-                subCategory: showSubCategory ? subCategory : undefined,
+                category,
+                bugType: showBugType ? bugType : undefined,
                 description,
                 stepsToReproduce: showSteps ? steps : undefined,
-                email: email || user?.email || undefined,
+                contactEmail: contactEmail || user?.email || undefined,
                 userId: user?.id ?? null,
             });
 
             setSubmittedMessage('Thanks — your report was submitted.');
             setTitle('');
-            setReportType('bug');
-            setSubCategory('ui');
+            setCategory('bug');
+            setBugType('ui_ux');
             setDescription('');
             setSteps('');
-            setEmail('');
+            setContactEmail('');
 
             const nextReports = await listBugReportTracker();
             setReports(nextReports);
@@ -227,34 +227,34 @@ export function ContactPage() {
                     <label className="grid gap-1.5 text-sm">
                         <span>Category</span>
                         <select
-                            value={reportType}
+                            value={category}
                             onChange={(event) =>
-                                handleReportTypeChange(event.target.value as BugReportType)
+                                handleCategoryChange(event.target.value as BugReportCategory)
                             }
                             className={inputClassName}
                         >
-                            {(Object.keys(REPORT_TYPE_LABELS) as BugReportType[]).map((value) => (
+                            {(Object.keys(CATEGORY_LABELS) as BugReportCategory[]).map((value) => (
                                 <option key={value} value={value}>
-                                    {REPORT_TYPE_LABELS[value]}
+                                    {CATEGORY_LABELS[value]}
                                 </option>
                             ))}
                         </select>
                     </label>
 
-                    {showSubCategory && (
+                    {showBugType && (
                         <label className="grid gap-1.5 text-sm">
-                            <span>{reportType === 'bug' ? 'Bug type' : 'Feedback area'}</span>
+                            <span>{category === 'bug' ? 'Bug type' : 'Feedback area'}</span>
                             <select
-                                value={subCategory}
+                                value={bugType}
                                 onChange={(event) =>
-                                    setSubCategory(event.target.value as BugReportSubCategory)
+                                    setBugType(event.target.value as BugReportBugType)
                                 }
                                 className={inputClassName}
                             >
-                                {(Object.keys(SUB_CATEGORY_LABELS) as BugReportSubCategory[]).map(
+                                {(Object.keys(BUG_TYPE_LABELS) as BugReportBugType[]).map(
                                     (value) => (
                                         <option key={value} value={value}>
-                                            {SUB_CATEGORY_LABELS[value]}
+                                            {BUG_TYPE_LABELS[value]}
                                         </option>
                                     ),
                                 )}
@@ -290,8 +290,8 @@ export function ContactPage() {
                         <span>Email (optional)</span>
                         <input
                             type="email"
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
+                            value={contactEmail}
+                            onChange={(event) => setContactEmail(event.target.value)}
                             placeholder="We may contact you for further details"
                             className={inputClassName}
                         />

@@ -1,16 +1,16 @@
 import { createClient } from '@/lib/supabase/client';
 
-export type BugReportType = 'bug' | 'feedback' | 'other';
-export type BugReportSubCategory = 'ui' | 'data' | 'other';
+export type BugReportCategory = 'bug' | 'feedback' | 'other';
+export type BugReportBugType = 'ui_ux' | 'data_sync' | 'other';
 export type BugReportStatus = 'open' | 'in_progress' | 'resolved';
 
 export type BugReportInput = {
     title: string;
-    reportType: BugReportType;
-    subCategory?: BugReportSubCategory;
+    category: BugReportCategory;
+    bugType?: BugReportBugType;
     description: string;
     stepsToReproduce?: string;
-    email?: string;
+    contactEmail?: string;
     userId?: string | null;
 };
 
@@ -18,8 +18,8 @@ export type BugReportTrackerItem = {
     id: string;
     displayId: string;
     title: string;
-    reportType: BugReportType;
-    subCategory: BugReportSubCategory | null;
+    category: BugReportCategory;
+    bugType: BugReportBugType | null;
     status: BugReportStatus;
     summary: string;
     createdAt: string;
@@ -29,8 +29,8 @@ type BugReportTrackerRow = {
     id: string;
     display_id: string;
     title: string;
-    report_type: BugReportType;
-    sub_category: BugReportSubCategory | null;
+    category: BugReportCategory;
+    bug_type: BugReportBugType | null;
     status: BugReportStatus;
     summary: string;
     created_at: string;
@@ -41,8 +41,8 @@ function mapTrackerRow(row: BugReportTrackerRow): BugReportTrackerItem {
         id: row.id,
         displayId: row.display_id,
         title: row.title,
-        reportType: row.report_type,
-        subCategory: row.sub_category,
+        category: row.category,
+        bugType: row.bug_type,
         status: row.status,
         summary: row.summary,
         createdAt: row.created_at,
@@ -54,13 +54,12 @@ export async function submitBugReport(input: BugReportInput): Promise<void> {
 
     const payload = {
         user_id: input.userId ?? null,
-        reporter_email: input.email?.trim() || null,
         title: input.title.trim(),
-        report_type: input.reportType,
-        sub_category:
-            input.reportType === 'other' ? null : (input.subCategory ?? null),
+        category: input.category,
+        bug_type: input.category === 'other' ? null : (input.bugType ?? null),
         description: input.description.trim(),
         steps_to_reproduce: input.stepsToReproduce?.trim() || null,
+        contact_email: input.contactEmail?.trim() || null,
     };
 
     const { error } = await supabase.from('bug_reports').insert(payload);

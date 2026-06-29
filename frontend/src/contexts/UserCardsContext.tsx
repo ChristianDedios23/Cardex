@@ -1,13 +1,6 @@
 'use client';
 
-import {
-    createContext,
-    useContext,
-    useEffect,
-    useRef,
-    useState,
-    type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useApp, type AppTab } from '@/components/app-shell/AppProvider';
 import { getAccessToken } from '@/lib/supabase/client';
 import { getMyUserCards, type UserCard } from '@/lib/api';
@@ -29,10 +22,7 @@ type UserCardsContextValue = {
     handleWishlistChange: (patch: UserCardPatch) => void;
     handleUserCardDeleted: (patch: UserCardPatch) => void;
     ensureUserCardsLoaded: () => void;
-    applyBulkOwnedCacheUpdate: (
-        added?: UserCard[],
-        removedExternalIds?: Set<string>,
-    ) => void;
+    applyBulkOwnedCacheUpdate: (added?: UserCard[], removedExternalIds?: Set<string>) => void;
     collectionMessage: string | null;
     setCollectionMessage: (message: string | null) => void;
 };

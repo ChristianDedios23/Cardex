@@ -20,12 +20,8 @@ type CollectionTabProps = {
 
 export default function CollectionTab({ onViewDetails }: CollectionTabProps) {
     const { tab, setPageLoading } = useApp();
-    const {
-        userCards,
-        collectionLoading,
-        collectionMessage,
-        handleUserCardDeleted,
-    } = useUserCards();
+    const { userCards, collectionLoading, collectionMessage, handleUserCardDeleted } =
+        useUserCards();
 
     const collectionNavigationCards = useMemo(
         () => userCards.map((card) => userCardToPreview(card)),
@@ -65,9 +61,7 @@ export default function CollectionTab({ onViewDetails }: CollectionTabProps) {
                         )}
                     </div>
                 )}
-                {collectionLoading && (
-                    <p className="text-sm text-[var(--muted)]">Loading...</p>
-                )}
+                {collectionLoading && <p className="text-sm text-[var(--muted)]">Loading...</p>}
                 {!collectionLoading && userCards.length === 0 && (
                     <p className="text-sm text-[var(--muted)]">No cards yet.</p>
                 )}

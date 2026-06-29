@@ -74,12 +74,8 @@ export function TestApp() {
                 {tab === 'contact' && <ContactPage />}
                 {tab === 'changelog' && <ChangelogPage />}
 
-                {user && tab === 'search' && (
-                    <SearchTab onViewDetails={setDetailSelection} />
-                )}
-                {user && tab === 'series' && (
-                    <SeriesTab onViewDetails={setDetailSelection} />
-                )}
+                {user && tab === 'search' && <SearchTab onViewDetails={setDetailSelection} />}
+                {user && tab === 'series' && <SeriesTab onViewDetails={setDetailSelection} />}
                 {user && (tab === 'collection' || tab === 'wishlist') && (
                     <CollectionTab onViewDetails={setDetailSelection} />
                 )}

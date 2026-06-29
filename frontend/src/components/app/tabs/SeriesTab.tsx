@@ -20,7 +20,12 @@ import {
     sortSetCards,
     sortSeriesNewestFirst,
 } from '@/components/app/card-utils';
-import type { CardDetailSelection, SetCardSortDirection, SetCardSortField, SetCardOwnershipFilter } from '@/components/app/types';
+import type {
+    CardDetailSelection,
+    SetCardSortDirection,
+    SetCardSortField,
+    SetCardOwnershipFilter,
+} from '@/components/app/types';
 import { BULK_OPERATION_COOLDOWN_MS } from '@/components/app/types';
 import {
     bulkAddOwnedUserCards,
@@ -522,9 +527,12 @@ export default function SeriesTab({ onViewDetails }: SeriesTabProps) {
                         ))}
                     </div>
                 )}
-                {selectedSeries && !selectedSet && !seriesSetsLoading && seriesSets.length === 0 && (
-                    <p className="text-sm text-[var(--muted)]">No sets found.</p>
-                )}
+                {selectedSeries &&
+                    !selectedSet &&
+                    !seriesSetsLoading &&
+                    seriesSets.length === 0 && (
+                        <p className="text-sm text-[var(--muted)]">No sets found.</p>
+                    )}
 
                 {selectedSet && setCardsLoading && (
                     <p className="text-sm text-[var(--muted)]">Loading cards…</p>

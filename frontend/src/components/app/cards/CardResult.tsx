@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import { getAccessToken } from '@/lib/supabase/client';
-import { createUserCard, createUserCardSnapshot, deleteUserCard, type PokemonCard } from '@/lib/api';
+import {
+    createUserCard,
+    createUserCardSnapshot,
+    deleteUserCard,
+    type PokemonCard,
+} from '@/lib/api';
 import type { UserCardPatch } from '@/components/app/types';
 import { formatTcgPlayerMarketPrice } from '@/components/app/card-utils';
 import { CheckIcon, PlusIcon, StarIcon, XIcon } from '@/components/app/shared/icons';

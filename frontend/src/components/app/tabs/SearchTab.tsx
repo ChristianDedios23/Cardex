@@ -11,7 +11,11 @@ import {
     getSearchDisplayTotalPages,
     sortSetCards,
 } from '@/components/app/card-utils';
-import type { SearchResultCache, SetCardSortDirection, SetCardSortField } from '@/components/app/types';
+import type {
+    SearchResultCache,
+    SetCardSortDirection,
+    SetCardSortField,
+} from '@/components/app/types';
 import type { CardDetailSelection } from '@/components/app/types';
 import { useUserCards } from '@/contexts/UserCardsContext';
 import {

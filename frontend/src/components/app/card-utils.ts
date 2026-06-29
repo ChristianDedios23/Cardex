@@ -1,6 +1,17 @@
-import type { PokemonCard, PokemonCardDetail, PokemonSeries, PokemonSetSummary, UserCard } from '@/lib/api';
+import type {
+    PokemonCard,
+    PokemonCardDetail,
+    PokemonSeries,
+    PokemonSetSummary,
+    UserCard,
+} from '@/lib/api';
 import { compareRarities } from '@/lib/pokemonRaritySymbols';
-import type { SetCardSortDirection, SetCardSortField, SetCardOwnershipFilter, SetMarketStats } from '@/components/app/types';
+import type {
+    SetCardSortDirection,
+    SetCardSortField,
+    SetCardOwnershipFilter,
+    SetMarketStats,
+} from '@/components/app/types';
 import { SEARCH_DISPLAY_PAGE_SIZE } from '@/lib/api';
 
 export function userCardToPreview(card: UserCard): PokemonCard {
@@ -46,7 +57,10 @@ export function formatSetCardCount(set: PokemonSetSummary, loadedCount: number):
     return loadedCount.toLocaleString();
 }
 
-export function computeSetMarketStats(cards: PokemonCardDetail[], owned: UserCard[]): SetMarketStats {
+export function computeSetMarketStats(
+    cards: PokemonCardDetail[],
+    owned: UserCard[],
+): SetMarketStats {
     let fullSetValue = 0;
     let mostExpensiveName: string | null = null;
     let highestPrice = -1;
@@ -244,7 +258,11 @@ export function getSearchDisplayTotalPages(resultCount: number): number {
     return Math.max(1, Math.ceil(resultCount / SEARCH_DISPLAY_PAGE_SIZE));
 }
 
-export function canGoToSearchDisplayPage(page: number, currentPage: number, totalPages: number): boolean {
+export function canGoToSearchDisplayPage(
+    page: number,
+    currentPage: number,
+    totalPages: number,
+): boolean {
     return page >= 1 && page <= totalPages && page !== currentPage;
 }
 
